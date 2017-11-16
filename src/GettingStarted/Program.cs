@@ -66,14 +66,14 @@ namespace GettingStarted
             // Begin command list for resource updates.
             _commandList.Begin();
 
-            VertexPositionColor[] vertexData =
+            VertexPositionColor[] quadVertices =
             {
                 new VertexPositionColor(new Vector2(-.75f, .75f), RgbaFloat.Red),
                 new VertexPositionColor(new Vector2(.75f, .75f), RgbaFloat.Green),
                 new VertexPositionColor(new Vector2(-.75f, -.75f), RgbaFloat.Blue),
                 new VertexPositionColor(new Vector2(.75f, -.75f), RgbaFloat.Yellow)
             };
-            _commandList.UpdateBuffer(_vertexBuffer, 0, vertexData);
+            _commandList.UpdateBuffer(_vertexBuffer, 0, quadVertices);
 
             ushort[] indexData = { 0, 1, 2, 3 };
             _commandList.UpdateBuffer(_indexBuffer, 0, indexData);
@@ -97,19 +97,29 @@ namespace GettingStarted
                 new ShaderStageDescription(ShaderStages.Vertex, _vertexShader, "VS"),
                 new ShaderStageDescription(ShaderStages.Fragment, _fragmentShader, "FS")
             };
-
-            ShaderSetDescription shaderSet = new ShaderSetDescription(
-                new VertexLayoutDescription[] { vertexLayout }, // We use a single vertex buffer for all attributes.
-                shaderStages);
+            ShaderSetDescription shaderSet = new ShaderSetDescription();
+            // We use a single vertex buffer for all attributes.
+            shaderSet.VertexLayouts = new VertexLayoutDescription[] { vertexLayout };
+            shaderSet.ShaderStages = shaderStages;
 
             // Create pipeline
             PipelineDescription pipelineDescription = new PipelineDescription();
             pipelineDescription.BlendState = BlendStateDescription.SingleOverrideBlend;
-            pipelineDescription.DepthStencilState = DepthStencilStateDescription.Disabled;
-            pipelineDescription.RasterizerState = RasterizerStateDescription.Default;
+            pipelineDescription.DepthStencilState = new DepthStencilStateDescription(
+                depthTestEnabled: true,
+                depthWriteEnabled: true,
+                comparisonKind: DepthComparisonKind.LessEqual);
+            pipelineDescription.RasterizerState = new RasterizerStateDescription(
+                cullMode: FaceCullMode.Back,
+                fillMode: PolygonFillMode.Solid,
+                frontFace: FrontFace.Clockwise,
+                depthClipEnabled: true,
+                scissorTestEnabled: false);
             pipelineDescription.PrimitiveTopology = PrimitiveTopology.TriangleStrip;
             pipelineDescription.ResourceLayouts = Array.Empty<ResourceLayout>();
-            pipelineDescription.ShaderSet = shaderSet;
+            pipelineDescription.ShaderSet = new ShaderSetDescription(
+                vertexLayouts: new VertexLayoutDescription[] { vertexLayout },
+                shaderStages: shaderStages);
             pipelineDescription.Outputs = _graphicsDevice.SwapchainFramebuffer.OutputDescription;
 
             _pipeline = factory.CreatePipeline(ref pipelineDescription);
@@ -146,6 +156,7 @@ namespace GettingStarted
             _commandList.SetFramebuffer(_graphicsDevice.SwapchainFramebuffer);
             _commandList.SetFullViewports();
             _commandList.ClearColorTarget(0, RgbaFloat.Black);
+            _commandList.ClearDepthTarget(1);
 
             // Set all relevant state to draw our quad.
             _commandList.SetVertexBuffer(0, _vertexBuffer);
