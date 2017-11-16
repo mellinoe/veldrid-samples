@@ -25,31 +25,19 @@ namespace GettingStarted
                 Y = 100,
                 WindowWidth = 960,
                 WindowHeight = 540,
-                WindowTitle = "Veldrid Getting Started Tutorial"
+                WindowTitle = "Veldrid Tutorial"
             };
-            GraphicsDeviceCreateInfo gdCI = new GraphicsDeviceCreateInfo();
+            Sdl2Window window = VeldridStartup.CreateWindow(ref windowCI);
 
-            VeldridStartup.CreateWindowAndGraphicsDevice(ref windowCI, ref gdCI, out Sdl2Window window, out _graphicsDevice);
-            bool resized = false;
-            window.Resized += () => resized = true;
+            GraphicsDeviceCreateInfo gdCI = new GraphicsDeviceCreateInfo();
+            _graphicsDevice = VeldridStartup.CreateGraphicsDevice(ref gdCI, window);
 
             CreateResources();
 
             while (window.Exists)
             {
                 window.PumpEvents();
-
-                if (window.Exists)
-                {
-                    if (resized)
-                    {
-                        _graphicsDevice.ResizeMainWindow((uint)window.Width, (uint)window.Height);
-                    }
-                    Draw();
-                }
-                else
-                {
-                }
+                Draw();
             }
 
             DisposeResources();
@@ -58,13 +46,8 @@ namespace GettingStarted
         private static void CreateResources()
         {
             ResourceFactory factory = _graphicsDevice.ResourceFactory;
+
             _commandList = factory.CreateCommandList();
-
-            _vertexBuffer = factory.CreateVertexBuffer(new BufferDescription(4 * VertexPositionColor.SizeInBytes));
-            _indexBuffer = factory.CreateIndexBuffer(new IndexBufferDescription(4 * sizeof(ushort), IndexFormat.UInt16));
-
-            // Begin command list for resource updates.
-            _commandList.Begin();
 
             VertexPositionColor[] quadVertices =
             {
@@ -73,9 +56,15 @@ namespace GettingStarted
                 new VertexPositionColor(new Vector2(-.75f, -.75f), RgbaFloat.Blue),
                 new VertexPositionColor(new Vector2(.75f, -.75f), RgbaFloat.Yellow)
             };
-            _commandList.UpdateBuffer(_vertexBuffer, 0, quadVertices);
+            _vertexBuffer = factory.CreateVertexBuffer(new BufferDescription(4 * VertexPositionColor.SizeInBytes));
 
             ushort[] indexData = { 0, 1, 2, 3 };
+            _indexBuffer = factory.CreateIndexBuffer(new IndexBufferDescription(4 * sizeof(ushort), IndexFormat.UInt16));
+
+            // Begin command list for resource updates.
+            _commandList.Begin();
+
+            _commandList.UpdateBuffer(_vertexBuffer, 0, quadVertices);
             _commandList.UpdateBuffer(_indexBuffer, 0, indexData);
 
             // End command list and execute it.
@@ -87,16 +76,13 @@ namespace GettingStarted
                 new VertexElementDescription("Color", VertexElementSemantic.Color, VertexElementFormat.Float4));
 
             _vertexShader = LoadShader(ShaderStages.Vertex);
-            _vertexShader.Dispose();
-            _graphicsDevice.WaitForIdle();
-            _vertexShader = LoadShader(ShaderStages.Vertex);
             _fragmentShader = LoadShader(ShaderStages.Fragment);
-
             ShaderStageDescription[] shaderStages =
             {
                 new ShaderStageDescription(ShaderStages.Vertex, _vertexShader, "VS"),
                 new ShaderStageDescription(ShaderStages.Fragment, _fragmentShader, "FS")
             };
+
             ShaderSetDescription shaderSet = new ShaderSetDescription();
             // We use a single vertex buffer for all attributes.
             shaderSet.VertexLayouts = new VertexLayoutDescription[] { vertexLayout };
@@ -163,7 +149,12 @@ namespace GettingStarted
             _commandList.SetIndexBuffer(_indexBuffer);
             _commandList.SetPipeline(_pipeline);
             // Issue a Draw command for a single instance with 4 indices.
-            _commandList.Draw(4, 1, 0, 0, 0);
+            _commandList.Draw(
+                indexCount: 4,
+                instanceCount: 1,
+                indexStart: 0,
+                vertexOffset: 0,
+                instanceStart: 0);
 
             // End() must be called before commands can be submitted for execution.
             _commandList.End();
@@ -175,7 +166,6 @@ namespace GettingStarted
 
         private static void DisposeResources()
         {
-            _graphicsDevice.WaitForIdle();
             _pipeline.Dispose();
             _vertexShader.Dispose();
             _fragmentShader.Dispose();
@@ -189,10 +179,8 @@ namespace GettingStarted
     struct VertexPositionColor
     {
         public const uint SizeInBytes = 24;
-
         public Vector2 Position;
         public RgbaFloat Color;
-
         public VertexPositionColor(Vector2 position, RgbaFloat color)
         {
             Position = position;
