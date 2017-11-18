@@ -1,5 +1,4 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using System.Numerics;
 using Veldrid;
 using Veldrid.Sdl2;
@@ -11,8 +10,8 @@ namespace GettingStarted
     {
         private static GraphicsDevice _graphicsDevice;
         private static CommandList _commandList;
-        private static VertexBuffer _vertexBuffer;
-        private static IndexBuffer _indexBuffer;
+        private static Buffer _vertexBuffer;
+        private static Buffer _indexBuffer;
         private static Shader _vertexShader;
         private static Shader _fragmentShader;
         private static Pipeline _pipeline;
@@ -56,10 +55,10 @@ namespace GettingStarted
                 new VertexPositionColor(new Vector2(-.75f, -.75f), RgbaFloat.Blue),
                 new VertexPositionColor(new Vector2(.75f, -.75f), RgbaFloat.Yellow)
             };
-            _vertexBuffer = factory.CreateVertexBuffer(new BufferDescription(4 * VertexPositionColor.SizeInBytes));
+            _vertexBuffer = factory.CreateBuffer(new BufferDescription(4 * VertexPositionColor.SizeInBytes, BufferUsage.VertexBuffer));
 
             ushort[] indexData = { 0, 1, 2, 3 };
-            _indexBuffer = factory.CreateIndexBuffer(new IndexBufferDescription(4 * sizeof(ushort), IndexFormat.UInt16));
+            _indexBuffer = factory.CreateBuffer(new BufferDescription(4 * sizeof(ushort), BufferUsage.IndexBuffer));
 
             // Begin command list for resource updates.
             _commandList.Begin();
@@ -89,7 +88,7 @@ namespace GettingStarted
             shaderSet.ShaderStages = shaderStages;
 
             // Create pipeline
-            PipelineDescription pipelineDescription = new PipelineDescription();
+            GraphicsPipelineDescription pipelineDescription = new GraphicsPipelineDescription();
             pipelineDescription.BlendState = BlendStateDescription.SingleOverrideBlend;
             pipelineDescription.DepthStencilState = new DepthStencilStateDescription(
                 depthTestEnabled: true,
@@ -102,13 +101,13 @@ namespace GettingStarted
                 depthClipEnabled: true,
                 scissorTestEnabled: false);
             pipelineDescription.PrimitiveTopology = PrimitiveTopology.TriangleStrip;
-            pipelineDescription.ResourceLayouts = Array.Empty<ResourceLayout>();
+            pipelineDescription.ResourceLayouts = System.Array.Empty<ResourceLayout>();
             pipelineDescription.ShaderSet = new ShaderSetDescription(
                 vertexLayouts: new VertexLayoutDescription[] { vertexLayout },
                 shaderStages: shaderStages);
             pipelineDescription.Outputs = _graphicsDevice.SwapchainFramebuffer.OutputDescription;
 
-            _pipeline = factory.CreatePipeline(ref pipelineDescription);
+            _pipeline = factory.CreateGraphicsPipeline(ref pipelineDescription);
         }
 
         private static Shader LoadShader(ShaderStages stage)
@@ -125,10 +124,10 @@ namespace GettingStarted
                 case GraphicsBackend.OpenGL:
                     extension = "glsl";
                     break;
-                default: throw new InvalidOperationException();
+                default: throw new System.InvalidOperationException();
             }
 
-            string path = Path.Combine(AppContext.BaseDirectory, "Shaders", $"{stage.ToString()}.{extension}");
+            string path = Path.Combine(System.AppContext.BaseDirectory, "Shaders", $"{stage.ToString()}.{extension}");
             byte[] shaderBytes = File.ReadAllBytes(path);
             return _graphicsDevice.ResourceFactory.CreateShader(new ShaderDescription(stage, shaderBytes));
         }
@@ -146,10 +145,10 @@ namespace GettingStarted
 
             // Set all relevant state to draw our quad.
             _commandList.SetVertexBuffer(0, _vertexBuffer);
-            _commandList.SetIndexBuffer(_indexBuffer);
+            _commandList.SetIndexBuffer(_indexBuffer, IndexFormat.UInt16);
             _commandList.SetPipeline(_pipeline);
             // Issue a Draw command for a single instance with 4 indices.
-            _commandList.Draw(
+            _commandList.DrawIndexed(
                 indexCount: 4,
                 instanceCount: 1,
                 indexStart: 0,
