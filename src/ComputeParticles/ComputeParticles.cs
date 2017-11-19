@@ -80,7 +80,7 @@ namespace ComputeParticles
 
             _computeShader = factory.CreateShader(new ShaderDescription(
                 ShaderStages.Compute,
-                File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "Shaders", $"compute.{GetExtension(factory.BackendType)}"))));
+                File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "Shaders", $"Compute.{GetExtension(factory.BackendType)}"))));
 
             ResourceLayout particleStorageLayout = factory.CreateResourceLayout(new ResourceLayoutDescription(
                 new ResourceLayoutElementDescription("ParticlesBuffer", ResourceKind.StructuredBufferReadWrite, ShaderStages.Compute)));
@@ -99,10 +99,10 @@ namespace ComputeParticles
 
             _vertexShader = factory.CreateShader(new ShaderDescription(
                 ShaderStages.Vertex,
-                File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "Shaders", $"vertex.{GetExtension(factory.BackendType)}"))));
+                File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "Shaders", $"Vertex.{GetExtension(factory.BackendType)}"))));
             _fragmentShader = factory.CreateShader(new ShaderDescription(
                 ShaderStages.Fragment,
-                File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "Shaders", $"fragment.{GetExtension(factory.BackendType)}"))));
+                File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "Shaders", $"Fragment.{GetExtension(factory.BackendType)}"))));
 
             ShaderSetDescription shaderSet = new ShaderSetDescription(
                 Array.Empty<VertexLayoutDescription>(),
