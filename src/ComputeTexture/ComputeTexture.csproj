@@ -6,6 +6,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Shaders\Fragment.hlsl.bytes" />
+    <None Remove="Shaders\Vertex.hlsl.bytes" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Veldrid" Version="$(VeldridVersion)" />
     <PackageReference Include="Veldrid.Utilities" Version="$(VeldridVersion)" />
     <PackageReference Include="Veldrid.StartupUtilities" Version="$(VeldridVersion)" />
