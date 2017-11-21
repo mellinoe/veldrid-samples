@@ -9,11 +9,23 @@ layout(set = 0, binding = 1) uniform ScreenSizeBuffer
     vec2 Padding_;
 };
 
+layout(set = 0, binding = 2) uniform ShiftBuffer
+{
+    float RShift;
+    float GShift;
+    float BShift;
+    float Padding1_;
+};
+
+
 layout(set = 0, binding = 0, rgba32f) uniform image2D Tex;
 
 layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 
 void main()
 {
-    imageStore(Tex, ivec2(gl_GlobalInvocationID.xy), vec4(gl_GlobalInvocationID.x / ScreenWidth, gl_GlobalInvocationID.y / ScreenHeight, 0, 1));
+    float x = (gl_GlobalInvocationID.x + RShift);
+    float y = (gl_GlobalInvocationID.y + GShift);
+
+    imageStore(Tex, ivec2(gl_GlobalInvocationID.xy), vec4(x / ScreenWidth, y / ScreenHeight, BShift, 1));
 }

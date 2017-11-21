@@ -15,6 +15,7 @@ namespace ComputeTexture
         private bool _windowResized;
 
         private Veldrid.Buffer _screenSizeBuffer;
+        private Veldrid.Buffer _shiftBuffer;
         private Veldrid.Buffer _vertexBuffer;
         private Veldrid.Buffer _indexBuffer;
         private Shader _computeShader;
@@ -72,6 +73,7 @@ namespace ComputeTexture
         private void CreateResources(ResourceFactory factory)
         {
             _screenSizeBuffer = factory.CreateBuffer(new BufferDescription(16, BufferUsage.UniformBuffer));
+            _shiftBuffer = factory.CreateBuffer(new BufferDescription(16, BufferUsage.UniformBuffer));
             _vertexBuffer = factory.CreateBuffer(new BufferDescription(16 * 4, BufferUsage.VertexBuffer));
             _indexBuffer = factory.CreateBuffer(new BufferDescription(2 * 6, BufferUsage.IndexBuffer));
 
@@ -81,7 +83,8 @@ namespace ComputeTexture
 
             _computeLayout = factory.CreateResourceLayout(new ResourceLayoutDescription(
                 new ResourceLayoutElementDescription("Tex", ResourceKind.TextureReadWrite, ShaderStages.Compute),
-                new ResourceLayoutElementDescription("ScreenSizeBuffer", ResourceKind.UniformBuffer, ShaderStages.Compute)));
+                new ResourceLayoutElementDescription("ScreenSizeBuffer", ResourceKind.UniformBuffer, ShaderStages.Compute),
+                new ResourceLayoutElementDescription("ShiftBuffer", ResourceKind.UniformBuffer, ShaderStages.Compute)));
 
             ComputePipelineDescription computePipelineDesc = new ComputePipelineDescription(
                 new ShaderStageDescription(ShaderStages.Compute, _computeShader, "CS"),
@@ -154,7 +157,8 @@ namespace ComputeTexture
             _computeResourceSet = factory.CreateResourceSet(new ResourceSetDescription(
                 _computeLayout,
                 _computeTargetTextureView,
-                _screenSizeBuffer));
+                _screenSizeBuffer,
+                _shiftBuffer));
 
             _graphicsResourceSet = factory.CreateResourceSet(new ResourceSetDescription(
                 _graphicsLayout,
@@ -205,19 +209,13 @@ namespace ComputeTexture
                 CreateWindowSizedResources();
             }
 
-            _cl.SetPipeline(_computePipeline);
-            _cl.SetComputeResourceSet(0, _computeResourceSet);
-            _cl.Dispatch((uint)_window.Width, (uint)_window.Height, 1);
-
-            _cl.SetFramebuffer(_gd.SwapchainFramebuffer);
-            _cl.SetFullViewports();
-            _cl.SetFullScissorRects();
-            _cl.ClearColorTarget(0, RgbaFloat.Black);
-            _cl.SetPipeline(_graphicsPipeline);
-            _cl.SetVertexBuffer(0, _vertexBuffer);
-            _cl.SetIndexBuffer(_indexBuffer, IndexFormat.UInt16);
-            _cl.SetGraphicsResourceSet(0, _graphicsResourceSet);
-            _cl.DrawIndexed(6, 1, 0, 0, 0);
+            int ticks = Environment.TickCount;
+            Vector4 shifts = new Vector4(
+                _window.Width * MathF.Cos(ticks / 500f), // Red shift
+                _window.Height * MathF.Sin(ticks / 1250f), // Green shift
+                MathF.Sin(ticks / 1000f), // Blue shift
+                0); // Padding
+            _cl.UpdateBuffer(_shiftBuffer, 0, ref shifts);
 
             _cl.SetPipeline(_computePipeline);
             _cl.SetComputeResourceSet(0, _computeResourceSet);

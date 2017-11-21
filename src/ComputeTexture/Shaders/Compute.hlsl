@@ -5,10 +5,20 @@ cbuffer ScreenSizeBuffer : register(b0)
     float2 Padding__;
 }
 
+cbuffer ShiftBuffer : register(b1)
+{
+    float RShift;
+    float GShift;
+    float BShift;
+    float Padding1__;
+}
+
 RWTexture2D<float4> Tex : register(u0);
 
 [numthreads(1, 1, 1)]
 void CS(uint3 dtid : SV_DispatchThreadID)
 {
-    Tex[dtid.xy] = float4(dtid.x / Width, dtid.y / Height, 0, 1);
+    float x = (dtid.x + RShift);
+    float y = (dtid.y + GShift);
+    Tex[dtid.xy] = float4(x / Width, y / Height, BShift, 1);
 }
