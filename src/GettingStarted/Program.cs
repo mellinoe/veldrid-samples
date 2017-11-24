@@ -36,7 +36,11 @@ namespace GettingStarted
             while (window.Exists)
             {
                 window.PumpEvents();
-                Draw();
+
+                if (window.Exists)
+                {
+                    Draw();
+                }
             }
 
             DisposeResources();
@@ -108,6 +112,8 @@ namespace GettingStarted
             pipelineDescription.Outputs = _graphicsDevice.SwapchainFramebuffer.OutputDescription;
 
             _pipeline = factory.CreateGraphicsPipeline(ref pipelineDescription);
+
+            _graphicsDevice.WaitForIdle();
         }
 
         private static Shader LoadShader(ShaderStages stage)
