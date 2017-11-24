@@ -5,6 +5,6 @@
     <BinDir>$(RepositoryRootDirectory)bin</BinDir>
     <OutputPath>$([System.IO.Path]::GetFullPath('$(RepositoryRootDirectory)bin\$(Configuration)'))\$(MSBuildProjectName)</OutputPath>
     <BaseIntermediateOutputPath>$([System.IO.Path]::GetFullPath('$(RepositoryRootDirectory)bin\obj\$(MSBuildProjectName)'))\</BaseIntermediateOutputPath>
-    <VeldridVersion>4.0.0-g6b1e6fd4f2</VeldridVersion>
+    <VeldridVersion>4.0.0-g2ddc4397a4</VeldridVersion>
   </PropertyGroup>
 </Project>
