@@ -73,7 +73,6 @@ namespace ComputeParticles
                 new BufferDescription(
                     (uint)Unsafe.SizeOf<ParticleInfo>() * ParticleCount,
                     BufferUsage.StructuredBufferReadWrite,
-                    false,
                     (uint)Unsafe.SizeOf<ParticleInfo>()));
 
             _screenSizeBuffer = factory.CreateBuffer(new BufferDescription(16, BufferUsage.UniformBuffer));

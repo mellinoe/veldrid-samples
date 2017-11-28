@@ -80,7 +80,7 @@ namespace TexturedCube
             _cl.UpdateBuffer(_indexBuffer, 0, indices);
 
             ImageSharpTexture stoneImage = new ImageSharpTexture(Path.Combine(AppContext.BaseDirectory, "Textures", "spnza_bricks_a_diff.png"));
-            _surfaceTexture = stoneImage.CreateDeviceTexture(factory, _cl);
+            _surfaceTexture = stoneImage.CreateDeviceTexture(_gd, factory);
             _surfaceTextureView = factory.CreateTextureView(_surfaceTexture);
 
             _cl.End();
