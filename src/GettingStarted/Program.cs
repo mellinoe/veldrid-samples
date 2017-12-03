@@ -49,8 +49,6 @@ namespace GettingStarted
         {
             ResourceFactory factory = _graphicsDevice.ResourceFactory;
 
-            _commandList = factory.CreateCommandList();
-
             VertexPositionColor[] quadVertices =
             {
                 new VertexPositionColor(new Vector2(-.75f, .75f), RgbaFloat.Red),
@@ -58,20 +56,18 @@ namespace GettingStarted
                 new VertexPositionColor(new Vector2(-.75f, -.75f), RgbaFloat.Blue),
                 new VertexPositionColor(new Vector2(.75f, -.75f), RgbaFloat.Yellow)
             };
-            _vertexBuffer = factory.CreateBuffer(new BufferDescription(4 * VertexPositionColor.SizeInBytes, BufferUsage.VertexBuffer));
+            BufferDescription vbDescription = new BufferDescription(
+                4 * VertexPositionColor.SizeInBytes,
+                BufferUsage.VertexBuffer);
+            _vertexBuffer = factory.CreateBuffer(vbDescription);
+            _graphicsDevice.UpdateBuffer(_vertexBuffer, 0, quadVertices);
 
             ushort[] indexData = { 0, 1, 2, 3 };
-            _indexBuffer = factory.CreateBuffer(new BufferDescription(4 * sizeof(ushort), BufferUsage.IndexBuffer));
-
-            // Begin command list for resource updates.
-            _commandList.Begin();
-
-            _commandList.UpdateBuffer(_vertexBuffer, 0, quadVertices);
-            _commandList.UpdateBuffer(_indexBuffer, 0, indexData);
-
-            // End command list and execute it.
-            _commandList.End();
-            _graphicsDevice.ExecuteCommands(_commandList);
+            BufferDescription ibDescription = new BufferDescription(
+                4 * sizeof(ushort),
+                BufferUsage.IndexBuffer);
+            _indexBuffer = factory.CreateBuffer(ibDescription);
+            _graphicsDevice.UpdateBuffer(_indexBuffer, 0, indexData);
 
             VertexLayoutDescription vertexLayout = new VertexLayoutDescription(
                 new VertexElementDescription("Position", VertexElementSemantic.Position, VertexElementFormat.Float2),
@@ -112,7 +108,7 @@ namespace GettingStarted
 
             _pipeline = factory.CreateGraphicsPipeline(ref pipelineDescription);
 
-            _graphicsDevice.WaitForIdle();
+            _commandList = factory.CreateCommandList();
         }
 
         private static Shader LoadShader(ShaderStages stage)
