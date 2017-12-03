@@ -37,11 +37,11 @@ namespace TexturedCube
             };
             _window = VeldridStartup.CreateWindow(ref wci);
 
-            GraphicsDeviceCreateInfo gdci = new GraphicsDeviceCreateInfo();
+            GraphicsDeviceOptions options = new GraphicsDeviceOptions();
 #if DEBUG
-            gdci.DebugDevice = true;
+            options.Debug = true;
 #endif
-            _gd = VeldridStartup.CreateGraphicsDevice(ref gdci, _window);
+            _gd = VeldridStartup.CreateGraphicsDevice(_window, options);
         }
 
         public void Run()

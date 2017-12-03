@@ -28,8 +28,7 @@ namespace GettingStarted
             };
             Sdl2Window window = VeldridStartup.CreateWindow(ref windowCI);
 
-            GraphicsDeviceCreateInfo gdCI = new GraphicsDeviceCreateInfo();
-            _graphicsDevice = VeldridStartup.CreateGraphicsDevice(ref gdCI, window);
+            _graphicsDevice = VeldridStartup.CreateGraphicsDevice(window);
 
             CreateResources();
 
