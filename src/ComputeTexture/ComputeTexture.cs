@@ -1,17 +1,13 @@
-﻿using System;
+﻿using SampleBase;
+using System;
 using System.IO;
 using System.Numerics;
 using Veldrid;
-using Veldrid.Sdl2;
-using Veldrid.StartupUtilities;
-using Veldrid.Utilities;
 
 namespace ComputeTexture
 {
-    internal class ComputeTexture
+    internal class ComputeTexture : SampleApplication
     {
-        private readonly Sdl2Window _window;
-        private readonly GraphicsDevice _gd;
         private bool _windowResized;
 
         private Veldrid.Buffer _screenSizeBuffer;
@@ -32,45 +28,12 @@ namespace ComputeTexture
         private TextureView _computeTargetTextureView;
         private ResourceLayout _graphicsLayout;
 
-        public ComputeTexture()
+        protected override void OnWindowResized()
         {
-            WindowCreateInfo wci = new WindowCreateInfo
-            {
-                X = 100,
-                Y = 100,
-                WindowWidth = 960,
-                WindowHeight = 540,
-                WindowTitle = "Compute Texture"
-            };
-            _window = VeldridStartup.CreateWindow(ref wci);
-            _window.Resized += () => _windowResized = true;
-
-            GraphicsDeviceOptions options = new GraphicsDeviceOptions();
-#if DEBUG
-            options.Debug = true;
-#endif
-            _gd = VeldridStartup.CreateGraphicsDevice(_window, options);
+            _windowResized = true;
         }
 
-        public void Run()
-        {
-            DisposeCollectorResourceFactory factory = new DisposeCollectorResourceFactory(_gd.ResourceFactory);
-            CreateResources(factory);
-
-            while (_window.Exists)
-            {
-                _window.PumpEvents();
-
-                if (_window.Exists)
-                {
-                    Draw();
-                }
-            }
-
-            factory.DisposeCollector.DisposeAll();
-        }
-
-        private void CreateResources(ResourceFactory factory)
+        protected override void CreateResources(ResourceFactory factory)
         {
             _screenSizeBuffer = factory.CreateBuffer(new BufferDescription(16, BufferUsage.UniformBuffer));
             _shiftBuffer = factory.CreateBuffer(new BufferDescription(16, BufferUsage.UniformBuffer));
@@ -168,7 +131,7 @@ namespace ComputeTexture
                 _gd.PointSampler));
         }
 
-        private object GetExtension(GraphicsBackend backendType)
+        private string GetExtension(GraphicsBackend backendType)
         {
             return backendType == GraphicsBackend.Direct3D11 ? "hlsl.bytes"
                 : backendType == GraphicsBackend.Vulkan ? "spv"
@@ -198,7 +161,7 @@ namespace ComputeTexture
             _gd.WaitForIdle();
         }
 
-        private void Draw()
+        protected override void Draw()
         {
             _cl.Begin();
             if (_windowResized)

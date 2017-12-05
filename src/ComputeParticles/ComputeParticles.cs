@@ -1,20 +1,16 @@
-﻿using System;
+﻿using SampleBase;
+using System;
 using System.IO;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using Veldrid;
-using Veldrid.Sdl2;
-using Veldrid.StartupUtilities;
-using Veldrid.Utilities;
 
 namespace ComputeParticles
 {
-    internal class ComputeParticles
+    internal class ComputeParticles : SampleApplication
     {
         public const int ParticleCount = 1024;
 
-        private readonly Sdl2Window _window;
-        private readonly GraphicsDevice _gd;
         private Veldrid.Buffer _particleBuffer;
         private Veldrid.Buffer _screenSizeBuffer;
         private Shader _computeShader;
@@ -29,45 +25,12 @@ namespace ComputeParticles
         private ResourceSet _computeResourceSet;
         private bool _windowResized;
 
-        public ComputeParticles()
+        protected override void OnWindowResized()
         {
-            WindowCreateInfo wci = new WindowCreateInfo
-            {
-                X = 100,
-                Y = 100,
-                WindowWidth = 960,
-                WindowHeight = 540,
-                WindowTitle = "Compute Particles"
-            };
-            _window = VeldridStartup.CreateWindow(ref wci);
-            _window.Resized += () => _windowResized = true;
-
-            GraphicsDeviceOptions options = new GraphicsDeviceOptions();
-#if DEBUG
-            options.Debug = true;
-#endif
-            _gd = VeldridStartup.CreateGraphicsDevice(_window, options);
+            _windowResized = true;
         }
 
-        public void Run()
-        {
-            DisposeCollectorResourceFactory factory = new DisposeCollectorResourceFactory(_gd.ResourceFactory);
-            CreateResources(factory);
-
-            while (_window.Exists)
-            {
-                _window.PumpEvents();
-
-                if (_window.Exists)
-                {
-                    Draw();
-                }
-            }
-
-            factory.DisposeCollector.DisposeAll();
-        }
-
-        private void CreateResources(ResourceFactory factory)
+        protected override void CreateResources(ResourceFactory factory)
         {
             _particleBuffer = factory.CreateBuffer(
                 new BufferDescription(
@@ -154,12 +117,12 @@ namespace ComputeParticles
             _cl.UpdateBuffer(_screenSizeBuffer, 0, new Vector4(_window.Width, _window.Height, 0, 0));
 
             ParticleInfo[] initialParticles = new ParticleInfo[ParticleCount];
-            System.Random r = new System.Random();
+            Random r = new Random();
             for (int i = 0; i < ParticleCount; i++)
             {
                 ParticleInfo pi = new ParticleInfo();
                 pi.Position = new Vector2((float)(r.NextDouble() * _window.Width), (float)(r.NextDouble() * _window.Height));
-                pi.Velocity = new Vector2((float)(r.NextDouble() * 0.03), (float)(r.NextDouble() * 0.03));
+                pi.Velocity = new Vector2((float)(r.NextDouble() * 3), (float)(r.NextDouble() * 3));
                 pi.Color = new Vector4(0.4f + (float)r.NextDouble() * .6f, 0.4f + (float)r.NextDouble() * .6f, 0.4f + (float)r.NextDouble() * .6f, 1);
                 initialParticles[i] = pi;
             }
@@ -170,7 +133,7 @@ namespace ComputeParticles
             _gd.WaitForIdle();
         }
 
-        private void Draw()
+        protected override void Draw()
         {
             _cl.Begin();
             if (_windowResized)

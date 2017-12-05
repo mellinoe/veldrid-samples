@@ -8,13 +8,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="..\..\assets\sponza\spnza_bricks_a_diff.png">
-      <Link>Textures\spnza_bricks_a_diff.png</Link>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\SampleBase\SampleBase.csproj" />
     <PackageReference Include="ShaderGen.Primitives" Version="1.1.0-gd6c57f9ba0" />
     <PackageReference Include="ShaderGen.Build" Version="1.1.0-gd6c57f9ba0" PrivateAssets="All" />

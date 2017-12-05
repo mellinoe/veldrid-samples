@@ -1,6 +1,6 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.27004.2002
+VisualStudioVersion = 15.0.27004.2010
 MinimumVisualStudioVersion = 15.0.26124.0
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GettingStarted", "GettingStarted\GettingStarted.csproj", "{D0D16984-9977-4379-BA97-CB16B6414BC7}"
 EndProject
@@ -9,6 +9,10 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ComputeTexture", "ComputeTexture\ComputeTexture.csproj", "{D68CC3C4-B170-4BE4-A588-DCB5C2118C2B}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TexturedCube", "TexturedCube\TexturedCube.csproj", "{2EBAE702-D39F-405C-991E-31D60EC72497}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ImageTint", "ImageTint\ImageTint.csproj", "{42C2FD68-C0A5-44CF-BA48-8DE071838D5A}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SampleBase", "SampleBase\SampleBase.csproj", "{7AF8692A-B52B-438C-A980-3B6BBCF15DA8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -68,6 +72,30 @@ Global
 		{2EBAE702-D39F-405C-991E-31D60EC72497}.Release|x64.Build.0 = Release|Any CPU
 		{2EBAE702-D39F-405C-991E-31D60EC72497}.Release|x86.ActiveCfg = Release|Any CPU
 		{2EBAE702-D39F-405C-991E-31D60EC72497}.Release|x86.Build.0 = Release|Any CPU
+		{42C2FD68-C0A5-44CF-BA48-8DE071838D5A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{42C2FD68-C0A5-44CF-BA48-8DE071838D5A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{42C2FD68-C0A5-44CF-BA48-8DE071838D5A}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{42C2FD68-C0A5-44CF-BA48-8DE071838D5A}.Debug|x64.Build.0 = Debug|Any CPU
+		{42C2FD68-C0A5-44CF-BA48-8DE071838D5A}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{42C2FD68-C0A5-44CF-BA48-8DE071838D5A}.Debug|x86.Build.0 = Debug|Any CPU
+		{42C2FD68-C0A5-44CF-BA48-8DE071838D5A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{42C2FD68-C0A5-44CF-BA48-8DE071838D5A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{42C2FD68-C0A5-44CF-BA48-8DE071838D5A}.Release|x64.ActiveCfg = Release|Any CPU
+		{42C2FD68-C0A5-44CF-BA48-8DE071838D5A}.Release|x64.Build.0 = Release|Any CPU
+		{42C2FD68-C0A5-44CF-BA48-8DE071838D5A}.Release|x86.ActiveCfg = Release|Any CPU
+		{42C2FD68-C0A5-44CF-BA48-8DE071838D5A}.Release|x86.Build.0 = Release|Any CPU
+		{7AF8692A-B52B-438C-A980-3B6BBCF15DA8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7AF8692A-B52B-438C-A980-3B6BBCF15DA8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7AF8692A-B52B-438C-A980-3B6BBCF15DA8}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{7AF8692A-B52B-438C-A980-3B6BBCF15DA8}.Debug|x64.Build.0 = Debug|Any CPU
+		{7AF8692A-B52B-438C-A980-3B6BBCF15DA8}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{7AF8692A-B52B-438C-A980-3B6BBCF15DA8}.Debug|x86.Build.0 = Debug|Any CPU
+		{7AF8692A-B52B-438C-A980-3B6BBCF15DA8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7AF8692A-B52B-438C-A980-3B6BBCF15DA8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7AF8692A-B52B-438C-A980-3B6BBCF15DA8}.Release|x64.ActiveCfg = Release|Any CPU
+		{7AF8692A-B52B-438C-A980-3B6BBCF15DA8}.Release|x64.Build.0 = Release|Any CPU
+		{7AF8692A-B52B-438C-A980-3B6BBCF15DA8}.Release|x86.ActiveCfg = Release|Any CPU
+		{7AF8692A-B52B-438C-A980-3B6BBCF15DA8}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

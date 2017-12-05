@@ -6,6 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\SampleBase\SampleBase.csproj" />
     <PackageReference Include="Veldrid" Version="$(VeldridVersion)" />
     <PackageReference Include="Veldrid.Utilities" Version="$(VeldridVersion)" />
     <PackageReference Include="Veldrid.StartupUtilities" Version="$(VeldridVersion)" />
