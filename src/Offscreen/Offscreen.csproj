@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <ShaderOutputPath>$(BaseIntermediateOutputPath)</ShaderOutputPath>
+    <ShaderContentIncludePath>Shaders</ShaderContentIncludePath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SampleBase\SampleBase.csproj" />
+    <ProjectReference Include="../../ext/assimp-net/AssimpNet/AssimpNet.csproj" />
+    <PackageReference Include="ShaderGen.Primitives" Version="1.1.0-gd6c57f9ba0" />
+    <PackageReference Include="ShaderGen.Build" Version="1.1.0-gd6c57f9ba0" PrivateAssets="All" />
+  </ItemGroup>
+
+</Project>
