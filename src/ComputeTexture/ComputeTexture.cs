@@ -8,8 +8,6 @@ namespace ComputeTexture
 {
     internal class ComputeTexture : SampleApplication
     {
-        private bool _windowResized;
-
         private Veldrid.Buffer _screenSizeBuffer;
         private Veldrid.Buffer _shiftBuffer;
         private Veldrid.Buffer _vertexBuffer;
@@ -27,11 +25,6 @@ namespace ComputeTexture
         private Texture _computeTargetTexture;
         private TextureView _computeTargetTextureView;
         private ResourceLayout _graphicsLayout;
-
-        protected override void OnWindowResized()
-        {
-            _windowResized = true;
-        }
 
         protected override void CreateResources(ResourceFactory factory)
         {
@@ -161,17 +154,15 @@ namespace ComputeTexture
             _gd.WaitForIdle();
         }
 
+        protected override void HandleWindowResize()
+        {
+            _gd.UpdateBuffer(_screenSizeBuffer, 0, new Vector4(_window.Width, _window.Height, 0, 0));
+            CreateWindowSizedResources();
+        }
+
         protected override void Draw()
         {
             _cl.Begin();
-            if (_windowResized)
-            {
-                _windowResized = false;
-                _gd.ResizeMainWindow((uint)_window.Width, (uint)_window.Height);
-                _cl.UpdateBuffer(_screenSizeBuffer, 0, new Vector4(_window.Width, _window.Height, 0, 0));
-                CreateWindowSizedResources();
-            }
-
             int ticks = Environment.TickCount;
             Vector4 shifts = new Vector4(
                 _window.Width * MathF.Cos(ticks / 500f), // Red shift

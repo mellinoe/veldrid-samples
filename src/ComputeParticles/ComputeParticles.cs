@@ -23,12 +23,6 @@ namespace ComputeParticles
         private ResourceSet _screenSizeResourceSet;
         private ResourceSet _computeScreenSizeResourceSet;
         private ResourceSet _computeResourceSet;
-        private bool _windowResized;
-
-        protected override void OnWindowResized()
-        {
-            _windowResized = true;
-        }
 
         protected override void CreateResources(ResourceFactory factory)
         {
@@ -133,15 +127,14 @@ namespace ComputeParticles
             _gd.WaitForIdle();
         }
 
+        protected override void HandleWindowResize()
+        {
+            _gd.UpdateBuffer(_screenSizeBuffer, 0, new Vector4(_window.Width, _window.Height, 0, 0));
+        }
+
         protected override void Draw()
         {
             _cl.Begin();
-            if (_windowResized)
-            {
-                _windowResized = false;
-                _gd.ResizeMainWindow((uint)_window.Width, (uint)_window.Height);
-                _cl.UpdateBuffer(_screenSizeBuffer, 0, new Vector4(_window.Width, _window.Height, 0, 0));
-            }
 
             _cl.SetPipeline(_computePipeline);
             _cl.SetComputeResourceSet(0, _computeResourceSet);
