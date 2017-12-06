@@ -14,7 +14,7 @@ namespace Offscreen.Shaders
 
         public struct VSIn
         {
-            [PositionSemantic] public Vector3 Position;
+            [PositionSemantic] public Vector4 Position;
             [TextureCoordinateSemantic] public Vector2 UV;
             [ColorSemantic] public Vector3 Color;
             [NormalSemantic] public Vector3 Normal;
@@ -35,8 +35,10 @@ namespace Offscreen.Shaders
             FSIn output;
             output.Normal = input.Normal;
             output.Color = input.Color;
-            output.Position = Mul(UBO.Projection, Mul(UBO.Model, new Vector4(input.Position, 1)));
-            Vector4 eyePos = Mul(UBO.Model, new Vector4(input.Position, 1));
+            output.Position = Mul(UBO.Projection, Mul(UBO.Model, input.Position + Vector4.UnitY * -3));
+            output.Position.Y *= -1; // Dunno
+            Vector4 eyePos = Mul(UBO.Model, input.Position);
+            eyePos.Y *= -1;
             output.EyePos = eyePos.XYZ();
             output.LightVec = Vector3.Normalize(UBO.LightPos.XYZ() - output.EyePos);
             return output;

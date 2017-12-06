@@ -4,6 +4,7 @@ using System.IO;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using Veldrid;
+using Veldrid.Sdl2;
 using Veldrid.Utilities;
 
 namespace Offscreen
@@ -25,11 +26,11 @@ namespace Offscreen
         private VertexLayoutDescription _vertexLayout;
         private Pipeline _dragonPipeline;
         private Pipeline _mirrorPipeline;
-        private Vector3 _cameraPos;
-        private Vector3 _rotation;
-        private Vector3 _meshPos;
-        private Vector3 _meshRot;
-        private float _zoom;
+        private Vector3 _cameraPos = new Vector3(0, 1, 0);
+        private Vector3 _rotation = new Vector3(-1.5f, 0, 0);
+        private Vector3 _dragonPos = new Vector3(0, -1.5f, 0);
+        private Vector3 _dragonRotation = new Vector3();
+        private float _zoom = -6f;
 
         private Veldrid.Buffer _uniformBuffers_vsShared;
         private Veldrid.Buffer _uniformBuffers_vsMirror;
@@ -37,6 +38,16 @@ namespace Offscreen
         private ResourceSet _offscreenResourceSet;
         private ResourceSet _dragonResourceSet;
         private ResourceSet _mirrorResourceSet;
+        private Vector2 _mousePos;
+        private float _zoomSpeed = 5f;
+        private float _rotationSpeed = 1f;
+
+        private int _startTicks;
+
+        public OffscreenApplication()
+        {
+            _startTicks = Environment.TickCount;
+        }
 
         protected override void CreateResources(ResourceFactory factory)
         {
@@ -126,9 +137,9 @@ namespace Offscreen
                 _gd.SwapchainFramebuffer.OutputDescription);
             _mirrorPipeline = factory.CreateGraphicsPipeline(ref mirrorPD);
 
-            _uniformBuffers_vsShared = factory.CreateBuffer(new BufferDescription(1024, BufferUsage.UniformBuffer | BufferUsage.Dynamic));
-            _uniformBuffers_vsMirror = factory.CreateBuffer(new BufferDescription(1024, BufferUsage.UniformBuffer | BufferUsage.Dynamic));
-            _uniformBuffers_vsOffScreen = factory.CreateBuffer(new BufferDescription(1024, BufferUsage.UniformBuffer | BufferUsage.Dynamic));
+            _uniformBuffers_vsShared = factory.CreateBuffer(new BufferDescription(144, BufferUsage.UniformBuffer | BufferUsage.Dynamic));
+            _uniformBuffers_vsMirror = factory.CreateBuffer(new BufferDescription(144, BufferUsage.UniformBuffer | BufferUsage.Dynamic));
+            _uniformBuffers_vsOffScreen = factory.CreateBuffer(new BufferDescription(144, BufferUsage.UniformBuffer | BufferUsage.Dynamic));
 
             _offscreenResourceSet = factory.CreateResourceSet(new ResourceSetDescription(phongLayout, _uniformBuffers_vsOffScreen));
             _dragonResourceSet = factory.CreateResourceSet(new ResourceSetDescription(phongLayout, _uniformBuffers_vsShared));
@@ -138,9 +149,6 @@ namespace Offscreen
                 _gd.LinearSampler,
                 _colorView,
                 _gd.Aniso4xSampler));
-
-            UpdateUniformBuffers();
-            UpdateUniformBufferOffscreen();
 
             _cl = factory.CreateCommandList();
         }
@@ -154,6 +162,14 @@ namespace Offscreen
 
         protected override void Draw()
         {
+            int newTicks = Environment.TickCount;
+            float frameTimer = (newTicks - _startTicks) / 1000f;
+            _startTicks = newTicks;
+            _dragonRotation.Y += frameTimer * 10f;
+
+            UpdateUniformBuffers();
+            UpdateUniformBufferOffscreen();
+
             _cl.Begin();
             DrawOffscreen();
             DrawMain();
@@ -207,15 +223,14 @@ namespace Offscreen
 
             // Mesh
             ui.Projection = Matrix4x4.CreatePerspectiveFieldOfView(DegreesToRadians(60.0f), _window.Width / (float)_window.Height, 0.1f, 256.0f);
-            Matrix4x4 viewMatrix = Matrix4x4.CreateTranslation(new Vector3(0, 0, _zoom));
 
+            Matrix4x4 viewMatrix = Matrix4x4.CreateTranslation(new Vector3(0, 0, _zoom));
             ui.Model = viewMatrix * Matrix4x4.CreateTranslation(_cameraPos);
             ui.Model = Matrix4x4.CreateRotationX(DegreesToRadians(_rotation.X)) * ui.Model;
-            ui.Model = Matrix4x4.CreateRotationY(DegreesToRadians(_rotation.Y + _meshRot.Y)) * ui.Model;
+            ui.Model = Matrix4x4.CreateRotationY(DegreesToRadians(_rotation.Y + _dragonRotation.Y)) * ui.Model;
             ui.Model = Matrix4x4.CreateRotationZ(DegreesToRadians(_rotation.Z)) * ui.Model;
 
-            ui.Model = Matrix4x4.CreateTranslation(_meshPos) * ui.Model;
-            // ui.Model = glm::translate(ui.Model, meshPos);
+            ui.Model = Matrix4x4.CreateTranslation(_dragonPos) * ui.Model;
 
             _gd.UpdateBuffer(_uniformBuffers_vsShared, 0, ref ui);
 
@@ -233,15 +248,15 @@ namespace Offscreen
             UniformInfo ui = new UniformInfo { LightPos = new Vector4(0, 0, 0, 1) };
 
             ui.Projection = Matrix4x4.CreatePerspectiveFieldOfView(DegreesToRadians(60.0f), _window.Width / (float)_window.Height, 0.1f, 256.0f);
-            Matrix4x4 viewMatrix = Matrix4x4.CreateTranslation(new Vector3(0.0f, 0.0f, _zoom));
 
+            Matrix4x4 viewMatrix = Matrix4x4.CreateTranslation(new Vector3(0.0f, 0.0f, _zoom));
             ui.Model = viewMatrix * Matrix4x4.CreateTranslation(_cameraPos);
             ui.Model = Matrix4x4.CreateRotationX(DegreesToRadians(_rotation.X)) * ui.Model;
-            ui.Model = Matrix4x4.CreateRotationY(DegreesToRadians(_rotation.Y + _meshRot.Y)) * ui.Model;
+            ui.Model = Matrix4x4.CreateRotationY(DegreesToRadians(_rotation.Y + _dragonRotation.Y)) * ui.Model;
             ui.Model = Matrix4x4.CreateRotationZ(DegreesToRadians(_rotation.Z)) * ui.Model;
 
             ui.Model = Matrix4x4.CreateScale(new Vector3(1, -1, 1)) * ui.Model;
-            ui.Model = Matrix4x4.CreateTranslation(_meshPos) * ui.Model;
+            ui.Model = Matrix4x4.CreateTranslation(_dragonPos) * ui.Model;
 
             _gd.UpdateBuffer(_uniformBuffers_vsOffScreen, 0, ref ui);
         }
@@ -305,6 +320,31 @@ namespace Offscreen
         private static string GetAssetPath(string name)
         {
             return Path.Combine(AppContext.BaseDirectory, name);
+        }
+
+        protected override void OnMouseMove(MouseMoveEventArgs e)
+        {
+            int posx = (int)e.MousePosition.X;
+            int posy = (int)e.MousePosition.Y;
+
+            if (e.State.IsButtonDown(MouseButton.Right))
+            {
+                _zoom += (_mousePos.Y - posy) * .005f * _zoomSpeed;
+                _cameraPos += new Vector3(-0.0f, 0.0f, (_mousePos.Y - posy) * .005f * _zoomSpeed);
+            }
+            if (e.State.IsButtonDown(MouseButton.Left))
+            {
+                _rotation.X += (_mousePos.Y - posy) * 1.25f * _rotationSpeed;
+                _rotation.Y -= (_mousePos.X - posx) * 1.25f * _rotationSpeed;
+            }
+            if (e.State.IsButtonDown(MouseButton.Middle))
+            {
+                _cameraPos.X -= (_mousePos.X - posx) * 0.01f;
+                _cameraPos.Y -= (_mousePos.Y - posy) * 0.01f;
+                _mousePos = new Vector2(posx, posy);
+            }
+
+            _mousePos = new Vector2(posx, posy);
         }
     }
 }

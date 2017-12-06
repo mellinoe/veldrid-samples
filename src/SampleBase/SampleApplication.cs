@@ -11,6 +11,7 @@ namespace SampleBase
     {
         protected readonly Sdl2Window _window;
         protected readonly GraphicsDevice _gd;
+        private bool _windowResized;
 
         public SampleApplication()
         {
@@ -23,13 +24,27 @@ namespace SampleBase
                 WindowTitle = GetTitle(),
             };
             _window = VeldridStartup.CreateWindow(ref wci);
-            _window.Resized += OnWindowResized;
+            _window.Resized += () =>
+            {
+                _windowResized = true;
+                OnWindowResized();
+            };
+            _window.MouseMove += OnMouseMove;
+            _window.KeyDown += OnKeyDown;
 
             GraphicsDeviceOptions options = new GraphicsDeviceOptions(false, PixelFormat.R16_UNorm, true);
 #if DEBUG
             options.Debug = true;
 #endif
-            _gd = VeldridStartup.CreateGraphicsDevice(_window, options);
+            _gd = VeldridStartup.CreateGraphicsDevice(_window, options, GraphicsBackend.Direct3D11);
+        }
+
+        protected virtual void OnMouseMove(MouseMoveEventArgs mouseMoveEvent)
+        {
+        }
+
+        protected virtual void OnKeyDown(KeyEvent keyEvent)
+        {
         }
 
         protected virtual string GetTitle() => GetType().Name;
@@ -45,6 +60,11 @@ namespace SampleBase
 
                 if (_window.Exists)
                 {
+                    if (_windowResized)
+                    {
+                        _gd.ResizeMainWindow((uint)_window.Width, (uint)_window.Height);
+                        HandleWindowResize();
+                    }
                     Draw();
                 }
             }
@@ -58,6 +78,8 @@ namespace SampleBase
         protected abstract void Draw();
 
         protected virtual void OnWindowResized() { }
+
+        protected virtual void HandleWindowResize() { }
 
         public static Shader LoadShader(ResourceFactory factory, string set, ShaderStages stage)
         {

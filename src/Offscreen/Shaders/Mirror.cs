@@ -37,6 +37,7 @@ namespace Offscreen.Shaders
             output.UV = input.UV;
             output.Position = Mul(UBO.Projection, Mul(UBO.Model, new Vector4(input.Position, 1f)));
             output.SysPosition = output.Position;
+            output.SysPosition.Y *= -1; // Dunno
             return output;
         }
 
