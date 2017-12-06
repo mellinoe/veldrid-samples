@@ -42,4 +42,15 @@
     </Content>
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include="..\..\..\veldrid\src\Veldrid.SDL2\native\win-x64\SDL2.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>SDL2.dll</Link>
+    </Content>
+    <ProjectReference Include="$(MSBuildThisFileDirectory)..\..\..\veldrid\src\Veldrid\Veldrid.csproj" />
+    <ProjectReference Include="$(MSBuildThisFileDirectory)..\..\..\veldrid\src\Veldrid.Utilities\Veldrid.Utilities.csproj" />
+    <ProjectReference Include="$(MSBuildThisFileDirectory)..\..\..\veldrid\src\Veldrid.StartupUtilities\Veldrid.StartupUtilities.csproj" />
+    <ProjectReference Include="$(MSBuildThisFileDirectory)..\..\..\veldrid\src\Veldrid.ImageSharp\Veldrid.ImageSharp.csproj" />
+  </ItemGroup>
+
 </Project>

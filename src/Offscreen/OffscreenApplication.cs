@@ -8,33 +8,67 @@ using Veldrid.Utilities;
 
 namespace Offscreen
 {
-    internal class OffscreenApplication : SampleApplication
+    public class OffscreenApplication : SampleApplication
     {
         private const uint OffscreenWidth = 1024;
         private const uint OffscreenHeight = 1024;
 
-        private DisposeCollectorResourceFactory _factory;
         private CommandList _cl;
         private Framebuffer _offscreenFB;
         private Pipeline _offscreenPipeline;
-        private Veldrid.Buffer _uniformBuffer;
-        private ResourceSet _phongResourceSet;
         private Model _dragonModel;
         private Model _planeModel;
         private Texture _colorMap;
+        private TextureView _colorView;
         private Texture _offscreenColor;
         private TextureView _offscreenView;
         private VertexLayoutDescription _vertexLayout;
-        private Pipeline _mainPipeline;
+        private Pipeline _dragonPipeline;
         private Pipeline _mirrorPipeline;
+        private Vector3 _cameraPos;
+        private Vector3 _rotation;
+        private Vector3 _meshPos;
+        private Vector3 _meshRot;
+        private float _zoom;
 
-        public OffscreenApplication()
-        {
-            _factory = new DisposeCollectorResourceFactory(_gd.ResourceFactory);
-        }
+        private Veldrid.Buffer _uniformBuffers_vsShared;
+        private Veldrid.Buffer _uniformBuffers_vsMirror;
+        private Veldrid.Buffer _uniformBuffers_vsOffScreen;
+        private ResourceSet _offscreenResourceSet;
+        private ResourceSet _dragonResourceSet;
+        private ResourceSet _mirrorResourceSet;
 
         protected override void CreateResources(ResourceFactory factory)
         {
+            _vertexLayout = new VertexLayoutDescription(
+                new VertexElementDescription("Position", VertexElementSemantic.Position, VertexElementFormat.Float3),
+                new VertexElementDescription("UV", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float2),
+                new VertexElementDescription("Color", VertexElementSemantic.Color, VertexElementFormat.Float3),
+                new VertexElementDescription("Position", VertexElementSemantic.Normal, VertexElementFormat.Float3));
+
+            _planeModel = new Model();
+            _planeModel.LoadFromFile(
+                _gd,
+                factory,
+                GetAssetPath("models/plane2.dae"),
+                _vertexLayout,
+                new Model.ModelCreateInfo(0.5f, 1, 0));
+
+            _dragonModel = new Model();
+            _dragonModel.LoadFromFile(
+                _gd,
+                factory,
+                GetAssetPath("models/chinesedragon.dae"),
+                _vertexLayout,
+                new Model.ModelCreateInfo(0.3f, 1, 0));
+
+            _colorMap = LoadTexture(
+                _gd,
+                factory,
+                GetAssetPath("textures/darkmetal_bc3_unorm.ktx"),
+                PixelFormat.BC3_UNorm);
+            _colorView = factory.CreateTextureView(_colorMap);
+
             _offscreenColor = factory.CreateTexture(new TextureDescription(
                 OffscreenWidth, OffscreenHeight, 1, 1, 1,
                  PixelFormat.R8_G8_B8_A8_UNorm, TextureUsage.RenderTarget | TextureUsage.Sampled));
@@ -42,12 +76,6 @@ namespace Offscreen
             Texture offscreenDepth = factory.CreateTexture(new TextureDescription(
                 OffscreenWidth, OffscreenHeight, 1, 1, 1, PixelFormat.R16_UNorm, TextureUsage.DepthStencil));
             _offscreenFB = factory.CreateFramebuffer(new FramebufferDescription(offscreenDepth, _offscreenColor));
-
-            _vertexLayout = new VertexLayoutDescription(
-                new VertexElementDescription("Position", VertexElementSemantic.Position, VertexElementFormat.Float3),
-                new VertexElementDescription("UV", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float2),
-                new VertexElementDescription("Color", VertexElementSemantic.Color, VertexElementFormat.Float3),
-                new VertexElementDescription("Position", VertexElementSemantic.Normal, VertexElementFormat.Float3));
 
             ShaderSetDescription phongShaders = new ShaderSetDescription(
                 new[] { _vertexLayout },
@@ -71,13 +99,7 @@ namespace Offscreen
             _offscreenPipeline = factory.CreateGraphicsPipeline(pd);
 
             pd.Outputs = _gd.SwapchainFramebuffer.OutputDescription;
-            _mainPipeline = factory.CreateGraphicsPipeline(pd);
-
-            _uniformBuffer = factory.CreateBuffer(new BufferDescription(
-                (uint)Unsafe.SizeOf<UniformInfo>(),
-                 BufferUsage.UniformBuffer));
-
-            _phongResourceSet = factory.CreateResourceSet(new ResourceSetDescription(phongLayout, _uniformBuffer));
+            _dragonPipeline = factory.CreateGraphicsPipeline(pd);
 
             ResourceLayout mirrorLayout = factory.CreateResourceLayout(new ResourceLayoutDescription(
                 new ResourceLayoutElementDescription("UBO", ResourceKind.UniformBuffer, ShaderStages.Vertex),
@@ -103,6 +125,24 @@ namespace Offscreen
                 new[] { mirrorLayout },
                 _gd.SwapchainFramebuffer.OutputDescription);
             _mirrorPipeline = factory.CreateGraphicsPipeline(ref mirrorPD);
+
+            _uniformBuffers_vsShared = factory.CreateBuffer(new BufferDescription(1024, BufferUsage.UniformBuffer | BufferUsage.Dynamic));
+            _uniformBuffers_vsMirror = factory.CreateBuffer(new BufferDescription(1024, BufferUsage.UniformBuffer | BufferUsage.Dynamic));
+            _uniformBuffers_vsOffScreen = factory.CreateBuffer(new BufferDescription(1024, BufferUsage.UniformBuffer | BufferUsage.Dynamic));
+
+            _offscreenResourceSet = factory.CreateResourceSet(new ResourceSetDescription(phongLayout, _uniformBuffers_vsOffScreen));
+            _dragonResourceSet = factory.CreateResourceSet(new ResourceSetDescription(phongLayout, _uniformBuffers_vsShared));
+            _mirrorResourceSet = factory.CreateResourceSet(new ResourceSetDescription(mirrorLayout,
+                _uniformBuffers_vsMirror,
+                _offscreenView,
+                _gd.LinearSampler,
+                _colorView,
+                _gd.Aniso4xSampler));
+
+            UpdateUniformBuffers();
+            UpdateUniformBufferOffscreen();
+
+            _cl = factory.CreateCommandList();
         }
 
         public struct UniformInfo
@@ -114,59 +154,101 @@ namespace Offscreen
 
         protected override void Draw()
         {
-            throw new NotImplementedException();
+            _cl.Begin();
+            DrawOffscreen();
+            DrawMain();
+            _cl.End();
+            _gd.ExecuteCommands(_cl);
+            _gd.SwapBuffers();
         }
 
         private void DrawOffscreen()
         {
-            _cl.Begin();
-
             _cl.SetFramebuffer(_offscreenFB);
             _cl.SetFullViewports();
             _cl.ClearColorTarget(0, RgbaFloat.Black);
             _cl.ClearDepthTarget(1f);
 
             _cl.SetPipeline(_offscreenPipeline);
-            _cl.SetGraphicsResourceSet(0, _phongResourceSet);
+            _cl.SetGraphicsResourceSet(0, _offscreenResourceSet);
             _cl.SetVertexBuffer(0, _dragonModel._vertexBuffer);
             _cl.SetIndexBuffer(_dragonModel._indexBuffer, IndexFormat.UInt32);
             _cl.DrawIndexed(_dragonModel._indexCount, 1, 0, 0, 0);
-
-            _cl.End();
         }
 
-        private void LoadAssets()
+        private void DrawMain()
         {
-            void loadAssets()
-            {
-                _planeModel = new Model();
-                VertexLayoutDescription vertexLayout = _vertexLayout;
-                _planeModel.LoadFromFile(
-                    _gd,
-                    _factory,
-                    GetAssetPath("models/plane2.dae"),
-                    vertexLayout,
-                    new Model.ModelCreateInfo(0.5f, 1, 0));
+            _cl.SetFramebuffer(_gd.SwapchainFramebuffer);
+            _cl.SetFullViewports();
+            _cl.ClearColorTarget(0, RgbaFloat.Black);
+            _cl.ClearDepthTarget(1f);
 
-                _dragonModel = new Model();
-                _dragonModel.LoadFromFile(
-                    _gd,
-                    _factory,
-                    GetAssetPath("models/chinesedragon.dae"),
-                    vertexLayout,
-                    new Model.ModelCreateInfo(0.3f, 1, 0));
+            _cl.SetPipeline(_mirrorPipeline);
+            _cl.SetGraphicsResourceSet(0, _mirrorResourceSet);
+            _cl.SetVertexBuffer(0, _planeModel._vertexBuffer);
+            _cl.SetIndexBuffer(_planeModel._indexBuffer, IndexFormat.UInt32);
+            _cl.DrawIndexed(_planeModel._indexCount, 1, 0, 0, 0);
 
-                _colorMap = LoadTexture(
-                    _gd,
-                    _factory,
-                    GetAssetPath("textures/darkmetal_bc3_unorm.ktx",
-                    PixelFormat.BC3_UNorm));
-            }
+            _cl.SetPipeline(_dragonPipeline);
+            _cl.SetGraphicsResourceSet(0, _dragonResourceSet);
+            _cl.SetVertexBuffer(0, _dragonModel._vertexBuffer);
+            _cl.SetIndexBuffer(_dragonModel._indexBuffer, IndexFormat.UInt32);
+            _cl.DrawIndexed(_dragonModel._indexCount, 1, 0, 0, 0);
+        }
+
+        public static float DegreesToRadians(float degrees)
+        {
+            return degrees * (float)Math.PI / 180f;
+        }
+
+        private void UpdateUniformBuffers()
+        {
+            UniformInfo ui = new UniformInfo { LightPos = new Vector4(0, 0, 0, 1) };
+
+            // Mesh
+            ui.Projection = Matrix4x4.CreatePerspectiveFieldOfView(DegreesToRadians(60.0f), _window.Width / (float)_window.Height, 0.1f, 256.0f);
+            Matrix4x4 viewMatrix = Matrix4x4.CreateTranslation(new Vector3(0, 0, _zoom));
+
+            ui.Model = viewMatrix * Matrix4x4.CreateTranslation(_cameraPos);
+            ui.Model = Matrix4x4.CreateRotationX(DegreesToRadians(_rotation.X)) * ui.Model;
+            ui.Model = Matrix4x4.CreateRotationY(DegreesToRadians(_rotation.Y + _meshRot.Y)) * ui.Model;
+            ui.Model = Matrix4x4.CreateRotationZ(DegreesToRadians(_rotation.Z)) * ui.Model;
+
+            ui.Model = Matrix4x4.CreateTranslation(_meshPos) * ui.Model;
+            // ui.Model = glm::translate(ui.Model, meshPos);
+
+            _gd.UpdateBuffer(_uniformBuffers_vsShared, 0, ref ui);
+
+            // Mirror
+            ui.Model = viewMatrix * Matrix4x4.CreateTranslation(_cameraPos);
+            ui.Model = Matrix4x4.CreateRotationX(DegreesToRadians(_rotation.X)) * ui.Model;
+            ui.Model = Matrix4x4.CreateRotationY(DegreesToRadians(_rotation.Y)) * ui.Model;
+            ui.Model = Matrix4x4.CreateRotationZ(DegreesToRadians(_rotation.Z)) * ui.Model;
+
+            _gd.UpdateBuffer(_uniformBuffers_vsMirror, 0, ref ui);
+        }
+
+        private void UpdateUniformBufferOffscreen()
+        {
+            UniformInfo ui = new UniformInfo { LightPos = new Vector4(0, 0, 0, 1) };
+
+            ui.Projection = Matrix4x4.CreatePerspectiveFieldOfView(DegreesToRadians(60.0f), _window.Width / (float)_window.Height, 0.1f, 256.0f);
+            Matrix4x4 viewMatrix = Matrix4x4.CreateTranslation(new Vector3(0.0f, 0.0f, _zoom));
+
+            ui.Model = viewMatrix * Matrix4x4.CreateTranslation(_cameraPos);
+            ui.Model = Matrix4x4.CreateRotationX(DegreesToRadians(_rotation.X)) * ui.Model;
+            ui.Model = Matrix4x4.CreateRotationY(DegreesToRadians(_rotation.Y + _meshRot.Y)) * ui.Model;
+            ui.Model = Matrix4x4.CreateRotationZ(DegreesToRadians(_rotation.Z)) * ui.Model;
+
+            ui.Model = Matrix4x4.CreateScale(new Vector3(1, -1, 1)) * ui.Model;
+            ui.Model = Matrix4x4.CreateTranslation(_meshPos) * ui.Model;
+
+            _gd.UpdateBuffer(_uniformBuffers_vsOffScreen, 0, ref ui);
         }
 
         private unsafe Texture LoadTexture(
             GraphicsDevice gd,
-            DisposeCollectorResourceFactory factory,
+            ResourceFactory factory,
             string assetPath,
             PixelFormat format)
         {
@@ -222,7 +304,7 @@ namespace Offscreen
 
         private static string GetAssetPath(string name)
         {
-            return Path.Combine(AppContext.BaseDirectory, "data", name);
+            return Path.Combine(AppContext.BaseDirectory, name);
         }
     }
 }
