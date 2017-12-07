@@ -9,24 +9,25 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="..\..\assets\**">
+    <Content Include="..\..\assets\models\chinesedragon.dae">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <Link>models\chinesedragon.dae</Link>
+    </Content>
+    <Content Include="..\..\assets\models\plane2.dae">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>models\plane2.dae</Link>
+    </Content>
+    <Content Include="..\..\assets\textures\darkmetal_bc3_unorm.ktx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>textures\darkmetal_bc3_unorm.ktx</Link>
     </Content>
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="..\..\..\veldrid\src\Veldrid.SDL2\native\win-x64\SDL2.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="..\..\ext\assimp-net\libs\Assimp\Assimp64.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <ProjectReference Include="..\..\..\veldrid\src\Veldrid\Veldrid.csproj" />
     <ProjectReference Include="..\SampleBase\SampleBase.csproj" />
-    <ProjectReference Include="../../ext/assimp-net/AssimpNet/AssimpNet.csproj" />
-    <PackageReference Include="ShaderGen.Primitives" Version="1.1.0-ga54977c397" />
-    <PackageReference Include="ShaderGen.Build" Version="1.1.0-ga54977c397" PrivateAssets="All" />
+    <PackageReference Include="ShaderGen.Primitives" Version="1.1.0-gefd56f9408" />
+    <PackageReference Include="ShaderGen.Build" Version="1.1.0-gefd56f9408" PrivateAssets="All" />
+    <PackageReference Include="AssimpNet-netstandard" Version="3.3.1" />
   </ItemGroup>
 
 </Project>

@@ -14,7 +14,7 @@ namespace Offscreen.Shaders
 
         public struct VSIn
         {
-            [PositionSemantic] public Vector4 Position;
+            [PositionSemantic] public Vector3 Position;
             [TextureCoordinateSemantic] public Vector2 UV;
             [ColorSemantic] public Vector3 Color;
             [NormalSemantic] public Vector3 Normal;
@@ -25,21 +25,22 @@ namespace Offscreen.Shaders
             [SystemPositionSemantic] public Vector4 Position;
             [NormalSemantic] public Vector3 Normal;
             [ColorSemantic] public Vector3 Color;
-            [PositionSemantic] public Vector3 EyePos;
-            [PositionSemantic] public Vector3 LightVec;
+            [TextureCoordinateSemantic] public Vector3 EyePos;
+            [TextureCoordinateSemantic] public Vector3 LightVec;
         }
 
         [VertexShader]
         public FSIn VS(VSIn input)
         {
+            Vector4 v4Pos = new Vector4(input.Position, 1);
             FSIn output;
+            output.Normal = Vector4.Normalize(Mul(UBO.Model, new Vector4(input.Normal, 1))).XYZ();
             output.Normal = input.Normal;
             output.Color = input.Color;
-            output.Position = Mul(UBO.Projection, Mul(UBO.Model, input.Position + Vector4.UnitY * -3));
-            output.Position.Y *= -1; // Dunno
-            Vector4 eyePos = Mul(UBO.Model, input.Position);
-            eyePos.Y *= -1;
+            output.Position = Mul(UBO.Projection, Mul(UBO.View, (Mul(UBO.Model, v4Pos))));
+            Vector4 eyePos = Mul(UBO.View, Mul(UBO.Model, v4Pos));
             output.EyePos = eyePos.XYZ();
+            Vector4 eyeLightPos = Mul(UBO.View, UBO.LightPos);
             output.LightVec = Vector3.Normalize(UBO.LightPos.XYZ() - output.EyePos);
             return output;
         }

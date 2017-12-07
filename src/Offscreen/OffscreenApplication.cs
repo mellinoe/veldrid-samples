@@ -26,10 +26,10 @@ namespace Offscreen
         private VertexLayoutDescription _vertexLayout;
         private Pipeline _dragonPipeline;
         private Pipeline _mirrorPipeline;
-        private Vector3 _cameraPos = new Vector3(0, 1, 0);
+        private Vector3 _cameraPos = new Vector3(0, 1, 6f);
         private Vector3 _rotation = new Vector3(-1.5f, 0, 0);
-        private Vector3 _dragonPos = new Vector3(0, -1.5f, 0);
-        private Vector3 _dragonRotation = new Vector3();
+        private Vector3 _dragonPos = new Vector3(0, 1.5f, 0);
+        private Vector3 _dragonRotation = new Vector3(0, 0, 0);
         private float _zoom = -6f;
 
         private Veldrid.Buffer _uniformBuffers_vsShared;
@@ -55,7 +55,7 @@ namespace Offscreen
                 new VertexElementDescription("Position", VertexElementSemantic.Position, VertexElementFormat.Float3),
                 new VertexElementDescription("UV", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float2),
                 new VertexElementDescription("Color", VertexElementSemantic.Color, VertexElementFormat.Float3),
-                new VertexElementDescription("Position", VertexElementSemantic.Normal, VertexElementFormat.Float3));
+                new VertexElementDescription("Normal", VertexElementSemantic.Normal, VertexElementFormat.Float3));
 
             _planeModel = new Model();
             _planeModel.LoadFromFile(
@@ -63,7 +63,7 @@ namespace Offscreen
                 factory,
                 GetAssetPath("models/plane2.dae"),
                 _vertexLayout,
-                new Model.ModelCreateInfo(0.5f, 1, 0));
+                new Model.ModelCreateInfo(new Vector3(0.5f, 0.5f, 0.5f), Vector2.One, Vector3.Zero));
 
             _dragonModel = new Model();
             _dragonModel.LoadFromFile(
@@ -71,7 +71,7 @@ namespace Offscreen
                 factory,
                 GetAssetPath("models/chinesedragon.dae"),
                 _vertexLayout,
-                new Model.ModelCreateInfo(0.3f, 1, 0));
+                new Model.ModelCreateInfo(new Vector3(0.3f, -0.3f, 0.3f), Vector2.One, Vector3.Zero));
 
             _colorMap = LoadTexture(
                 _gd,
@@ -102,7 +102,7 @@ namespace Offscreen
             GraphicsPipelineDescription pd = new GraphicsPipelineDescription(
                 BlendStateDescription.SingleOverrideBlend,
                 DepthStencilStateDescription.LessEqual,
-                RasterizerStateDescription.Default,
+                new RasterizerStateDescription(FaceCullMode.Front, PolygonFillMode.Solid, FrontFace.Clockwise, true, false),
                 PrimitiveTopology.TriangleList,
                 phongShaders,
                 new[] { phongLayout },
@@ -110,6 +110,7 @@ namespace Offscreen
             _offscreenPipeline = factory.CreateGraphicsPipeline(pd);
 
             pd.Outputs = _gd.SwapchainFramebuffer.OutputDescription;
+            pd.RasterizerState = RasterizerStateDescription.Default;
             _dragonPipeline = factory.CreateGraphicsPipeline(pd);
 
             ResourceLayout mirrorLayout = factory.CreateResourceLayout(new ResourceLayoutDescription(
@@ -130,16 +131,16 @@ namespace Offscreen
             GraphicsPipelineDescription mirrorPD = new GraphicsPipelineDescription(
                 BlendStateDescription.SingleOverrideBlend,
                 DepthStencilStateDescription.LessEqual,
-                RasterizerStateDescription.Default,
+                new RasterizerStateDescription(FaceCullMode.None, PolygonFillMode.Solid, FrontFace.Clockwise, true, false),
                 PrimitiveTopology.TriangleList,
                 mirrorShaders,
                 new[] { mirrorLayout },
                 _gd.SwapchainFramebuffer.OutputDescription);
             _mirrorPipeline = factory.CreateGraphicsPipeline(ref mirrorPD);
 
-            _uniformBuffers_vsShared = factory.CreateBuffer(new BufferDescription(144, BufferUsage.UniformBuffer | BufferUsage.Dynamic));
-            _uniformBuffers_vsMirror = factory.CreateBuffer(new BufferDescription(144, BufferUsage.UniformBuffer | BufferUsage.Dynamic));
-            _uniformBuffers_vsOffScreen = factory.CreateBuffer(new BufferDescription(144, BufferUsage.UniformBuffer | BufferUsage.Dynamic));
+            _uniformBuffers_vsShared = factory.CreateBuffer(new BufferDescription(208, BufferUsage.UniformBuffer | BufferUsage.Dynamic));
+            _uniformBuffers_vsMirror = factory.CreateBuffer(new BufferDescription(208, BufferUsage.UniformBuffer | BufferUsage.Dynamic));
+            _uniformBuffers_vsOffScreen = factory.CreateBuffer(new BufferDescription(208, BufferUsage.UniformBuffer | BufferUsage.Dynamic));
 
             _offscreenResourceSet = factory.CreateResourceSet(new ResourceSetDescription(phongLayout, _uniformBuffers_vsOffScreen));
             _dragonResourceSet = factory.CreateResourceSet(new ResourceSetDescription(phongLayout, _uniformBuffers_vsShared));
@@ -156,6 +157,7 @@ namespace Offscreen
         public struct UniformInfo
         {
             public Matrix4x4 Projection;
+            public Matrix4x4 View;
             public Matrix4x4 Model;
             public Vector4 LightPos;
         }
@@ -221,25 +223,24 @@ namespace Offscreen
         {
             UniformInfo ui = new UniformInfo { LightPos = new Vector4(0, 0, 0, 1) };
 
-            // Mesh
             ui.Projection = Matrix4x4.CreatePerspectiveFieldOfView(DegreesToRadians(60.0f), _window.Width / (float)_window.Height, 0.1f, 256.0f);
 
-            Matrix4x4 viewMatrix = Matrix4x4.CreateTranslation(new Vector3(0, 0, _zoom));
-            ui.Model = viewMatrix * Matrix4x4.CreateTranslation(_cameraPos);
-            ui.Model = Matrix4x4.CreateRotationX(DegreesToRadians(_rotation.X)) * ui.Model;
-            ui.Model = Matrix4x4.CreateRotationY(DegreesToRadians(_rotation.Y + _dragonRotation.Y)) * ui.Model;
-            ui.Model = Matrix4x4.CreateRotationZ(DegreesToRadians(_rotation.Z)) * ui.Model;
+            Matrix4x4 cameraRot = Matrix4x4.CreateFromYawPitchRoll(
+                DegreesToRadians(_rotation.Y),
+                DegreesToRadians(_rotation.X),
+                DegreesToRadians(_rotation.Z));
+            Vector3 cameraLookDir = Vector3.Transform(-Vector3.UnitZ, cameraRot);
+            Matrix4x4 viewMatrix = Matrix4x4.CreateLookAt(_cameraPos, _cameraPos + cameraLookDir, Vector3.UnitY);
+            ui.View = viewMatrix;
 
+            ui.Model = Matrix4x4.CreateRotationX(DegreesToRadians(_dragonRotation.X));
+            ui.Model = Matrix4x4.CreateRotationY(DegreesToRadians(_dragonRotation.Y)) * ui.Model;
             ui.Model = Matrix4x4.CreateTranslation(_dragonPos) * ui.Model;
 
             _gd.UpdateBuffer(_uniformBuffers_vsShared, 0, ref ui);
 
             // Mirror
-            ui.Model = viewMatrix * Matrix4x4.CreateTranslation(_cameraPos);
-            ui.Model = Matrix4x4.CreateRotationX(DegreesToRadians(_rotation.X)) * ui.Model;
-            ui.Model = Matrix4x4.CreateRotationY(DegreesToRadians(_rotation.Y)) * ui.Model;
-            ui.Model = Matrix4x4.CreateRotationZ(DegreesToRadians(_rotation.Z)) * ui.Model;
-
+            ui.Model = Matrix4x4.Identity;
             _gd.UpdateBuffer(_uniformBuffers_vsMirror, 0, ref ui);
         }
 
@@ -249,12 +250,16 @@ namespace Offscreen
 
             ui.Projection = Matrix4x4.CreatePerspectiveFieldOfView(DegreesToRadians(60.0f), _window.Width / (float)_window.Height, 0.1f, 256.0f);
 
-            Matrix4x4 viewMatrix = Matrix4x4.CreateTranslation(new Vector3(0.0f, 0.0f, _zoom));
-            ui.Model = viewMatrix * Matrix4x4.CreateTranslation(_cameraPos);
-            ui.Model = Matrix4x4.CreateRotationX(DegreesToRadians(_rotation.X)) * ui.Model;
-            ui.Model = Matrix4x4.CreateRotationY(DegreesToRadians(_rotation.Y + _dragonRotation.Y)) * ui.Model;
-            ui.Model = Matrix4x4.CreateRotationZ(DegreesToRadians(_rotation.Z)) * ui.Model;
+            Matrix4x4 cameraRot = Matrix4x4.CreateFromYawPitchRoll(
+                DegreesToRadians(_rotation.Y),
+                DegreesToRadians(_rotation.X),
+                DegreesToRadians(_rotation.Z));
+            Vector3 cameraLookDir = Vector3.Transform(-Vector3.UnitZ, cameraRot);
+            Matrix4x4 viewMatrix = Matrix4x4.CreateLookAt(_cameraPos, _cameraPos + cameraLookDir, Vector3.UnitY);
+            ui.View = viewMatrix;
 
+            ui.Model = Matrix4x4.CreateRotationX(DegreesToRadians(_dragonRotation.X));
+            ui.Model = Matrix4x4.CreateRotationY(DegreesToRadians(_dragonRotation.Y)) * ui.Model;
             ui.Model = Matrix4x4.CreateScale(new Vector3(1, -1, 1)) * ui.Model;
             ui.Model = Matrix4x4.CreateTranslation(_dragonPos) * ui.Model;
 
@@ -330,17 +335,32 @@ namespace Offscreen
             if (e.State.IsButtonDown(MouseButton.Right))
             {
                 _zoom += (_mousePos.Y - posy) * .005f * _zoomSpeed;
-                _cameraPos += new Vector3(-0.0f, 0.0f, (_mousePos.Y - posy) * .005f * _zoomSpeed);
+                Matrix4x4 cameraRot = Matrix4x4.CreateFromYawPitchRoll(
+                    DegreesToRadians(_rotation.Y),
+                    DegreesToRadians(_rotation.X),
+                    DegreesToRadians(_rotation.Z));
+                Vector3 camForward = Vector3.Normalize(Vector3.Transform(-Vector3.UnitZ, cameraRot));
+                _cameraPos += camForward * (_mousePos.Y - posy) * .005f * _zoomSpeed;
             }
             if (e.State.IsButtonDown(MouseButton.Left))
             {
                 _rotation.X += (_mousePos.Y - posy) * 1.25f * _rotationSpeed;
-                _rotation.Y -= (_mousePos.X - posx) * 1.25f * _rotationSpeed;
+                _rotation.Y += (_mousePos.X - posx) * 1.25f * _rotationSpeed;
             }
             if (e.State.IsButtonDown(MouseButton.Middle))
             {
-                _cameraPos.X -= (_mousePos.X - posx) * 0.01f;
-                _cameraPos.Y -= (_mousePos.Y - posy) * 0.01f;
+                Matrix4x4 cameraRot = Matrix4x4.CreateFromYawPitchRoll(
+                    DegreesToRadians(_rotation.Y),
+                    DegreesToRadians(_rotation.X),
+                    DegreesToRadians(_rotation.Z));
+                Vector3 camForward = Vector3.Normalize(Vector3.Transform(-Vector3.UnitZ, cameraRot));
+                Vector3 camRight = Vector3.Normalize(Vector3.Cross(camForward, Vector3.UnitY));
+                Vector3 camUp = Vector3.Normalize(Vector3.Cross(camForward, -camRight));
+
+                _cameraPos += (_mousePos.X - posx) * 0.01f * camRight;
+                _cameraPos -= (_mousePos.Y - posy) * 0.01f * camUp;
+                //_cameraPos.X += (_mousePos.X - posx) * 0.01f;
+                //_cameraPos.Y -= (_mousePos.Y - posy) * 0.01f;
                 _mousePos = new Vector2(posx, posy);
             }
 

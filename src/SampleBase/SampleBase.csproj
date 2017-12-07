@@ -5,10 +5,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\veldrid\src\Veldrid\Veldrid.csproj" />
-    <ProjectReference Include="..\..\..\veldrid\src\Veldrid.Utilities\Veldrid.Utilities.csproj" />
-    <ProjectReference Include="..\..\..\veldrid\src\Veldrid.StartupUtilities\Veldrid.StartupUtilities.csproj" />
-    <ProjectReference Include="..\..\..\veldrid\src\Veldrid.ImageSharp\Veldrid.ImageSharp.csproj" />
+    <PackageReference Include="Veldrid" Version="$(VeldridVersion)" />
+    <PackageReference Include="Veldrid.StartupUtilities" Version="$(VeldridVersion)" />
+    <PackageReference Include="Veldrid.Utilities" Version="$(VeldridVersion)" />
+    <PackageReference Include="Veldrid.ImageSharp" Version="$(VeldridVersion)" />
   </ItemGroup>
 
 </Project>

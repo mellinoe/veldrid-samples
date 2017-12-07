@@ -35,31 +35,32 @@ namespace Offscreen.Shaders
         {
             FSIn output;
             output.UV = input.UV;
-            output.Position = Mul(UBO.Projection, Mul(UBO.Model, new Vector4(input.Position, 1f)));
-            output.SysPosition = output.Position;
-            output.SysPosition.Y *= -1; // Dunno
+            output.SysPosition =
+                Mul(UBO.Projection,
+                    Mul(UBO.View,
+                        Mul(UBO.Model, new Vector4(input.Position, 1f))));
+            output.Position =
+                Mul(UBO.Projection,
+                    Mul(UBO.View,
+                        Mul(UBO.Model, new Vector4(input.Position, 1f))));
+
             return output;
         }
 
         [FragmentShader]
         public Vector4 FS(FSIn input)
         {
-            Vector4 tmp = new Vector4(1.0f / input.Position.W);
-            Vector4 projCoord = input.Position * tmp;
             Vector4 outFragColor;
-
-            // Scale and bias
-            projCoord += new Vector4(1.0f);
-            projCoord *= new Vector4(0.5f);
+            Vector2 projCoord = ClipToTextureCoordinates(input.Position);
 
             // Slow single pass blur
             // For demonstration purposes only
-            const float blurSize = 1.0f / 512.0f;
+            const float blurSize = 1f / 512f;
 
             Vector4 color = Sample(ColorMap, ColorMapSampler, input.UV);
             outFragColor = color * 0.25f;
 
-            // if (gl_FrontFacing)
+            if (IsFrontFace)
             {
                 // Only render mirrored scene on front facing (upper) side of mirror surface
                 Vector4 reflection = new Vector4(0.0f);
