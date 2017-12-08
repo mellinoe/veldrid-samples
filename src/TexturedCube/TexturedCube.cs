@@ -1,5 +1,6 @@
 ﻿using SampleBase;
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Numerics;
 using Veldrid;
@@ -23,6 +24,12 @@ namespace TexturedCube
         private Pipeline _pipeline;
         private ResourceSet _projViewSet;
         private ResourceSet _worldTextureSet;
+        private Stopwatch _sw;
+
+        public TexturedCube()
+        {
+            _sw = Stopwatch.StartNew();
+        }
 
         protected override void CreateResources(ResourceFactory factory)
         {
@@ -57,8 +64,8 @@ namespace TexturedCube
                 },
                 new[]
                 {
-                    new ShaderStageDescription(ShaderStages.Vertex, LoadShader(factory, "Cube", ShaderStages.Vertex), "VS"),
-                    new ShaderStageDescription(ShaderStages.Fragment, LoadShader(factory, "Cube", ShaderStages.Fragment), "FS")
+                    LoadShader(factory, "Cube", ShaderStages.Vertex, "VS"),
+                    LoadShader(factory, "Cube", ShaderStages.Fragment, "FS")
                 });
 
             ResourceLayout projViewLayout = factory.CreateResourceLayout(
@@ -74,7 +81,7 @@ namespace TexturedCube
 
             _pipeline = factory.CreateGraphicsPipeline(new GraphicsPipelineDescription(
                 BlendStateDescription.SingleOverrideBlend,
-                DepthStencilStateDescription.LessEqual,
+                DepthStencilStateDescription.DepthOnlyLessEqual,
                 RasterizerStateDescription.Default,
                 PrimitiveTopology.TriangleList,
                 shaderSet,
@@ -95,7 +102,7 @@ namespace TexturedCube
 
         protected override void Draw()
         {
-            int ticks = Environment.TickCount;
+            long ticks = _sw.ElapsedMilliseconds;
             _cl.Begin();
 
             _cl.UpdateBuffer(_projectionBuffer, 0, Matrix4x4.CreatePerspectiveFieldOfView(
@@ -114,7 +121,7 @@ namespace TexturedCube
             _cl.SetFramebuffer(_gd.SwapchainFramebuffer);
             _cl.SetFullViewports();
             _cl.ClearColorTarget(0, RgbaFloat.Black);
-            _cl.ClearDepthTarget(1f);
+            _cl.ClearDepthStencil(1f);
             _cl.SetPipeline(_pipeline);
             _cl.SetVertexBuffer(0, _vertexBuffer);
             _cl.SetIndexBuffer(_indexBuffer, IndexFormat.UInt16);

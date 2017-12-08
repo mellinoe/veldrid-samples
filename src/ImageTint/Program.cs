@@ -69,9 +69,6 @@ namespace ImageTint
             };
             gd.UpdateBuffer(vertexBuffer, 0, quadVerts);
 
-            Shader vs = SampleApplication.LoadShader(factory, "TintShader", ShaderStages.Vertex);
-            Shader fs = SampleApplication.LoadShader(factory, "TintShader", ShaderStages.Fragment);
-
             ShaderSetDescription shaderSet = new ShaderSetDescription(
                 new[]
                 {
@@ -81,8 +78,8 @@ namespace ImageTint
                 },
                 new[]
                 {
-                    new ShaderStageDescription(ShaderStages.Vertex, vs, "VS"),
-                    new ShaderStageDescription(ShaderStages.Fragment, fs, "FS"),
+                    SampleApplication.LoadShader(factory, "TintShader", ShaderStages.Vertex, "VS"),
+                    SampleApplication.LoadShader(factory, "TintShader", ShaderStages.Fragment, "FS")
                 });
 
             ResourceLayout layout = factory.CreateResourceLayout(new ResourceLayoutDescription(
@@ -96,7 +93,7 @@ namespace ImageTint
                 RasterizerStateDescription.Default,
                 PrimitiveTopology.TriangleStrip,
                 shaderSet,
-                new[] { layout },
+                layout,
                 framebuffer.OutputDescription));
 
             Veldrid.Buffer tintInfoBuffer = factory.CreateBuffer(new BufferDescription(16, BufferUsage.UniformBuffer));

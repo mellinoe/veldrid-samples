@@ -81,13 +81,13 @@ namespace SampleBase
 
         protected virtual void HandleWindowResize() { }
 
-        public static Shader LoadShader(ResourceFactory factory, string set, ShaderStages stage)
+        public static Shader LoadShader(ResourceFactory factory, string set, ShaderStages stage, string entryPoint)
         {
             string path = Path.Combine(
                 AppContext.BaseDirectory,
                 "Shaders",
                 $"{set}-{stage.ToString().ToLower()}.{GetExtension(factory.BackendType)}");
-            return factory.CreateShader(new ShaderDescription(stage, File.ReadAllBytes(path)));
+            return factory.CreateShader(new ShaderDescription(stage, File.ReadAllBytes(path), entryPoint));
         }
 
         private static string GetExtension(GraphicsBackend backendType)

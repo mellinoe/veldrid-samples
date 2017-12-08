@@ -35,7 +35,8 @@ namespace ComputeTexture
 
             _computeShader = factory.CreateShader(new ShaderDescription(
                 ShaderStages.Compute,
-                File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "Shaders", $"Compute.{GetExtension(factory.BackendType)}"))));
+                File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "Shaders", $"Compute.{GetExtension(factory.BackendType)}")),
+                "CS"));
 
             _computeLayout = factory.CreateResourceLayout(new ResourceLayoutDescription(
                 new ResourceLayoutElementDescription("Tex", ResourceKind.TextureReadWrite, ShaderStages.Compute),
@@ -43,16 +44,18 @@ namespace ComputeTexture
                 new ResourceLayoutElementDescription("ShiftBuffer", ResourceKind.UniformBuffer, ShaderStages.Compute)));
 
             ComputePipelineDescription computePipelineDesc = new ComputePipelineDescription(
-                new ShaderStageDescription(ShaderStages.Compute, _computeShader, "CS"),
-                new[] { _computeLayout });
+                _computeShader,
+                _computeLayout);
             _computePipeline = factory.CreateComputePipeline(ref computePipelineDesc);
 
             _vertexShader = factory.CreateShader(new ShaderDescription(
                 ShaderStages.Vertex,
-                File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "Shaders", $"Vertex.{GetExtension(factory.BackendType)}"))));
+                File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "Shaders", $"Vertex.{GetExtension(factory.BackendType)}")),
+                "VS"));
             _fragmentShader = factory.CreateShader(new ShaderDescription(
                 ShaderStages.Fragment,
-                File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "Shaders", $"Fragment.{GetExtension(factory.BackendType)}"))));
+                File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "Shaders", $"Fragment.{GetExtension(factory.BackendType)}")),
+                "FS"));
 
             ShaderSetDescription shaderSet = new ShaderSetDescription(
                 new VertexLayoutDescription[]
@@ -63,8 +66,8 @@ namespace ComputeTexture
                 },
                 new[]
                 {
-                    new ShaderStageDescription(ShaderStages.Vertex, _vertexShader, "VS"),
-                    new ShaderStageDescription(ShaderStages.Fragment, _fragmentShader, "FS")
+                    _vertexShader,
+                    _fragmentShader
                 });
 
             _graphicsLayout = factory.CreateResourceLayout(new ResourceLayoutDescription(

@@ -36,7 +36,8 @@ namespace ComputeParticles
 
             _computeShader = factory.CreateShader(new ShaderDescription(
                 ShaderStages.Compute,
-                File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "Shaders", $"Compute.{GetExtension(factory.BackendType)}"))));
+                File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "Shaders", $"Compute.{GetExtension(factory.BackendType)}")),
+                "CS"));
 
             ResourceLayout particleStorageLayout = factory.CreateResourceLayout(new ResourceLayoutDescription(
                 new ResourceLayoutElementDescription("ParticlesBuffer", ResourceKind.StructuredBufferReadWrite, ShaderStages.Compute)));
@@ -45,7 +46,7 @@ namespace ComputeParticles
                 new ResourceLayoutElementDescription("ScreenSizeBuffer", ResourceKind.UniformBuffer, ShaderStages.Compute)));
 
             ComputePipelineDescription computePipelineDesc = new ComputePipelineDescription(
-                new ShaderStageDescription(ShaderStages.Compute, _computeShader, "CS"),
+                _computeShader,
                 new[] { particleStorageLayout, screenSizeLayout });
             _computePipeline = factory.CreateComputePipeline(ref computePipelineDesc);
 
@@ -55,17 +56,19 @@ namespace ComputeParticles
 
             _vertexShader = factory.CreateShader(new ShaderDescription(
                 ShaderStages.Vertex,
-                File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "Shaders", $"Vertex.{GetExtension(factory.BackendType)}"))));
+                File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "Shaders", $"Vertex.{GetExtension(factory.BackendType)}")),
+                "VS"));
             _fragmentShader = factory.CreateShader(new ShaderDescription(
                 ShaderStages.Fragment,
-                File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "Shaders", $"Fragment.{GetExtension(factory.BackendType)}"))));
+                File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "Shaders", $"Fragment.{GetExtension(factory.BackendType)}")),
+                "FS"));
 
             ShaderSetDescription shaderSet = new ShaderSetDescription(
                 Array.Empty<VertexLayoutDescription>(),
                 new[]
                 {
-                    new ShaderStageDescription(ShaderStages.Vertex, _vertexShader, "VS"),
-                    new ShaderStageDescription(ShaderStages.Fragment, _fragmentShader, "FS")
+                    _vertexShader,
+                    _fragmentShader
                 });
 
             particleStorageLayout = factory.CreateResourceLayout(new ResourceLayoutDescription(

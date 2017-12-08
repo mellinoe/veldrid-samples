@@ -75,16 +75,6 @@ namespace GettingStarted
 
             _vertexShader = LoadShader(ShaderStages.Vertex);
             _fragmentShader = LoadShader(ShaderStages.Fragment);
-            ShaderStageDescription[] shaderStages =
-            {
-                new ShaderStageDescription(ShaderStages.Vertex, _vertexShader, "VS"),
-                new ShaderStageDescription(ShaderStages.Fragment, _fragmentShader, "FS")
-            };
-
-            ShaderSetDescription shaderSet = new ShaderSetDescription();
-            // We use a single vertex buffer for all attributes.
-            shaderSet.VertexLayouts = new VertexLayoutDescription[] { vertexLayout };
-            shaderSet.ShaderStages = shaderStages;
 
             // Create pipeline
             GraphicsPipelineDescription pipelineDescription = new GraphicsPipelineDescription();
@@ -92,7 +82,7 @@ namespace GettingStarted
             pipelineDescription.DepthStencilState = new DepthStencilStateDescription(
                 depthTestEnabled: true,
                 depthWriteEnabled: true,
-                comparisonKind: DepthComparisonKind.LessEqual);
+                comparisonKind: ComparisonKind.LessEqual);
             pipelineDescription.RasterizerState = new RasterizerStateDescription(
                 cullMode: FaceCullMode.Back,
                 fillMode: PolygonFillMode.Solid,
@@ -103,7 +93,7 @@ namespace GettingStarted
             pipelineDescription.ResourceLayouts = System.Array.Empty<ResourceLayout>();
             pipelineDescription.ShaderSet = new ShaderSetDescription(
                 vertexLayouts: new VertexLayoutDescription[] { vertexLayout },
-                shaderStages: shaderStages);
+                shaders: new Shader[] { _vertexShader, _fragmentShader });
             pipelineDescription.Outputs = _graphicsDevice.SwapchainFramebuffer.OutputDescription;
 
             _pipeline = factory.CreateGraphicsPipeline(ref pipelineDescription);
@@ -128,9 +118,10 @@ namespace GettingStarted
                 default: throw new System.InvalidOperationException();
             }
 
+            string entryPoint = stage == ShaderStages.Vertex ? "VS" : "FS";
             string path = Path.Combine(System.AppContext.BaseDirectory, "Shaders", $"{stage.ToString()}.{extension}");
             byte[] shaderBytes = File.ReadAllBytes(path);
-            return _graphicsDevice.ResourceFactory.CreateShader(new ShaderDescription(stage, shaderBytes));
+            return _graphicsDevice.ResourceFactory.CreateShader(new ShaderDescription(stage, shaderBytes, entryPoint));
         }
 
         private static void Draw()
@@ -142,7 +133,7 @@ namespace GettingStarted
             _commandList.SetFramebuffer(_graphicsDevice.SwapchainFramebuffer);
             _commandList.SetFullViewports();
             _commandList.ClearColorTarget(0, RgbaFloat.Black);
-            _commandList.ClearDepthTarget(1);
+            _commandList.ClearDepthStencil(1);
 
             // Set all relevant state to draw our quad.
             _commandList.SetVertexBuffer(0, _vertexBuffer);

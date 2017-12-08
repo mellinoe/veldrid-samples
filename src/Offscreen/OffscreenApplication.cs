@@ -92,8 +92,8 @@ namespace Offscreen
                 new[] { _vertexLayout },
                 new[]
                 {
-                    new ShaderStageDescription(ShaderStages.Vertex, LoadShader(factory, "Phong", ShaderStages.Vertex), "VS"),
-                    new ShaderStageDescription(ShaderStages.Fragment, LoadShader(factory, "Phong", ShaderStages.Fragment), "FS")
+                    LoadShader(factory, "Phong", ShaderStages.Vertex, "VS"),
+                    LoadShader(factory, "Phong", ShaderStages.Fragment, "FS")
                 });
 
             ResourceLayout phongLayout = factory.CreateResourceLayout(new ResourceLayoutDescription(
@@ -101,11 +101,11 @@ namespace Offscreen
 
             GraphicsPipelineDescription pd = new GraphicsPipelineDescription(
                 BlendStateDescription.SingleOverrideBlend,
-                DepthStencilStateDescription.LessEqual,
+                DepthStencilStateDescription.DepthOnlyLessEqual,
                 new RasterizerStateDescription(FaceCullMode.Front, PolygonFillMode.Solid, FrontFace.Clockwise, true, false),
                 PrimitiveTopology.TriangleList,
                 phongShaders,
-                new[] { phongLayout },
+                phongLayout,
                 _offscreenFB.OutputDescription);
             _offscreenPipeline = factory.CreateGraphicsPipeline(pd);
 
@@ -124,17 +124,17 @@ namespace Offscreen
                 new[] { _vertexLayout },
                 new[]
                 {
-                    new ShaderStageDescription(ShaderStages.Vertex, LoadShader(factory, "Mirror", ShaderStages.Vertex), "VS"),
-                    new ShaderStageDescription(ShaderStages.Fragment, LoadShader(factory, "Mirror", ShaderStages.Fragment), "FS")
+                    LoadShader(factory, "Mirror", ShaderStages.Vertex, "VS"),
+                    LoadShader(factory, "Mirror", ShaderStages.Fragment, "FS")
                 });
 
             GraphicsPipelineDescription mirrorPD = new GraphicsPipelineDescription(
                 BlendStateDescription.SingleOverrideBlend,
-                DepthStencilStateDescription.LessEqual,
+                DepthStencilStateDescription.DepthOnlyLessEqual,
                 new RasterizerStateDescription(FaceCullMode.None, PolygonFillMode.Solid, FrontFace.Clockwise, true, false),
                 PrimitiveTopology.TriangleList,
                 mirrorShaders,
-                new[] { mirrorLayout },
+                mirrorLayout,
                 _gd.SwapchainFramebuffer.OutputDescription);
             _mirrorPipeline = factory.CreateGraphicsPipeline(ref mirrorPD);
 
@@ -185,7 +185,7 @@ namespace Offscreen
             _cl.SetFramebuffer(_offscreenFB);
             _cl.SetFullViewports();
             _cl.ClearColorTarget(0, RgbaFloat.Black);
-            _cl.ClearDepthTarget(1f);
+            _cl.ClearDepthStencil(1f);
 
             _cl.SetPipeline(_offscreenPipeline);
             _cl.SetGraphicsResourceSet(0, _offscreenResourceSet);
@@ -199,7 +199,7 @@ namespace Offscreen
             _cl.SetFramebuffer(_gd.SwapchainFramebuffer);
             _cl.SetFullViewports();
             _cl.ClearColorTarget(0, RgbaFloat.Black);
-            _cl.ClearDepthTarget(1f);
+            _cl.ClearDepthStencil(1f);
 
             _cl.SetPipeline(_mirrorPipeline);
             _cl.SetGraphicsResourceSet(0, _mirrorResourceSet);
