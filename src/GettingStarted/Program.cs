@@ -62,12 +62,12 @@ namespace GettingStarted
             _vertexBuffer = factory.CreateBuffer(vbDescription);
             _graphicsDevice.UpdateBuffer(_vertexBuffer, 0, quadVertices);
 
-            ushort[] indexData = { 0, 1, 2, 3 };
+            ushort[] quadIndices = { 0, 1, 2, 3 };
             BufferDescription ibDescription = new BufferDescription(
                 4 * sizeof(ushort),
                 BufferUsage.IndexBuffer);
             _indexBuffer = factory.CreateBuffer(ibDescription);
-            _graphicsDevice.UpdateBuffer(_indexBuffer, 0, indexData);
+            _graphicsDevice.UpdateBuffer(_indexBuffer, 0, quadIndices);
 
             VertexLayoutDescription vertexLayout = new VertexLayoutDescription(
                 new VertexElementDescription("Position", VertexElementSemantic.Position, VertexElementFormat.Float2),
@@ -96,7 +96,7 @@ namespace GettingStarted
                 shaders: new Shader[] { _vertexShader, _fragmentShader });
             pipelineDescription.Outputs = _graphicsDevice.SwapchainFramebuffer.OutputDescription;
 
-            _pipeline = factory.CreateGraphicsPipeline(ref pipelineDescription);
+            _pipeline = factory.CreateGraphicsPipeline(pipelineDescription);
 
             _commandList = factory.CreateCommandList();
         }
