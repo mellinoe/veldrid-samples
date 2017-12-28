@@ -11,8 +11,8 @@ namespace ComputeParticles
     {
         public const int ParticleCount = 1024;
 
-        private Veldrid.Buffer _particleBuffer;
-        private Veldrid.Buffer _screenSizeBuffer;
+        private DeviceBuffer _particleBuffer;
+        private DeviceBuffer _screenSizeBuffer;
         private Shader _computeShader;
         private Pipeline _computePipeline;
         private Shader _vertexShader;
@@ -126,7 +126,7 @@ namespace ComputeParticles
             _cl.UpdateBuffer(_particleBuffer, 0, initialParticles);
 
             _cl.End();
-            _gd.ExecuteCommands(_cl);
+            _gd.SubmitCommands(_cl);
             _gd.WaitForIdle();
         }
 
@@ -154,7 +154,7 @@ namespace ComputeParticles
             _cl.Draw(ParticleCount, 1, 0, 0);
             _cl.End();
 
-            _gd.ExecuteCommands(_cl);
+            _gd.SubmitCommands(_cl);
             _gd.SwapBuffers();
         }
     }

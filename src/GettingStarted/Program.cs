@@ -10,8 +10,8 @@ namespace GettingStarted
     {
         private static GraphicsDevice _graphicsDevice;
         private static CommandList _commandList;
-        private static Buffer _vertexBuffer;
-        private static Buffer _indexBuffer;
+        private static DeviceBuffer _vertexBuffer;
+        private static DeviceBuffer _indexBuffer;
         private static Shader _vertexShader;
         private static Shader _fragmentShader;
         private static Pipeline _pipeline;
@@ -133,7 +133,6 @@ namespace GettingStarted
             _commandList.SetFramebuffer(_graphicsDevice.SwapchainFramebuffer);
             _commandList.SetFullViewports();
             _commandList.ClearColorTarget(0, RgbaFloat.Black);
-            _commandList.ClearDepthStencil(1);
 
             // Set all relevant state to draw our quad.
             _commandList.SetVertexBuffer(0, _vertexBuffer);
@@ -149,7 +148,7 @@ namespace GettingStarted
 
             // End() must be called before commands can be submitted for execution.
             _commandList.End();
-            _graphicsDevice.ExecuteCommands(_commandList);
+            _graphicsDevice.SubmitCommands(_commandList);
 
             // Once commands have been submitted, the rendered image can be presented to the application window.
             _graphicsDevice.SwapBuffers();

@@ -1,6 +1,5 @@
 ﻿using Assimp;
 using System;
-using System.Collections.Generic;
 using System.Numerics;
 using Veldrid;
 using Veldrid.Collections;
@@ -13,8 +12,8 @@ namespace Offscreen
             PostProcessSteps.FlipWindingOrder | PostProcessSteps.Triangulate | PostProcessSteps.PreTransformVertices
             | PostProcessSteps.CalculateTangentSpace | PostProcessSteps.GenerateSmoothNormals;
 
-        public Veldrid.Buffer _vertexBuffer;
-        public Veldrid.Buffer _indexBuffer;
+        public DeviceBuffer _vertexBuffer;
+        public DeviceBuffer _indexBuffer;
         public uint _indexCount = 0;
         public uint vertexCount = 0;
 

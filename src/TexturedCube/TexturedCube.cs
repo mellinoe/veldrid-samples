@@ -5,19 +5,17 @@ using System.IO;
 using System.Numerics;
 using Veldrid;
 using Veldrid.ImageSharp;
-using Veldrid.Sdl2;
-using Veldrid.StartupUtilities;
 using Veldrid.Utilities;
 
 namespace TexturedCube
 {
     internal class TexturedCube : SampleApplication
     {
-        private Veldrid.Buffer _projectionBuffer;
-        private Veldrid.Buffer _viewBuffer;
-        private Veldrid.Buffer _worldBuffer;
-        private Veldrid.Buffer _vertexBuffer;
-        private Veldrid.Buffer _indexBuffer;
+        private DeviceBuffer _projectionBuffer;
+        private DeviceBuffer _viewBuffer;
+        private DeviceBuffer _worldBuffer;
+        private DeviceBuffer _vertexBuffer;
+        private DeviceBuffer _indexBuffer;
         private CommandList _cl;
         private Texture _surfaceTexture;
         private TextureView _surfaceTextureView;
@@ -52,7 +50,7 @@ namespace TexturedCube
             _surfaceTextureView = factory.CreateTextureView(_surfaceTexture);
 
             _cl.End();
-            _gd.ExecuteCommands(_cl);
+            _gd.SubmitCommands(_cl);
             _gd.WaitForIdle();
 
             ShaderSetDescription shaderSet = new ShaderSetDescription(
@@ -130,7 +128,7 @@ namespace TexturedCube
             _cl.DrawIndexed(36, 1, 0, 0, 0);
 
             _cl.End();
-            _gd.ExecuteCommands(_cl);
+            _gd.SubmitCommands(_cl);
             _gd.SwapBuffers();
         }
 

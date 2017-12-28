@@ -32,9 +32,9 @@ namespace Offscreen
         private Vector3 _dragonRotation = new Vector3(0, 0, 0);
         private float _zoom = -6f;
 
-        private Veldrid.Buffer _uniformBuffers_vsShared;
-        private Veldrid.Buffer _uniformBuffers_vsMirror;
-        private Veldrid.Buffer _uniformBuffers_vsOffScreen;
+        private DeviceBuffer _uniformBuffers_vsShared;
+        private DeviceBuffer _uniformBuffers_vsMirror;
+        private DeviceBuffer _uniformBuffers_vsOffScreen;
         private ResourceSet _offscreenResourceSet;
         private ResourceSet _dragonResourceSet;
         private ResourceSet _mirrorResourceSet;
@@ -176,7 +176,7 @@ namespace Offscreen
             DrawOffscreen();
             DrawMain();
             _cl.End();
-            _gd.ExecuteCommands(_cl);
+            _gd.SubmitCommands(_cl);
             _gd.SwapBuffers();
         }
 
@@ -314,7 +314,7 @@ namespace Offscreen
                     ret, 0, 0, 0, level, 0, levelWidth, levelHeight, 1, 1);
             }
             copyCL.End();
-            gd.ExecuteCommands(copyCL);
+            gd.SubmitCommands(copyCL);
 
             copyCL.Dispose();
             stagingTex.Dispose();

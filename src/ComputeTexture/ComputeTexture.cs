@@ -8,10 +8,10 @@ namespace ComputeTexture
 {
     internal class ComputeTexture : SampleApplication
     {
-        private Veldrid.Buffer _screenSizeBuffer;
-        private Veldrid.Buffer _shiftBuffer;
-        private Veldrid.Buffer _vertexBuffer;
-        private Veldrid.Buffer _indexBuffer;
+        private DeviceBuffer _screenSizeBuffer;
+        private DeviceBuffer _shiftBuffer;
+        private DeviceBuffer _vertexBuffer;
+        private DeviceBuffer _indexBuffer;
         private Shader _computeShader;
         private ResourceLayout _computeLayout;
         private Pipeline _computePipeline;
@@ -89,18 +89,16 @@ namespace ComputeTexture
 
             _cl = factory.CreateCommandList();
 
-            CreateWindowSizedResources();
+            CreateWindowSizedResources(factory);
             InitResources(factory);
         }
 
-        private void CreateWindowSizedResources()
+        private void CreateWindowSizedResources(ResourceFactory factory)
         {
             _computeTargetTexture?.Dispose();
             _computeTargetTextureView?.Dispose();
             _computeResourceSet?.Dispose();
             _graphicsResourceSet?.Dispose();
-
-            ResourceFactory factory = _gd.ResourceFactory;
 
             _computeTargetTexture = factory.CreateTexture(new TextureDescription(
                 (uint)_window.Width,
@@ -153,14 +151,14 @@ namespace ComputeTexture
             _cl.UpdateBuffer(_indexBuffer, 0, indices);
 
             _cl.End();
-            _gd.ExecuteCommands(_cl);
+            _gd.SubmitCommands(_cl);
             _gd.WaitForIdle();
         }
 
         protected override void HandleWindowResize()
         {
             _gd.UpdateBuffer(_screenSizeBuffer, 0, new Vector4(_window.Width, _window.Height, 0, 0));
-            CreateWindowSizedResources();
+            CreateWindowSizedResources(_factory);
         }
 
         protected override void Draw()
@@ -189,7 +187,7 @@ namespace ComputeTexture
             _cl.DrawIndexed(6, 1, 0, 0, 0);
 
             _cl.End();
-            _gd.ExecuteCommands(_cl);
+            _gd.SubmitCommands(_cl);
             _gd.SwapBuffers();
         }
     }

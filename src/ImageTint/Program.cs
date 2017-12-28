@@ -39,6 +39,8 @@ namespace ImageTint
                 {
                     WindowInitialState = WindowState.Hidden,
                 },
+                new GraphicsDeviceOptions(),
+                GraphicsBackend.OpenGL,
                 out Sdl2Window window,
                 out GraphicsDevice gd);
 
@@ -58,7 +60,7 @@ namespace ImageTint
                 TextureUsage.RenderTarget));
             Framebuffer framebuffer = factory.CreateFramebuffer(new FramebufferDescription(null, output));
 
-            Veldrid.Buffer vertexBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.VertexBuffer));
+            DeviceBuffer vertexBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.VertexBuffer));
 
             Vector4[] quadVerts =
             {
@@ -96,7 +98,7 @@ namespace ImageTint
                 layout,
                 framebuffer.OutputDescription));
 
-            Veldrid.Buffer tintInfoBuffer = factory.CreateBuffer(new BufferDescription(16, BufferUsage.UniformBuffer));
+            DeviceBuffer tintInfoBuffer = factory.CreateBuffer(new BufferDescription(16, BufferUsage.UniformBuffer));
             gd.UpdateBuffer(
                 tintInfoBuffer, 0,
                 new TintInfo(
@@ -130,7 +132,7 @@ namespace ImageTint
                 stage, 0, 0, 0, 0, 0,
                 stage.Width, stage.Height, 1, 1);
             cl.End();
-            gd.ExecuteCommands(cl);
+            gd.SubmitCommands(cl);
             gd.WaitForIdle();
 
             // When a texture is mapped into a CPU-visible region, it is often not laid out linearly.

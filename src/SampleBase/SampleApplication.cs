@@ -11,6 +11,7 @@ namespace SampleBase
     {
         protected readonly Sdl2Window _window;
         protected readonly GraphicsDevice _gd;
+        protected DisposeCollectorResourceFactory _factory;
         private bool _windowResized;
 
         public SampleApplication()
@@ -51,8 +52,8 @@ namespace SampleBase
 
         public void Run()
         {
-            DisposeCollectorResourceFactory factory = new DisposeCollectorResourceFactory(_gd.ResourceFactory);
-            CreateResources(factory);
+            _factory = new DisposeCollectorResourceFactory(_gd.ResourceFactory);
+            CreateResources(_factory);
 
             while (_window.Exists)
             {
@@ -69,7 +70,8 @@ namespace SampleBase
                 }
             }
 
-            factory.DisposeCollector.DisposeAll();
+            _gd.WaitForIdle();
+            _factory.DisposeCollector.DisposeAll();
             _gd.Dispose();
         }
 
