@@ -80,12 +80,12 @@ namespace Offscreen
                 PixelFormat.BC3_UNorm);
             _colorView = factory.CreateTextureView(_colorMap);
 
-            _offscreenColor = factory.CreateTexture(new TextureDescription(
-                OffscreenWidth, OffscreenHeight, 1, 1, 1,
+            _offscreenColor = factory.CreateTexture(TextureDescription.Texture2D(
+                OffscreenWidth, OffscreenHeight, 1, 1,
                  PixelFormat.R8_G8_B8_A8_UNorm, TextureUsage.RenderTarget | TextureUsage.Sampled));
             _offscreenView = factory.CreateTextureView(_offscreenColor);
-            Texture offscreenDepth = factory.CreateTexture(new TextureDescription(
-                OffscreenWidth, OffscreenHeight, 1, 1, 1, PixelFormat.R16_UNorm, TextureUsage.DepthStencil));
+            Texture offscreenDepth = factory.CreateTexture(TextureDescription.Texture2D(
+                OffscreenWidth, OffscreenHeight, 1, 1, PixelFormat.R16_UNorm, TextureUsage.DepthStencil));
             _offscreenFB = factory.CreateFramebuffer(new FramebufferDescription(offscreenDepth, _offscreenColor));
 
             ShaderSetDescription phongShaders = new ShaderSetDescription(
@@ -284,12 +284,12 @@ namespace Offscreen
 
             uint mipLevels = tex2D.Header.NumberOfMipmapLevels;
 
-            Texture ret = factory.CreateTexture(new TextureDescription(
-                width, height, 1, mipLevels, 1,
+            Texture ret = factory.CreateTexture(TextureDescription.Texture2D(
+                width, height, mipLevels, 1,
                 format, TextureUsage.Sampled));
 
-            Texture stagingTex = factory.CreateTexture(new TextureDescription(
-                width, height, 1, mipLevels, 1,
+            Texture stagingTex = factory.CreateTexture(TextureDescription.Texture2D(
+                width, height, mipLevels, 1,
                 format, TextureUsage.Staging));
 
             // Copy texture data into staging buffer

@@ -50,10 +50,9 @@ namespace ImageTint
             Texture inputTexture = inputImage.CreateDeviceTexture(gd, factory);
             TextureView view = factory.CreateTextureView(inputTexture);
 
-            Texture output = factory.CreateTexture(new TextureDescription(
+            Texture output = factory.CreateTexture(TextureDescription.Texture2D(
                 inputImage.Width,
                 inputImage.Height,
-                1,
                 1,
                 1,
                 PixelFormat.R8_G8_B8_A8_UNorm,
@@ -110,10 +109,9 @@ namespace ImageTint
 
             // RenderTarget textures are not CPU-visible, so to get our tinted image back, we need to first copy it into
             // a "staging Texture", which is a Texture that is CPU-visible (it can be Mapped).
-            Texture stage = factory.CreateTexture(new TextureDescription(
+            Texture stage = factory.CreateTexture(TextureDescription.Texture2D(
                 inputImage.Width,
                 inputImage.Height,
-                1,
                 1,
                 1,
                 PixelFormat.R8_G8_B8_A8_UNorm,

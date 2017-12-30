@@ -100,10 +100,9 @@ namespace ComputeTexture
             _computeResourceSet?.Dispose();
             _graphicsResourceSet?.Dispose();
 
-            _computeTargetTexture = factory.CreateTexture(new TextureDescription(
+            _computeTargetTexture = factory.CreateTexture(TextureDescription.Texture2D(
                 (uint)_window.Width,
                 (uint)_window.Height,
-                1,
                 1,
                 1,
                 PixelFormat.R32_G32_B32_A32_Float,
