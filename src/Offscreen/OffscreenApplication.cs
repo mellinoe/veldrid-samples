@@ -316,8 +316,8 @@ namespace Offscreen
             copyCL.End();
             gd.SubmitCommands(copyCL);
 
-            copyCL.Dispose();
-            stagingTex.Dispose();
+            gd.DisposeWhenIdle(copyCL);
+            gd.DisposeWhenIdle(stagingTex);
 
             return ret;
         }
