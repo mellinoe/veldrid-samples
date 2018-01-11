@@ -25,8 +25,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\SampleBase\SampleBase.csproj" />
-    <PackageReference Include="ShaderGen.Primitives" Version="1.1.0-gefd56f9408" />
-    <PackageReference Include="ShaderGen.Build" Version="1.1.0-gefd56f9408" PrivateAssets="All" />
+    <PackageReference Include="ShaderGen.Primitives" Version="1.1.0-gf4889989da" />
+    <PackageReference Include="ShaderGen.Build" Version="1.1.0-gf4889989da" PrivateAssets="All" />
     <PackageReference Include="AssimpNet-netstandard" Version="3.3.1" />
   </ItemGroup>
 

@@ -40,7 +40,6 @@ namespace ImageTint
                     WindowInitialState = WindowState.Hidden,
                 },
                 new GraphicsDeviceOptions(),
-                GraphicsBackend.OpenGL,
                 out Sdl2Window window,
                 out GraphicsDevice gd);
 

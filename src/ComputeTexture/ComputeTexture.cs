@@ -45,7 +45,8 @@ namespace ComputeTexture
 
             ComputePipelineDescription computePipelineDesc = new ComputePipelineDescription(
                 _computeShader,
-                _computeLayout);
+                _computeLayout,
+                1, 1, 1);
             _computePipeline = factory.CreateComputePipeline(ref computePipelineDesc);
 
             _vertexShader = factory.CreateShader(new ShaderDescription(
@@ -128,7 +129,9 @@ namespace ComputeTexture
         {
             return backendType == GraphicsBackend.Direct3D11 ? "hlsl.bytes"
                 : backendType == GraphicsBackend.Vulkan ? "spv"
-                    : "430.glsl";
+                    : backendType == GraphicsBackend.Metal
+                        ? "metal"
+                        : "430.glsl";
         }
 
         private void InitResources(ResourceFactory factory)

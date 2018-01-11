@@ -37,7 +37,7 @@ namespace SampleBase
 #if DEBUG
             options.Debug = true;
 #endif
-            _gd = VeldridStartup.CreateGraphicsDevice(_window, options, GraphicsBackend.OpenGL);
+            _gd = VeldridStartup.CreateGraphicsDevice(_window, options, GraphicsBackend.Metal);
         }
 
         protected virtual void OnMouseMove(MouseMoveEventArgs mouseMoveEvent)
@@ -98,7 +98,9 @@ namespace SampleBase
                 ? "hlsl.bytes"
                 : (backendType == GraphicsBackend.Vulkan)
                     ? "450.glsl.spv"
-                    : "330.glsl";
+                    : (backendType == GraphicsBackend.Metal)
+                        ? "metallib"
+                        : "330.glsl";
         }
     }
 }
