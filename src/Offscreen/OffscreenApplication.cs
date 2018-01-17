@@ -42,13 +42,6 @@ namespace Offscreen
         private float _zoomSpeed = 5f;
         private float _rotationSpeed = 1f;
 
-        private int _startTicks;
-
-        public OffscreenApplication()
-        {
-            _startTicks = Environment.TickCount;
-        }
-
         protected override void CreateResources(ResourceFactory factory)
         {
             _vertexLayout = new VertexLayoutDescription(
@@ -73,7 +66,7 @@ namespace Offscreen
                 _vertexLayout,
                 new Model.ModelCreateInfo(new Vector3(0.3f, -0.3f, 0.3f), Vector2.One, Vector3.Zero));
 
-            _colorMap = LoadTexture(
+            _colorMap = KtxFile.LoadTexture(
                 _gd,
                 factory,
                 GetAssetPath("textures/darkmetal_bc3_unorm.ktx"),
@@ -162,12 +155,9 @@ namespace Offscreen
             public Vector4 LightPos;
         }
 
-        protected override void Draw()
+        protected override void Draw(float deltaSeconds)
         {
-            int newTicks = Environment.TickCount;
-            float frameTimer = (newTicks - _startTicks) / 1000f;
-            _startTicks = newTicks;
-            _dragonRotation.Y += frameTimer * 10f;
+            _dragonRotation.Y += deltaSeconds * 10f;
 
             UpdateUniformBuffers();
             UpdateUniformBufferOffscreen();
@@ -264,62 +254,6 @@ namespace Offscreen
             ui.Model = Matrix4x4.CreateTranslation(_dragonPos) * ui.Model;
 
             _gd.UpdateBuffer(_uniformBuffers_vsOffScreen, 0, ref ui);
-        }
-
-        private unsafe Texture LoadTexture(
-            GraphicsDevice gd,
-            ResourceFactory factory,
-            string assetPath,
-            PixelFormat format)
-        {
-            KtxFile tex2D;
-            using (FileStream fs = File.OpenRead(assetPath))
-            {
-                tex2D = KtxFile.Load(fs, false);
-            }
-
-            uint width = tex2D.Header.PixelWidth;
-            uint height = tex2D.Header.PixelHeight;
-            if (height == 0) height = width;
-
-            uint mipLevels = tex2D.Header.NumberOfMipmapLevels;
-
-            Texture ret = factory.CreateTexture(TextureDescription.Texture2D(
-                width, height, mipLevels, 1,
-                format, TextureUsage.Sampled));
-
-            Texture stagingTex = factory.CreateTexture(TextureDescription.Texture2D(
-                width, height, mipLevels, 1,
-                format, TextureUsage.Staging));
-
-            // Copy texture data into staging buffer
-            for (uint level = 0; level < mipLevels; level++)
-            {
-                KtxMipmap mipmap = tex2D.Faces[0].Mipmaps[level];
-                byte[] pixelData = mipmap.Data;
-                fixed (byte* pixelDataPtr = &pixelData[0])
-                {
-                    gd.UpdateTexture(stagingTex, (IntPtr)pixelDataPtr, (uint)pixelData.Length,
-                        0, 0, 0, mipmap.Width, mipmap.Height, 1, level, 0);
-                }
-            }
-
-            CommandList copyCL = factory.CreateCommandList();
-            copyCL.Begin();
-            for (uint level = 0; level < mipLevels; level++)
-            {
-                uint levelWidth = tex2D.Faces[0].Mipmaps[level].Width;
-                uint levelHeight = tex2D.Faces[0].Mipmaps[level].Height;
-                copyCL.CopyTexture(stagingTex, 0, 0, 0, level, 0,
-                    ret, 0, 0, 0, level, 0, levelWidth, levelHeight, 1, 1);
-            }
-            copyCL.End();
-            gd.SubmitCommands(copyCL);
-
-            gd.DisposeWhenIdle(copyCL);
-            gd.DisposeWhenIdle(stagingTex);
-
-            return ret;
         }
 
         private static string GetAssetPath(string name)

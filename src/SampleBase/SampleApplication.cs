@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using Veldrid;
 using Veldrid.Sdl2;
@@ -55,18 +56,27 @@ namespace SampleBase
             _factory = new DisposeCollectorResourceFactory(_gd.ResourceFactory);
             CreateResources(_factory);
 
+            Stopwatch sw = Stopwatch.StartNew();
+            double previousElapsed = sw.Elapsed.TotalSeconds;
+
             while (_window.Exists)
             {
-                _window.PumpEvents();
+                double newElapsed = sw.Elapsed.TotalSeconds;
+                float deltaSeconds = (float)(newElapsed - previousElapsed);
+
+                InputSnapshot inputSnapshot = _window.PumpEvents();
+                InputTracker.UpdateFrameInput(inputSnapshot);
 
                 if (_window.Exists)
                 {
+                    previousElapsed = newElapsed;
                     if (_windowResized)
                     {
                         _gd.ResizeMainWindow((uint)_window.Width, (uint)_window.Height);
                         HandleWindowResize();
                     }
-                    Draw();
+
+                    Draw(deltaSeconds);
                 }
             }
 
@@ -77,7 +87,7 @@ namespace SampleBase
 
         protected abstract void CreateResources(ResourceFactory factory);
 
-        protected abstract void Draw();
+        protected abstract void Draw(float deltaSeconds);
 
         protected virtual void OnWindowResized() { }
 

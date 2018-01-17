@@ -25,6 +25,7 @@ namespace ComputeTexture
         private Texture _computeTargetTexture;
         private TextureView _computeTargetTextureView;
         private ResourceLayout _graphicsLayout;
+        private float _ticks;
 
         protected override void CreateResources(ResourceFactory factory)
         {
@@ -163,14 +164,14 @@ namespace ComputeTexture
             CreateWindowSizedResources(_factory);
         }
 
-        protected override void Draw()
+        protected override void Draw(float deltaSeconds)
         {
             _cl.Begin();
-            int ticks = Environment.TickCount;
+            _ticks += deltaSeconds * 1000f;
             Vector4 shifts = new Vector4(
-                _window.Width * MathF.Cos(ticks / 500f), // Red shift
-                _window.Height * MathF.Sin(ticks / 1250f), // Green shift
-                MathF.Sin(ticks / 1000f), // Blue shift
+                _window.Width * MathF.Cos(_ticks / 500f), // Red shift
+                _window.Height * MathF.Sin(_ticks / 1250f), // Green shift
+                MathF.Sin(_ticks / 1000f), // Blue shift
                 0); // Padding
             _cl.UpdateBuffer(_shiftBuffer, 0, ref shifts);
 

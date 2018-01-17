@@ -9,8 +9,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\SampleBase\SampleBase.csproj" />
-    <PackageReference Include="ShaderGen.Primitives" Version="1.1.0-gf4889989da" />
-    <PackageReference Include="ShaderGen.Build" Version="1.1.0-gf4889989da" PrivateAssets="All" />
+    <PackageReference Include="ShaderGen.Primitives" Version="$(ShaderGenVersion)" />
+    <PackageReference Include="ShaderGen.Build" Version="$(ShaderGenVersion)" PrivateAssets="All" />
   </ItemGroup>
 
 </Project>
