@@ -32,7 +32,7 @@ namespace SampleBase
         {
             _windowWidth = width;
             _windowHeight = height;
-            UpdatePerspectiveMatrix(width, height);
+            UpdatePerspectiveMatrix();
             UpdateViewMatrix();
         }
 
@@ -43,9 +43,9 @@ namespace SampleBase
         public Vector3 LookDirection => _lookDirection;
 
 
-        public float FarDistance { get => _far; set => _far = value; }
+        public float FarDistance { get => _far; set { _far = value; UpdatePerspectiveMatrix(); } }
         public float FieldOfView => _fov;
-        public float NearDistance { get => _near; set => _near = value; }
+        public float NearDistance { get => _near; set { _near = value; UpdatePerspectiveMatrix(); } }
 
         public float AspectRatio => _windowWidth / _windowHeight;
 
@@ -112,12 +112,12 @@ namespace SampleBase
         {
             _windowWidth = width;
             _windowHeight = height;
-            UpdatePerspectiveMatrix(width, height);
+            UpdatePerspectiveMatrix();
         }
 
-        private void UpdatePerspectiveMatrix(float width, float height)
+        private void UpdatePerspectiveMatrix()
         {
-            _projectionMatrix = Matrix4x4.CreatePerspectiveFieldOfView(_fov, width / height, _near, _far);
+            _projectionMatrix = Matrix4x4.CreatePerspectiveFieldOfView(_fov, _windowWidth / _windowHeight, _near, _far);
             ProjectionChanged?.Invoke(_projectionMatrix);
         }
 

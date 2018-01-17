@@ -59,7 +59,7 @@ namespace AnimatedMesh
             _viewBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer | BufferUsage.Dynamic));
             _worldBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer | BufferUsage.Dynamic));
             Matrix4x4 worldMatrix =
-                Matrix4x4.CreateTranslation(0, 1000, -10000)
+                Matrix4x4.CreateTranslation(0, 15000, -5000)
                 * Matrix4x4.CreateRotationX(3 * MathF.PI / 2)
                 * Matrix4x4.CreateScale(0.05f);
             _gd.UpdateBuffer(_worldBuffer, 0, ref worldMatrix);
@@ -88,7 +88,7 @@ namespace AnimatedMesh
                     new VertexElementDescription("Position", VertexElementSemantic.Position, VertexElementFormat.Float3),
                     new VertexElementDescription("UV", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float2),
                     new VertexElementDescription("BoneWeights", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float4),
-                    new VertexElementDescription("BoneIndices", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Int4),
+                    new VertexElementDescription("BoneIndices", VertexElementSemantic.TextureCoordinate, VertexElementFormat.UInt4),
                 });
 
             GraphicsPipelineDescription gpd = new GraphicsPipelineDescription(
@@ -190,7 +190,7 @@ namespace AnimatedMesh
 
             double ticks = newSeconds * _animation.TicksPerSecond;
 
-            UpdateChannel(1f, _scene.RootNode, aiMatrix4x4.Identity);
+            UpdateChannel(ticks, _scene.RootNode, aiMatrix4x4.Identity);
 
             for (int i = 0; i < _boneTransformations.Length; i++)
             {

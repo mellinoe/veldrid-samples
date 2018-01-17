@@ -38,7 +38,7 @@ namespace SampleBase
 #if DEBUG
             options.Debug = true;
 #endif
-            _gd = VeldridStartup.CreateGraphicsDevice(_window, options, GraphicsBackend.Vulkan);
+            _gd = VeldridStartup.CreateGraphicsDevice(_window, options, GraphicsBackend.OpenGL);
         }
 
         protected virtual void OnMouseMove(MouseMoveEventArgs mouseMoveEvent)
