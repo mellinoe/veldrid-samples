@@ -5,8 +5,9 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
+using Veldrid;
 
-namespace Offscreen
+namespace SampleBase
 {
     // A ridiculously bad KTX file parser.
     // https://www.khronos.org/opengles/sdk/tools/KTX/file_format_spec
@@ -172,6 +173,62 @@ namespace Offscreen
             }
 
             return result;
+        }
+
+        public static unsafe Texture LoadTexture(
+            GraphicsDevice gd,
+            ResourceFactory factory,
+            string assetPath,
+            PixelFormat format)
+        {
+            KtxFile tex2D;
+            using (FileStream fs = File.OpenRead(assetPath))
+            {
+                tex2D = KtxFile.Load(fs, false);
+            }
+
+            uint width = tex2D.Header.PixelWidth;
+            uint height = tex2D.Header.PixelHeight;
+            if (height == 0) height = width;
+
+            uint mipLevels = tex2D.Header.NumberOfMipmapLevels;
+
+            Texture ret = factory.CreateTexture(TextureDescription.Texture2D(
+                width, height, mipLevels, 1,
+                format, TextureUsage.Sampled));
+
+            Texture stagingTex = factory.CreateTexture(TextureDescription.Texture2D(
+                width, height, mipLevels, 1,
+                format, TextureUsage.Staging));
+
+            // Copy texture data into staging buffer
+            for (uint level = 0; level < mipLevels; level++)
+            {
+                KtxMipmap mipmap = tex2D.Faces[0].Mipmaps[level];
+                byte[] pixelData = mipmap.Data;
+                fixed (byte* pixelDataPtr = &pixelData[0])
+                {
+                    gd.UpdateTexture(stagingTex, (IntPtr)pixelDataPtr, (uint)pixelData.Length,
+                        0, 0, 0, mipmap.Width, mipmap.Height, 1, level, 0);
+                }
+            }
+
+            CommandList copyCL = factory.CreateCommandList();
+            copyCL.Begin();
+            for (uint level = 0; level < mipLevels; level++)
+            {
+                uint levelWidth = tex2D.Faces[0].Mipmaps[level].Width;
+                uint levelHeight = tex2D.Faces[0].Mipmaps[level].Height;
+                copyCL.CopyTexture(stagingTex, 0, 0, 0, level, 0,
+                    ret, 0, 0, 0, level, 0, levelWidth, levelHeight, 1, 1);
+            }
+            copyCL.End();
+            gd.SubmitCommands(copyCL);
+
+            gd.DisposeWhenIdle(copyCL);
+            gd.DisposeWhenIdle(stagingTex);
+
+            return ret;
         }
     }
 

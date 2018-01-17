@@ -22,12 +22,7 @@ namespace TexturedCube
         private Pipeline _pipeline;
         private ResourceSet _projViewSet;
         private ResourceSet _worldTextureSet;
-        private Stopwatch _sw;
-
-        public TexturedCube()
-        {
-            _sw = Stopwatch.StartNew();
-        }
+        private float _ticks;
 
         protected override void CreateResources(ResourceFactory factory)
         {
@@ -98,9 +93,9 @@ namespace TexturedCube
                 _gd.Aniso4xSampler));
         }
 
-        protected override void Draw()
+        protected override void Draw(float deltaSeconds)
         {
-            long ticks = _sw.ElapsedMilliseconds;
+            _ticks += deltaSeconds * 1000f;
             _cl.Begin();
 
             _cl.UpdateBuffer(_projectionBuffer, 0, Matrix4x4.CreatePerspectiveFieldOfView(
@@ -112,8 +107,8 @@ namespace TexturedCube
             _cl.UpdateBuffer(_viewBuffer, 0, Matrix4x4.CreateLookAt(Vector3.UnitZ * 2.5f, Vector3.Zero, Vector3.UnitY));
 
             Matrix4x4 rotation =
-                Matrix4x4.CreateFromAxisAngle(Vector3.UnitY, (ticks / 1000f))
-                * Matrix4x4.CreateFromAxisAngle(Vector3.UnitX, (ticks / 3000f));
+                Matrix4x4.CreateFromAxisAngle(Vector3.UnitY, (_ticks / 1000f))
+                * Matrix4x4.CreateFromAxisAngle(Vector3.UnitX, (_ticks / 3000f));
             _cl.UpdateBuffer(_worldBuffer, 0, ref rotation);
 
             _cl.SetFramebuffer(_gd.SwapchainFramebuffer);

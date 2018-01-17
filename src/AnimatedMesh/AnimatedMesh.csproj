@@ -9,17 +9,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="..\..\assets\models\chinesedragon.dae">
+    <Content Include="..\..\assets\models\Goblin.dae">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>models\chinesedragon.dae</Link>
+      <Link>assets/models/Goblin.dae</Link>
     </Content>
-    <Content Include="..\..\assets\models\plane2.dae">
+    <Content Include="..\..\assets\textures\goblin_bc3_unorm.ktx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>models\plane2.dae</Link>
-    </Content>
-    <Content Include="..\..\assets\textures\darkmetal_bc3_unorm.ktx">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>textures\darkmetal_bc3_unorm.ktx</Link>
+      <Link>assets/textures/goblin_bc3_unorm.ktx</Link>
     </Content>
   </ItemGroup>
 

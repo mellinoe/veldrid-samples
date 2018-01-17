@@ -138,7 +138,7 @@ namespace ComputeParticles
             _gd.UpdateBuffer(_screenSizeBuffer, 0, new Vector4(_window.Width, _window.Height, 0, 0));
         }
 
-        protected override void Draw()
+        protected override void Draw(float deltaSeconds)
         {
             _cl.Begin();
 
