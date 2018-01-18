@@ -9,9 +9,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="..\..\assets\models\Goblin.dae">
+    <Content Include="..\..\assets\models\goblin.dae">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>assets/models/Goblin.dae</Link>
+      <Link>assets/models/goblin.dae</Link>
     </Content>
     <Content Include="..\..\assets\textures\goblin_bc3_unorm.ktx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

@@ -101,7 +101,7 @@ namespace AnimatedMesh
 
             const string monsterAssetPath = "models/goblin.dae";
             AssimpContext ac = new AssimpContext();
-
+Console.WriteLine($"Loading {GetAssetPath(monsterAssetPath)}");
             _scene = ac.ImportFile(GetAssetPath(monsterAssetPath), 0);
             _rootNodeInverseTransform = _scene.RootNode.Transform;
             _rootNodeInverseTransform.Inverse();
