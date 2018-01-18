@@ -5,7 +5,7 @@
     <BinDir>$(RepositoryRootDirectory)bin</BinDir>
     <OutputPath>$([System.IO.Path]::GetFullPath('$(RepositoryRootDirectory)bin\$(Configuration)'))\$(MSBuildProjectName)</OutputPath>
     <BaseIntermediateOutputPath>$([System.IO.Path]::GetFullPath('$(RepositoryRootDirectory)bin\obj\$(MSBuildProjectName)'))\</BaseIntermediateOutputPath>
-    <VeldridVersion>4.0.0-g18b8826e98</VeldridVersion>
-    <ShaderGenVersion>1.1.0-gbcbafe732a</ShaderGenVersion>
+    <VeldridVersion>4.0.0-gb5e1cace2d</VeldridVersion>
+    <ShaderGenVersion>1.1.0-g1b11bad785</ShaderGenVersion>
   </PropertyGroup>
 </Project>

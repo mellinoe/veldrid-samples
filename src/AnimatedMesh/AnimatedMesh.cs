@@ -17,14 +17,12 @@ namespace AnimatedMesh
 {
     class AnimatedMesh : SampleApplication
     {
-        private const PostProcessSteps DefaultPostProcessSteps =
-            PostProcessSteps.FlipWindingOrder | PostProcessSteps.Triangulate | PostProcessSteps.GenerateSmoothNormals;
-
         private DeviceBuffer _projectionBuffer;
         private DeviceBuffer _viewBuffer;
         private DeviceBuffer _worldBuffer;
         private DeviceBuffer _vertexBuffer;
         private DeviceBuffer _indexBuffer;
+        private uint _indexCount;
         private DeviceBuffer _bonesBuffer;
         private TextureView _texView;
         private ResourceSet _rs;
@@ -32,7 +30,6 @@ namespace AnimatedMesh
         private Pipeline _pipeline;
 
         private Camera _camera;
-        private uint _indexCount;
 
         private Animation _animation;
         private Dictionary<string, uint> _boneIDsByName = new Dictionary<string, uint>();
@@ -42,6 +39,7 @@ namespace AnimatedMesh
         private BoneAnimInfo _boneAnimInfo;
         private aiMatrix4x4 _rootNodeInverseTransform;
         private aiMatrix4x4[] _boneTransformations;
+        private float _animationTimeScale = 1f;
 
         public AnimatedMesh()
         {
@@ -184,7 +182,7 @@ namespace AnimatedMesh
         private void UpdateAnimation(float deltaSeconds)
         {
             double totalSeconds = _animation.DurationInTicks * _animation.TicksPerSecond;
-            double newSeconds = _previousAnimSeconds + deltaSeconds;
+            double newSeconds = _previousAnimSeconds + (deltaSeconds * _animationTimeScale);
             newSeconds = newSeconds % totalSeconds;
             _previousAnimSeconds = newSeconds;
 
@@ -342,6 +340,18 @@ namespace AnimatedMesh
 
             channel = null;
             return false;
+        }
+
+        protected override void OnKeyDown(KeyEvent keyEvent)
+        {
+            if (keyEvent.Key == Key.KeypadPlus)
+            {
+                _animationTimeScale = Math.Min(3, _animationTimeScale + 0.25f);
+            }
+            if (keyEvent.Key == Key.KeypadMinus)
+            {
+                _animationTimeScale = Math.Max(0, _animationTimeScale - 0.25f);
+            }
         }
 
         protected override void HandleWindowResize()
