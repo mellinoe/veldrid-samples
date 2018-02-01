@@ -2,6 +2,7 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Numerics;
 using Veldrid;
 using Veldrid.ImageSharp;
@@ -15,11 +16,14 @@ namespace TexturedCube
         private DeviceBuffer _viewBuffer;
         private DeviceBuffer _worldBuffer;
         private DeviceBuffer _vertexBuffer;
+        private DeviceBuffer _vertexBuffer_Split0;
+        private DeviceBuffer _vertexBuffer_Split1;
         private DeviceBuffer _indexBuffer;
         private CommandList _cl;
         private Texture _surfaceTexture;
         private TextureView _surfaceTextureView;
         private Pipeline _pipeline;
+        private Pipeline _pipeline_2VB;
         private ResourceSet _projViewSet;
         private ResourceSet _worldTextureSet;
         private float _ticks;
@@ -35,6 +39,12 @@ namespace TexturedCube
             VertexPositionTexture[] vertices = GetCubeVertices();
             _vertexBuffer = factory.CreateBuffer(new BufferDescription((uint)(VertexPositionTexture.SizeInBytes * vertices.Length), BufferUsage.VertexBuffer));
             _cl.UpdateBuffer(_vertexBuffer, 0, vertices);
+
+            _vertexBuffer_Split0 = factory.CreateBuffer(new BufferDescription((uint)(12 * vertices.Length), BufferUsage.VertexBuffer));
+            _cl.UpdateBuffer(_vertexBuffer_Split0, 0, vertices.Select(vpt => vpt.Position).ToArray());
+
+            _vertexBuffer_Split1 = factory.CreateBuffer(new BufferDescription((uint)(8 * vertices.Length), BufferUsage.VertexBuffer));
+            _cl.UpdateBuffer(_vertexBuffer_Split1, 0, vertices.Select(vpt => vpt.TextureCoordinates).ToArray());
 
             ushort[] indices = GetCubeIndices();
             _indexBuffer = factory.CreateBuffer(new BufferDescription(sizeof(ushort) * (uint)indices.Length, BufferUsage.IndexBuffer));
@@ -81,6 +91,24 @@ namespace TexturedCube
                 new[] { projViewLayout, worldTextureLayout },
                 _gd.SwapchainFramebuffer.OutputDescription));
 
+            shaderSet.VertexLayouts = new VertexLayoutDescription[]
+            {
+                new VertexLayoutDescription(
+                    new VertexElementDescription("Position", VertexElementSemantic.Position, VertexElementFormat.Float3)),
+                new VertexLayoutDescription(
+                    new VertexElementDescription("TexCoords", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float2))
+            };
+
+            _pipeline_2VB = factory.CreateGraphicsPipeline(new GraphicsPipelineDescription(
+                BlendStateDescription.SingleOverrideBlend,
+                DepthStencilStateDescription.DepthOnlyLessEqual,
+                RasterizerStateDescription.Default,
+                PrimitiveTopology.TriangleList,
+                shaderSet,
+                new[] { projViewLayout, worldTextureLayout },
+                _gd.SwapchainFramebuffer.OutputDescription));
+
+
             _projViewSet = factory.CreateResourceSet(new ResourceSetDescription(
                 projViewLayout,
                 _projectionBuffer,
@@ -115,6 +143,18 @@ namespace TexturedCube
             _cl.SetFullViewports();
             _cl.ClearColorTarget(0, RgbaFloat.Black);
             _cl.ClearDepthStencil(1f);
+
+            _cl.SetPipeline(_pipeline_2VB);
+            _cl.SetVertexBuffer(0, _vertexBuffer_Split0);
+            _cl.SetVertexBuffer(1, _vertexBuffer_Split1);
+            _cl.SetIndexBuffer(_indexBuffer, IndexFormat.UInt16);
+            _cl.SetGraphicsResourceSet(0, _projViewSet);
+            _cl.SetGraphicsResourceSet(1, _worldTextureSet);
+            _cl.DrawIndexed(36, 1, 0, 0, 0);
+
+            rotation = Matrix4x4.CreateTranslation(1.5f, 0, 0) * rotation;
+            _cl.UpdateBuffer(_worldBuffer, 0, ref rotation);
+
             _cl.SetPipeline(_pipeline);
             _cl.SetVertexBuffer(0, _vertexBuffer);
             _cl.SetIndexBuffer(_indexBuffer, IndexFormat.UInt16);
