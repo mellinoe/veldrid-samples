@@ -12,6 +12,7 @@ namespace SampleBase
     {
         protected readonly Sdl2Window _window;
         protected readonly GraphicsDevice _gd;
+        protected Camera _camera;
         protected DisposeCollectorResourceFactory _factory;
         private bool _windowResized;
 
@@ -38,7 +39,7 @@ namespace SampleBase
 #if DEBUG
             options.Debug = true;
 #endif
-            _gd = VeldridStartup.CreateGraphicsDevice(_window, options);
+            _gd = VeldridStartup.CreateGraphicsDevice(_window,options,GraphicsBackend.OpenGL);
         }
 
         protected virtual void OnMouseMove(MouseMoveEventArgs mouseMoveEvent)
@@ -53,6 +54,7 @@ namespace SampleBase
 
         public void Run()
         {
+            _camera = new Camera(_window.Width,_window.Height);
             _factory = new DisposeCollectorResourceFactory(_gd.ResourceFactory);
             CreateResources(_factory);
 
@@ -76,6 +78,7 @@ namespace SampleBase
                         HandleWindowResize();
                     }
 
+                    _camera.Update(deltaSeconds);
                     Draw(deltaSeconds);
                 }
             }
