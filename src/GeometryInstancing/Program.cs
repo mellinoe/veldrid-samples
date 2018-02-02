@@ -36,8 +36,8 @@ namespace GeometryInstancing
          
             _camera = new Camera(960,540);
 
-            _graphicsDevice = VeldridStartup.CreateGraphicsDevice(window,GraphicsBackend.OpenGL);
-            //_graphicsDevice = VeldridStartup.CreateGraphicsDevice(window); // Defaults to metal on mac
+            //_graphicsDevice = VeldridStartup.CreateGraphicsDevice(window,GraphicsBackend.OpenGL);
+            _graphicsDevice = VeldridStartup.CreateGraphicsDevice(window); // Defaults to metal on mac
 
             CreateResources();
 
@@ -171,9 +171,7 @@ namespace GeometryInstancing
                     break;
                 case GraphicsBackend.Metal:
                     extension = "metallib";
-                    // not implemented
-                    throw new System.InvalidOperationException();
-                    //break;
+                    break;
                 default: throw new System.InvalidOperationException();
             }
 
@@ -193,6 +191,9 @@ namespace GeometryInstancing
             _commandList.SetFullViewports();
             _commandList.ClearColorTarget(0, RgbaFloat.Black);
 
+            _commandList.UpdateBuffer(_cameraProjViewBuffer,0,_camera.ViewMatrix);
+            _commandList.UpdateBuffer(_cameraProjViewBuffer,64,_camera.ProjectionMatrix);
+
             // Set all relevant state to draw our quad.
             _commandList.SetVertexBuffer(0,_vertexBuffer);
             _commandList.SetIndexBuffer(_indexBuffer,IndexFormat.UInt16);
@@ -200,8 +201,6 @@ namespace GeometryInstancing
             _commandList.SetPipeline(_pipeline);
             // Set uniforms
             _commandList.SetGraphicsResourceSet(0,_resourceSet); // Always after SetPipeline
-            _commandList.UpdateBuffer(_cameraProjViewBuffer,0,_camera.ViewMatrix);
-            _commandList.UpdateBuffer(_cameraProjViewBuffer,64,_camera.ProjectionMatrix);
             // Issue a Draw command for two instances with 4 indices.
             _commandList.DrawIndexed(
                 indexCount: 4,
