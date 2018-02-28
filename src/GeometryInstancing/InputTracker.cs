@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.Numerics;
 using System.Text;
 using Veldrid.Sdl2;
+using Veldrid;
 
-namespace Veldrid.NeoDemo
+namespace GeometryInstancing
 {
     public static class InputTracker
     {

@@ -1,9 +1,10 @@
 using System;
 using System.Numerics;
 using System.Runtime.InteropServices;
+using Veldrid;
 using Veldrid.Sdl2;
 
-namespace Veldrid.NeoDemo
+namespace GeometryInstancing
 {
     public class Camera : IUpdateable
     {

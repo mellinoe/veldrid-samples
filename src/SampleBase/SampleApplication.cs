@@ -12,7 +12,8 @@ namespace SampleBase
     {
         protected readonly Sdl2Window _window;
         protected readonly GraphicsDevice _gd;
-        protected DisposeCollectorResourceFactory _factory;
+        protected Camera _camera;
+        protected ResourceFactory _factory;
         private bool _windowResized;
 
         public SampleApplication()
@@ -38,7 +39,8 @@ namespace SampleBase
 #if DEBUG
             options.Debug = true;
 #endif
-            _gd = VeldridStartup.CreateGraphicsDevice(_window, options);
+            // _gd = VeldridStartup.CreateGraphicsDevice(_window,options,GraphicsBackend.OpenGL);
+            _gd = VeldridStartup.CreateGraphicsDevice(_window,GraphicsBackend.OpenGL);
         }
 
         protected virtual void OnMouseMove(MouseMoveEventArgs mouseMoveEvent)
@@ -53,7 +55,8 @@ namespace SampleBase
 
         public void Run()
         {
-            _factory = new DisposeCollectorResourceFactory(_gd.ResourceFactory);
+            _camera = new Camera(960,540);
+            _factory = _gd.ResourceFactory;
             CreateResources(_factory);
 
             Stopwatch sw = Stopwatch.StartNew();
@@ -70,18 +73,19 @@ namespace SampleBase
                 if (_window.Exists)
                 {
                     previousElapsed = newElapsed;
-                    if (_windowResized)
-                    {
-                        _gd.ResizeMainWindow((uint)_window.Width, (uint)_window.Height);
-                        HandleWindowResize();
-                    }
+                    // if (_windowResized)
+                    // {
+                    //     _gd.ResizeMainWindow((uint)_window.Width, (uint)_window.Height);
+                    //     HandleWindowResize();
+                    // }
 
+                    _camera.Update(deltaSeconds);
                     Draw(deltaSeconds);
                 }
             }
 
             _gd.WaitForIdle();
-            _factory.DisposeCollector.DisposeAll();
+            //_factory.DisposeCollector.DisposeAll();
             _gd.Dispose();
         }
 

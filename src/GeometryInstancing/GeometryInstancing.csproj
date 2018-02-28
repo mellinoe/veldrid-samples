@@ -6,8 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Veldrid" Version="$(VeldridVersion)" />
-    <PackageReference Include="Veldrid.StartupUtilities" Version="$(VeldridVersion)" />
+    <ProjectReference Include="..\SampleBase\SampleBase.csproj" />
     <PackageReference Include="NativeLibraryLoader" Version="1.0.5" />
   </ItemGroup>
 

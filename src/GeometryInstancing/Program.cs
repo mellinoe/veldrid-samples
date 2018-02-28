@@ -3,7 +3,6 @@ using System.Numerics;
 using Veldrid;
 using Veldrid.Sdl2;
 using Veldrid.StartupUtilities;
-using Veldrid.NeoDemo;
 
 namespace GeometryInstancing
 {
@@ -18,45 +17,47 @@ namespace GeometryInstancing
         private static Shader _vertexShader;
         private static Shader _fragmentShader;
         private static Pipeline _pipeline;
-        private static Camera _camera;
+        private static GeometryInstancing.Camera _camera;
         private static ResourceSet _resourceSet;
         private static ResourceLayout _resourceLayout;
 
         static void Main(string[] args)
         {
-            WindowCreateInfo windowCI = new WindowCreateInfo()
-            {
-                X = 100,
-                Y = 100,
-                WindowWidth = 960,
-                WindowHeight = 540,
-                WindowTitle = "Veldrid Tutorial"
-            };
-            Sdl2Window window = VeldridStartup.CreateWindow(ref windowCI);
+            // WindowCreateInfo windowCI = new WindowCreateInfo()
+            // {
+            //     X = 100,
+            //     Y = 100,
+            //     WindowWidth = 960,
+            //     WindowHeight = 540,
+            //     WindowTitle = "Veldrid Tutorial"
+            // };
+            // Sdl2Window window = VeldridStartup.CreateWindow(ref windowCI);
          
-            _camera = new Camera(960,540);
+            // _camera = new Camera(960,540);
 
-            //_graphicsDevice = VeldridStartup.CreateGraphicsDevice(window,GraphicsBackend.OpenGL);
-            _graphicsDevice = VeldridStartup.CreateGraphicsDevice(window); // Defaults to metal on mac
+            // //_graphicsDevice = VeldridStartup.CreateGraphicsDevice(window,GraphicsBackend.OpenGL);
+            // _graphicsDevice = VeldridStartup.CreateGraphicsDevice(window); // Defaults to metal on mac
 
-            CreateResources();
+            // CreateResources();
 
-            while (window.Exists)
-            {
-                InputSnapshot inputSnapshot = window.PumpEvents();
+            // while (window.Exists)
+            // {
+            //     InputSnapshot inputSnapshot = window.PumpEvents();
 
-                if (window.Exists)
-                {
-                    InputTracker.UpdateFrameInput(inputSnapshot);
+            //     if (window.Exists)
+            //     {
+            //         InputTracker.UpdateFrameInput(inputSnapshot);
 
-                    float deltaSeconds = 1/60f;
-                    _camera.Update(deltaSeconds);
+            //         float deltaSeconds = 1/60f;
+            //         _camera.Update(deltaSeconds);
 
-                    Draw();
-                }
-            }
+            //         Draw();
+            //     }
+            // }
 
-            DisposeResources();
+            // DisposeResources();
+
+            new InstancingApplication().Run();
         }
 
         private static void CreateResources()
@@ -119,8 +120,8 @@ namespace GeometryInstancing
                     elements: new VertexElementDescription[] {vertexElementPerInstance}
                 );
 
-            _vertexShader = LoadShader(ShaderStages.Vertex);
-            _fragmentShader = LoadShader(ShaderStages.Fragment);
+            _vertexShader = LoadShader(_graphicsDevice, ShaderStages.Vertex);
+            _fragmentShader = LoadShader(_graphicsDevice, ShaderStages.Fragment);
 
             GraphicsPipelineDescription pipelineDescription = new GraphicsPipelineDescription(){
                 BlendState = BlendStateDescription.SingleOverrideBlend,
@@ -151,10 +152,10 @@ namespace GeometryInstancing
 
         }
 
-        private static Shader LoadShader(ShaderStages stage)
+        public static Shader LoadShader(GraphicsDevice gd, ShaderStages stage)
         {
             string extension = null;
-            switch (_graphicsDevice.BackendType)
+            switch (gd.BackendType)
             {
                 case GraphicsBackend.Direct3D11:
                     extension = "hlsl.bytes";
@@ -178,7 +179,7 @@ namespace GeometryInstancing
             string entryPoint = stage == ShaderStages.Vertex ? "VS" : "FS";
             string path = Path.Combine(System.AppContext.BaseDirectory, "Shaders", $"{stage.ToString()}.{extension}");
             byte[] shaderBytes = File.ReadAllBytes(path);
-            return _graphicsDevice.ResourceFactory.CreateShader(new ShaderDescription(stage, shaderBytes, entryPoint));
+            return gd.ResourceFactory.CreateShader(new ShaderDescription(stage, shaderBytes, entryPoint));
         }
 
         private static void Draw()
@@ -233,17 +234,6 @@ namespace GeometryInstancing
         }
     }
 
-    struct VertexPositionColor
-    {
-        public const uint SizeInBytes = 24;
-        public Vector2 Position;
-        public RgbaFloat Color;
-        public VertexPositionColor(Vector2 position, RgbaFloat color)
-        {
-            Position = position;
-            Color = color;
-        }
-    }
 
     public struct VertexPositionColour
     {

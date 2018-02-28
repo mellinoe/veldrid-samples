@@ -1,4 +1,4 @@
-namespace Veldrid.NeoDemo
+namespace GeometryInstancing
 {
     public interface IUpdateable
     {
