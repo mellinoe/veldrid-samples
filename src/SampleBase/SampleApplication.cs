@@ -13,7 +13,7 @@ namespace SampleBase
         protected readonly Sdl2Window _window;
         protected readonly GraphicsDevice _gd;
         protected Camera _camera;
-        protected ResourceFactory _factory;
+        protected DisposeCollectorResourceFactory _factory;
         private bool _windowResized;
 
         public SampleApplication()
@@ -35,12 +35,12 @@ namespace SampleBase
             _window.MouseMove += OnMouseMove;
             _window.KeyDown += OnKeyDown;
 
-            GraphicsDeviceOptions options = new GraphicsDeviceOptions(false, PixelFormat.R16_UNorm, true);
+            //GraphicsDeviceOptions options = new GraphicsDeviceOptions(false, PixelFormat.R16_UNorm, true);
+            GraphicsDeviceOptions options = new GraphicsDeviceOptions(false, null, true);
 #if DEBUG
             options.Debug = true;
 #endif
-            // _gd = VeldridStartup.CreateGraphicsDevice(_window,options,GraphicsBackend.OpenGL);
-            _gd = VeldridStartup.CreateGraphicsDevice(_window,GraphicsBackend.OpenGL);
+            _gd = VeldridStartup.CreateGraphicsDevice(_window,options,GraphicsBackend.OpenGL);
         }
 
         protected virtual void OnMouseMove(MouseMoveEventArgs mouseMoveEvent)
@@ -55,8 +55,8 @@ namespace SampleBase
 
         public void Run()
         {
-            _camera = new Camera(960,540);
-            _factory = _gd.ResourceFactory;
+            _camera = new Camera(_window.Width,_window.Height);
+            _factory = new DisposeCollectorResourceFactory(_gd.ResourceFactory);
             CreateResources(_factory);
 
             Stopwatch sw = Stopwatch.StartNew();
@@ -73,11 +73,11 @@ namespace SampleBase
                 if (_window.Exists)
                 {
                     previousElapsed = newElapsed;
-                    // if (_windowResized)
-                    // {
-                    //     _gd.ResizeMainWindow((uint)_window.Width, (uint)_window.Height);
-                    //     HandleWindowResize();
-                    // }
+                    if (_windowResized)
+                    {
+                        _gd.ResizeMainWindow((uint)_window.Width, (uint)_window.Height);
+                        HandleWindowResize();
+                    }
 
                     _camera.Update(deltaSeconds);
                     Draw(deltaSeconds);
@@ -85,7 +85,7 @@ namespace SampleBase
             }
 
             _gd.WaitForIdle();
-            //_factory.DisposeCollector.DisposeAll();
+            _factory.DisposeCollector.DisposeAll();
             _gd.Dispose();
         }
 
