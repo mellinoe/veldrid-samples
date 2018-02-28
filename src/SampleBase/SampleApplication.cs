@@ -35,8 +35,7 @@ namespace SampleBase
             _window.MouseMove += OnMouseMove;
             _window.KeyDown += OnKeyDown;
 
-            //GraphicsDeviceOptions options = new GraphicsDeviceOptions(false, PixelFormat.R16_UNorm, true);
-            GraphicsDeviceOptions options = new GraphicsDeviceOptions(false, null, true);
+            GraphicsDeviceOptions options = new GraphicsDeviceOptions(false, PixelFormat.R16_UNorm, true);
 #if DEBUG
             options.Debug = true;
 #endif

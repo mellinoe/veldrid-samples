@@ -124,6 +124,7 @@ namespace GeometryInstancing
             _commandList.SetFramebuffer(_gd.SwapchainFramebuffer);
             _commandList.SetFullViewports();
             _commandList.ClearColorTarget(0, RgbaFloat.Black);
+            _commandList.ClearDepthStencil(1f);
             _commandList.SetPipeline(_pipeline);
             // Set uniforms
             _commandList.SetGraphicsResourceSet(0,_resourceSet); // Always after SetPipeline
