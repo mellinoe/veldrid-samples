@@ -24,12 +24,12 @@ namespace GeometryInstancing
                 case GraphicsBackend.Direct3D11:
                     extension = "hlsl.bytes";
                     // not implemented
-                    throw new System.InvalidOperationException();
+                    throw new System.NotImplementedException();
                     //break;
                 case GraphicsBackend.Vulkan:
                     extension = "spv";
                     // not implemented
-                    throw new System.InvalidOperationException();
+                    throw new System.NotImplementedException();
                     //break;
                 case GraphicsBackend.OpenGL:
                     extension = "glsl";

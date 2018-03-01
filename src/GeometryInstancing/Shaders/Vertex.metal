@@ -14,7 +14,8 @@ struct PixelInput
     float4 Color;
 };
 
-struct projView {
+struct projView 
+{
     float4x4 View;
     float4x4 Proj;
 };
