@@ -9,6 +9,5 @@ struct PixelInput
 
 fragment float4 FS(PixelInput input[[stage_in]])
 {
-    //return input.Color;
-    return float4(1,0,0,1);
+    return input.Color;
 }
