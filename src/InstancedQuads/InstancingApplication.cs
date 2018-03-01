@@ -5,7 +5,7 @@ using Veldrid.Sdl2;
 using Veldrid.StartupUtilities;
 using SampleBase;
 
-namespace GeometryInstancing
+namespace InstancedQuads
 {
     class InstancingApplication : SampleApplication 
     {
@@ -18,9 +18,7 @@ namespace GeometryInstancing
         private Shader _fragmentShader;
         private Pipeline _pipeline;
         private ResourceSet _resourceSet;
-        private ResourceLayout _resourceLayout;
-
-    
+        private ResourceLayout _resourceLayout; 
 
         protected override void CreateResources(ResourceFactory factory)
         {

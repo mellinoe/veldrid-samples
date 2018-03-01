@@ -4,7 +4,7 @@ using Veldrid;
 using Veldrid.Sdl2;
 using Veldrid.StartupUtilities;
 
-namespace GeometryInstancing
+namespace InstancedQuads
 {
     class Program
     {
@@ -45,9 +45,6 @@ namespace GeometryInstancing
             byte[] shaderBytes = File.ReadAllBytes(path);
             return gd.ResourceFactory.CreateShader(new ShaderDescription(stage, shaderBytes, entryPoint));
         }
-
-
-
  
     }
 

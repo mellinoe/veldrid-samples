@@ -18,8 +18,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Offscreen", "Offscreen\Offs
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AnimatedMesh", "AnimatedMesh\AnimatedMesh.csproj", "{48F23362-815E-4DCD-A243-0F129ABE9832}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GeometryInstancing", "GeometryInstancing\GeometryInstancing.csproj", "{E1CC3BBA-D7EA-416A-ABAB-3D23AB643149}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -126,18 +124,6 @@ Global
 		{48F23362-815E-4DCD-A243-0F129ABE9832}.Release|x64.Build.0 = Release|Any CPU
 		{48F23362-815E-4DCD-A243-0F129ABE9832}.Release|x86.ActiveCfg = Release|Any CPU
 		{48F23362-815E-4DCD-A243-0F129ABE9832}.Release|x86.Build.0 = Release|Any CPU
-		{E1CC3BBA-D7EA-416A-ABAB-3D23AB643149}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{E1CC3BBA-D7EA-416A-ABAB-3D23AB643149}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{E1CC3BBA-D7EA-416A-ABAB-3D23AB643149}.Debug|x64.ActiveCfg = Debug|x64
-		{E1CC3BBA-D7EA-416A-ABAB-3D23AB643149}.Debug|x64.Build.0 = Debug|x64
-		{E1CC3BBA-D7EA-416A-ABAB-3D23AB643149}.Debug|x86.ActiveCfg = Debug|x86
-		{E1CC3BBA-D7EA-416A-ABAB-3D23AB643149}.Debug|x86.Build.0 = Debug|x86
-		{E1CC3BBA-D7EA-416A-ABAB-3D23AB643149}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{E1CC3BBA-D7EA-416A-ABAB-3D23AB643149}.Release|Any CPU.Build.0 = Release|Any CPU
-		{E1CC3BBA-D7EA-416A-ABAB-3D23AB643149}.Release|x64.ActiveCfg = Release|x64
-		{E1CC3BBA-D7EA-416A-ABAB-3D23AB643149}.Release|x64.Build.0 = Release|x64
-		{E1CC3BBA-D7EA-416A-ABAB-3D23AB643149}.Release|x86.ActiveCfg = Release|x86
-		{E1CC3BBA-D7EA-416A-ABAB-3D23AB643149}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
