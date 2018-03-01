@@ -11,7 +11,6 @@ namespace InstancedQuads
 
         static void Main(string[] args)
         {
- 
             new InstancingApplication().Run();
         }
 
