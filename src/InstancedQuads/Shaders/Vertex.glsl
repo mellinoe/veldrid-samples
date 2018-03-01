@@ -1,6 +1,5 @@
 #version 330 core
 
-
 layout(std140) uniform projView
 {
     mat4 View;
