@@ -1,14 +1,10 @@
 #version 330 core
 
-struct Camera_ProjView
-{
-    mat4 View;
-    mat4 Proj;
-};
 
 layout(std140) uniform projView
 {
-    Camera_ProjView field_projView;
+    mat4 View;
+    mat4 Proj;
 };
 
 layout(location = 0)in vec2 Position;
@@ -23,8 +19,8 @@ void main()
 {
     vec2 posOff = vec2(Position.x + xOff,Position.y);
     vec4 worldPos = vec4(posOff, 5, 1);
-    mat4 viewMatrix = field_projView.View;
-    mat4 projMatrix = field_projView.Proj;
+    mat4 viewMatrix = View;
+    mat4 projMatrix = Proj;
     gl_Position = projMatrix*viewMatrix*worldPos;
     fsin_Color = Color;
 }
