@@ -1,6 +1,6 @@
 ﻿using SampleBase;
+using SixLabors.ImageSharp;
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.Numerics;
 using Veldrid;
@@ -9,7 +9,7 @@ using Veldrid.Utilities;
 
 namespace TexturedCube
 {
-    internal class TexturedCube : SampleApplication
+    public class TexturedCube : SampleApplication
     {
         private DeviceBuffer _projectionBuffer;
         private DeviceBuffer _viewBuffer;
@@ -23,6 +23,8 @@ namespace TexturedCube
         private ResourceSet _projViewSet;
         private ResourceSet _worldTextureSet;
         private float _ticks;
+
+        public TexturedCube(ApplicationWindow window) : base(window) { }
 
         protected override void CreateResources(ResourceFactory factory)
         {
@@ -40,13 +42,19 @@ namespace TexturedCube
             _indexBuffer = factory.CreateBuffer(new BufferDescription(sizeof(ushort) * (uint)indices.Length, BufferUsage.IndexBuffer));
             _cl.UpdateBuffer(_indexBuffer, 0, indices);
 
-            ImageSharpTexture stoneImage = new ImageSharpTexture(Path.Combine(AppContext.BaseDirectory, "Textures", "spnza_bricks_a_diff.png"));
-            _surfaceTexture = stoneImage.CreateDeviceTexture(_gd, factory);
+            Image<Rgba32> image;
+            using (Stream s = OpenEmbeddedAssetStream("spnza_bricks_a_diff.png"))
+            {
+                image = Image.Load(s);
+            }
+
+            ImageSharpTexture stoneImage = new ImageSharpTexture(image);
+            _surfaceTexture = stoneImage.CreateDeviceTexture(GraphicsDevice, factory);
             _surfaceTextureView = factory.CreateTextureView(_surfaceTexture);
 
             _cl.End();
-            _gd.SubmitCommands(_cl);
-            _gd.WaitForIdle();
+            GraphicsDevice.SubmitCommands(_cl);
+            GraphicsDevice.WaitForIdle();
 
             ShaderSetDescription shaderSet = new ShaderSetDescription(
                 new[]
@@ -79,7 +87,7 @@ namespace TexturedCube
                 PrimitiveTopology.TriangleList,
                 shaderSet,
                 new[] { projViewLayout, worldTextureLayout },
-                _gd.SwapchainFramebuffer.OutputDescription));
+                GraphicsDevice.SwapchainFramebuffer.OutputDescription));
 
             _projViewSet = factory.CreateResourceSet(new ResourceSetDescription(
                 projViewLayout,
@@ -90,7 +98,7 @@ namespace TexturedCube
                 worldTextureLayout,
                 _worldBuffer,
                 _surfaceTextureView,
-                _gd.Aniso4xSampler));
+                GraphicsDevice.Aniso4xSampler));
         }
 
         protected override void Draw(float deltaSeconds)
@@ -100,7 +108,7 @@ namespace TexturedCube
 
             _cl.UpdateBuffer(_projectionBuffer, 0, Matrix4x4.CreatePerspectiveFieldOfView(
                 1.0f,
-                (float)_window.Width / _window.Height,
+                (float)Window.Width / Window.Height,
                 0.5f,
                 100f));
 
@@ -111,7 +119,7 @@ namespace TexturedCube
                 * Matrix4x4.CreateFromAxisAngle(Vector3.UnitX, (_ticks / 3000f));
             _cl.UpdateBuffer(_worldBuffer, 0, ref rotation);
 
-            _cl.SetFramebuffer(_gd.SwapchainFramebuffer);
+            _cl.SetFramebuffer(GraphicsDevice.SwapchainFramebuffer);
             _cl.SetFullViewports();
             _cl.ClearColorTarget(0, RgbaFloat.Black);
             _cl.ClearDepthStencil(1f);
@@ -123,8 +131,8 @@ namespace TexturedCube
             _cl.DrawIndexed(36, 1, 0, 0, 0);
 
             _cl.End();
-            _gd.SubmitCommands(_cl);
-            _gd.SwapBuffers();
+            GraphicsDevice.SubmitCommands(_cl);
+            GraphicsDevice.SwapBuffers();
         }
 
         private static VertexPositionTexture[] GetCubeVertices()
@@ -179,6 +187,27 @@ namespace TexturedCube
             };
 
             return indices;
+        }
+    }
+
+    public struct VertexPositionTexture
+    {
+        public const uint SizeInBytes = 20;
+
+        public float PosX;
+        public float PosY;
+        public float PosZ;
+
+        public float TexU;
+        public float TexV;
+
+        public VertexPositionTexture(Vector3 pos, Vector2 uv)
+        {
+            PosX = pos.X;
+            PosY = pos.Y;
+            PosZ = pos.Z;
+            TexU = uv.X;
+            TexV = uv.Y;
         }
     }
 }

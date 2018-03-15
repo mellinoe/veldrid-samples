@@ -85,7 +85,7 @@ namespace ComputeParticles
                 PrimitiveTopology.PointList,
                 shaderSet,
                 new[] { particleStorageLayout, screenSizeLayout },
-                _gd.SwapchainFramebuffer.OutputDescription);
+                GraphicsDevice.SwapchainFramebuffer.OutputDescription);
 
             _graphicsPipeline = factory.CreateGraphicsPipeline(ref particleDrawPipelineDesc);
 
@@ -129,13 +129,13 @@ namespace ComputeParticles
             _cl.UpdateBuffer(_particleBuffer, 0, initialParticles);
 
             _cl.End();
-            _gd.SubmitCommands(_cl);
-            _gd.WaitForIdle();
+            GraphicsDevice.SubmitCommands(_cl);
+            GraphicsDevice.WaitForIdle();
         }
 
         protected override void HandleWindowResize()
         {
-            _gd.UpdateBuffer(_screenSizeBuffer, 0, new Vector4(_window.Width, _window.Height, 0, 0));
+            GraphicsDevice.UpdateBuffer(_screenSizeBuffer, 0, new Vector4(_window.Width, _window.Height, 0, 0));
         }
 
         protected override void Draw(float deltaSeconds)
@@ -147,7 +147,7 @@ namespace ComputeParticles
             _cl.SetComputeResourceSet(1, _computeScreenSizeResourceSet);
             _cl.Dispatch(1024, 1, 1);
 
-            _cl.SetFramebuffer(_gd.SwapchainFramebuffer);
+            _cl.SetFramebuffer(GraphicsDevice.SwapchainFramebuffer);
             _cl.SetFullViewports();
             _cl.SetFullScissorRects();
             _cl.ClearColorTarget(0, RgbaFloat.Black);
@@ -157,8 +157,8 @@ namespace ComputeParticles
             _cl.Draw(ParticleCount, 1, 0, 0);
             _cl.End();
 
-            _gd.SubmitCommands(_cl);
-            _gd.SwapBuffers();
+            GraphicsDevice.SubmitCommands(_cl);
+            GraphicsDevice.SwapBuffers();
         }
     }
 

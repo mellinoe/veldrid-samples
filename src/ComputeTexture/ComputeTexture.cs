@@ -85,7 +85,7 @@ namespace ComputeTexture
                 PrimitiveTopology.TriangleList,
                 shaderSet,
                 new[] { _graphicsLayout },
-                _gd.SwapchainFramebuffer.OutputDescription);
+                GraphicsDevice.SwapchainFramebuffer.OutputDescription);
 
             _graphicsPipeline = factory.CreateGraphicsPipeline(ref fullScreenQuadDesc);
 
@@ -123,7 +123,7 @@ namespace ComputeTexture
                 _computeTargetTextureView,
                 _computeTargetTextureView,
                 _computeTargetTextureView,
-                _gd.PointSampler));
+                GraphicsDevice.PointSampler));
         }
 
         private string GetExtension(GraphicsBackend backendType)
@@ -154,13 +154,13 @@ namespace ComputeTexture
             _cl.UpdateBuffer(_indexBuffer, 0, indices);
 
             _cl.End();
-            _gd.SubmitCommands(_cl);
-            _gd.WaitForIdle();
+            GraphicsDevice.SubmitCommands(_cl);
+            GraphicsDevice.WaitForIdle();
         }
 
         protected override void HandleWindowResize()
         {
-            _gd.UpdateBuffer(_screenSizeBuffer, 0, new Vector4(_window.Width, _window.Height, 0, 0));
+            GraphicsDevice.UpdateBuffer(_screenSizeBuffer, 0, new Vector4(_window.Width, _window.Height, 0, 0));
             CreateWindowSizedResources(_factory);
         }
 
@@ -179,7 +179,7 @@ namespace ComputeTexture
             _cl.SetComputeResourceSet(0, _computeResourceSet);
             _cl.Dispatch((uint)_window.Width, (uint)_window.Height, 1);
 
-            _cl.SetFramebuffer(_gd.SwapchainFramebuffer);
+            _cl.SetFramebuffer(GraphicsDevice.SwapchainFramebuffer);
             _cl.SetFullViewports();
             _cl.SetFullScissorRects();
             _cl.ClearColorTarget(0, RgbaFloat.Black);
@@ -190,8 +190,8 @@ namespace ComputeTexture
             _cl.DrawIndexed(6, 1, 0, 0, 0);
 
             _cl.End();
-            _gd.SubmitCommands(_cl);
-            _gd.SwapBuffers();
+            GraphicsDevice.SubmitCommands(_cl);
+            GraphicsDevice.SwapBuffers();
         }
     }
 

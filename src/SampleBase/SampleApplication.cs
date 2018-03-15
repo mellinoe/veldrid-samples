@@ -1,105 +1,50 @@
-﻿using System;
-using System.Diagnostics;
-using System.IO;
+﻿using System.IO;
 using Veldrid;
-using Veldrid.Sdl2;
-using Veldrid.StartupUtilities;
-using Veldrid.Utilities;
 
 namespace SampleBase
 {
     public abstract class SampleApplication
     {
-        protected readonly Sdl2Window _window;
-        protected readonly GraphicsDevice _gd;
-        protected DisposeCollectorResourceFactory _factory;
-        private bool _windowResized;
+        public ApplicationWindow Window { get; }
 
-        public SampleApplication()
+        public GraphicsDevice GraphicsDevice { get; private set; }
+
+        public SampleApplication(ApplicationWindow window)
         {
-            WindowCreateInfo wci = new WindowCreateInfo
-            {
-                X = 100,
-                Y = 100,
-                WindowWidth = 960,
-                WindowHeight = 540,
-                WindowTitle = GetTitle(),
-            };
-            _window = VeldridStartup.CreateWindow(ref wci);
-            _window.Resized += () =>
-            {
-                _windowResized = true;
-                OnWindowResized();
-            };
-            _window.MouseMove += OnMouseMove;
-            _window.KeyDown += OnKeyDown;
-
-            GraphicsDeviceOptions options = new GraphicsDeviceOptions(false, PixelFormat.R16_UNorm, true);
-#if DEBUG
-            options.Debug = true;
-#endif
-            _gd = VeldridStartup.CreateGraphicsDevice(_window, options);
+            Window = window;
+            Window.Resized += HandleWindowResize;
+            Window.GraphicsDeviceCreated += OnGraphicsDeviceCreated;
+            Window.Rendering += Draw;
         }
 
-        protected virtual void OnMouseMove(MouseMoveEventArgs mouseMoveEvent)
+        private void OnGraphicsDeviceCreated(GraphicsDevice gd, ResourceFactory factory)
         {
-        }
-
-        protected virtual void OnKeyDown(KeyEvent keyEvent)
-        {
+            GraphicsDevice = gd;
+            CreateResources(factory);
         }
 
         protected virtual string GetTitle() => GetType().Name;
-
-        public void Run()
-        {
-            _factory = new DisposeCollectorResourceFactory(_gd.ResourceFactory);
-            CreateResources(_factory);
-
-            Stopwatch sw = Stopwatch.StartNew();
-            double previousElapsed = sw.Elapsed.TotalSeconds;
-
-            while (_window.Exists)
-            {
-                double newElapsed = sw.Elapsed.TotalSeconds;
-                float deltaSeconds = (float)(newElapsed - previousElapsed);
-
-                InputSnapshot inputSnapshot = _window.PumpEvents();
-                InputTracker.UpdateFrameInput(inputSnapshot);
-
-                if (_window.Exists)
-                {
-                    previousElapsed = newElapsed;
-                    if (_windowResized)
-                    {
-                        _gd.ResizeMainWindow((uint)_window.Width, (uint)_window.Height);
-                        HandleWindowResize();
-                    }
-
-                    Draw(deltaSeconds);
-                }
-            }
-
-            _gd.WaitForIdle();
-            _factory.DisposeCollector.DisposeAll();
-            _gd.Dispose();
-        }
 
         protected abstract void CreateResources(ResourceFactory factory);
 
         protected abstract void Draw(float deltaSeconds);
 
-        protected virtual void OnWindowResized() { }
-
         protected virtual void HandleWindowResize() { }
 
-        public static Shader LoadShader(ResourceFactory factory, string set, ShaderStages stage, string entryPoint)
+        public Stream OpenEmbeddedAssetStream(string name) => GetType().Assembly.GetManifestResourceStream(name);
+
+        public Shader LoadShader(ResourceFactory factory, string set, ShaderStages stage, string entryPoint)
         {
-            string path = Path.Combine(
-                AppContext.BaseDirectory,
-                "Shaders",
-                $"{set}-{stage.ToString().ToLower()}.{GetExtension(factory.BackendType)}");
-            return factory.CreateShader(new ShaderDescription(stage, File.ReadAllBytes(path), entryPoint));
+            string name = $"{set}-{stage.ToString().ToLower()}.{GetExtension(factory.BackendType)}";
+            using (Stream shaderStream = OpenEmbeddedAssetStream(name))
+            {
+                byte[] bytes = new byte[shaderStream.Length];
+                using (MemoryStream ms = new MemoryStream(bytes))
+                {
+                    shaderStream.CopyTo(ms);
+                    return factory.CreateShader(new ShaderDescription(stage, bytes, entryPoint));
+                }
+            }
         }
 
         private static string GetExtension(GraphicsBackend backendType)
@@ -110,7 +55,9 @@ namespace SampleBase
                     ? "450.glsl.spv"
                     : (backendType == GraphicsBackend.Metal)
                         ? "metallib"
-                        : "330.glsl";
+                        : (backendType == GraphicsBackend.OpenGL)
+                            ? "330.glsl"
+                            : "300.glsles";
         }
     }
 }

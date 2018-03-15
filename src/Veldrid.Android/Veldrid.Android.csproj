@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Veldrid" Version="4.2.0-g5dd99bc961" />
+    <PackageReference Include="Veldrid.MetalBindings" Version="4.2.0-g5dd99bc961" />
+    <PackageReference Include="Veldrid.OpenGLBindings" Version="4.2.0-g5dd99bc961" />
+  </ItemGroup>
+
+</Project>

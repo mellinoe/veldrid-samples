@@ -60,7 +60,7 @@ namespace AnimatedMesh
                 Matrix4x4.CreateTranslation(0, 15000, -5000)
                 * Matrix4x4.CreateRotationX(3 * MathF.PI / 2)
                 * Matrix4x4.CreateScale(0.05f);
-            _gd.UpdateBuffer(_worldBuffer, 0, ref worldMatrix);
+            GraphicsDevice.UpdateBuffer(_worldBuffer, 0, ref worldMatrix);
 
             Shader vs = LoadShader(factory, "Animated", ShaderStages.Vertex, "VS");
             Shader fs = LoadShader(factory, "Animated", ShaderStages.Fragment, "FS");
@@ -74,7 +74,7 @@ namespace AnimatedMesh
                 new ResourceLayoutElementDescription("SurfaceSampler", ResourceKind.Sampler, ShaderStages.Fragment)));
 
             Texture texture = KtxFile.LoadTexture(
-                _gd,
+                GraphicsDevice,
                 factory,
                 GetAssetPath("textures/goblin_bc3_unorm.ktx"),
                 PixelFormat.BC3_UNorm);
@@ -96,7 +96,7 @@ namespace AnimatedMesh
                 PrimitiveTopology.TriangleList,
                 new ShaderSetDescription(new[] { vertexLayouts }, new[] { vs, fs }),
                 layout,
-                _gd.SwapchainFramebuffer.OutputDescription);
+                GraphicsDevice.SwapchainFramebuffer.OutputDescription);
             _pipeline = factory.CreateGraphicsPipeline(ref gpd);
 
             const string monsterAssetPath = "models/goblin.dae";
@@ -141,17 +141,17 @@ namespace AnimatedMesh
                 64 * 64, BufferUsage.UniformBuffer | BufferUsage.Dynamic));
 
             _rs = factory.CreateResourceSet(new ResourceSetDescription(layout,
-                _projectionBuffer, _viewBuffer, _worldBuffer, _bonesBuffer, _texView, _gd.Aniso4xSampler));
+                _projectionBuffer, _viewBuffer, _worldBuffer, _bonesBuffer, _texView, GraphicsDevice.Aniso4xSampler));
 
             _indexCount = (uint)indices.Count;
 
             _vertexBuffer = _factory.CreateBuffer(new BufferDescription(
                 (uint)(vertices.Length * Unsafe.SizeOf<AnimatedVertex>()), BufferUsage.VertexBuffer));
-            _gd.UpdateBuffer(_vertexBuffer, 0, vertices);
+            GraphicsDevice.UpdateBuffer(_vertexBuffer, 0, vertices);
 
             _indexBuffer = _factory.CreateBuffer(new BufferDescription(
                 _indexCount * 4, BufferUsage.IndexBuffer));
-            _gd.UpdateBuffer(_indexBuffer, 0, indices.ToArray());
+            GraphicsDevice.UpdateBuffer(_indexBuffer, 0, indices.ToArray());
 
             _cl = factory.CreateCommandList();
             _camera = new Camera(_window.Width, _window.Height);
@@ -165,7 +165,7 @@ namespace AnimatedMesh
             UpdateAnimation(deltaSeconds);
             UpdateUniforms();
             _cl.Begin();
-            _cl.SetFramebuffer(_gd.SwapchainFramebuffer);
+            _cl.SetFramebuffer(GraphicsDevice.SwapchainFramebuffer);
             _cl.ClearColorTarget(0, RgbaFloat.Black);
             _cl.ClearDepthStencil(1f);
             _cl.SetPipeline(_pipeline);
@@ -174,8 +174,8 @@ namespace AnimatedMesh
             _cl.SetIndexBuffer(_indexBuffer, IndexFormat.UInt32);
             _cl.DrawIndexed(_indexCount);
             _cl.End();
-            _gd.SubmitCommands(_cl);
-            _gd.SwapBuffers();
+            GraphicsDevice.SubmitCommands(_cl);
+            GraphicsDevice.SwapBuffers();
         }
 
         private void UpdateAnimation(float deltaSeconds)
@@ -194,7 +194,7 @@ namespace AnimatedMesh
                 _boneAnimInfo.BonesTransformations[i] = _boneTransformations[i].ToSystemMatrixTransposed();
             }
 
-            _gd.UpdateBuffer(_bonesBuffer, 0, _boneAnimInfo.GetBlittable());
+            GraphicsDevice.UpdateBuffer(_bonesBuffer, 0, _boneAnimInfo.GetBlittable());
         }
 
         private void UpdateChannel(double time, Node node, aiMatrix4x4 parentTransform)
@@ -361,8 +361,8 @@ namespace AnimatedMesh
         private void UpdateUniforms()
         {
             _camera.Update(1f / 60f);
-            _gd.UpdateBuffer(_projectionBuffer, 0, _camera.ProjectionMatrix);
-            _gd.UpdateBuffer(_viewBuffer, 0, _camera.ViewMatrix);
+            GraphicsDevice.UpdateBuffer(_projectionBuffer, 0, _camera.ProjectionMatrix);
+            GraphicsDevice.UpdateBuffer(_viewBuffer, 0, _camera.ViewMatrix);
         }
     }
 }

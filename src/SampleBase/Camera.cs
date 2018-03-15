@@ -102,10 +102,19 @@ namespace SampleBase
             {
                 Yaw += -mouseDelta.X * 0.01f;
                 Pitch += -mouseDelta.Y * 0.01f;
-                Pitch = Math.Clamp(Pitch, -1.55f, 1.55f);
+                Pitch = Clamp(Pitch, -1.55f, 1.55f);
 
                 UpdateViewMatrix();
             }
+        }
+
+        private float Clamp(float value, float min, float max)
+        {
+            return value > max
+                ? max
+                : value < min
+                    ? min
+                    : value;
         }
 
         public void WindowResized(float width, float height)

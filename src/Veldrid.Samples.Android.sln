@@ -1,0 +1,57 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27428.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Veldrid.Android", "Veldrid.Android\Veldrid.Android.csproj", "{AC8420D5-F302-4A5D-9193-E274F241F092}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "TexturedCube", "TexturedCube", "{7FD3C556-92BC-4048-9C71-824ABC7E3B7F}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SampleBase", "SampleBase\SampleBase.csproj", "{6A6CA600-065B-4068-9230-CB6DA729E59F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SampleBase.Android", "SampleBase.Android\SampleBase.Android.csproj", "{4ACF152F-F65D-4C45-A7EB-B1EC1C5D95D9}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TexturedCube", "TexturedCube\Application\TexturedCube.csproj", "{7F0EB4C6-F7F4-42D5-AB69-B6AAEDECA5EE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TexturedCube.Android", "TexturedCube\Android\TexturedCube.Android.csproj", "{4ADD2589-5227-46CD-8E5C-9C54FA7005C4}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{AC8420D5-F302-4A5D-9193-E274F241F092}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AC8420D5-F302-4A5D-9193-E274F241F092}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AC8420D5-F302-4A5D-9193-E274F241F092}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AC8420D5-F302-4A5D-9193-E274F241F092}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6A6CA600-065B-4068-9230-CB6DA729E59F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6A6CA600-065B-4068-9230-CB6DA729E59F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6A6CA600-065B-4068-9230-CB6DA729E59F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6A6CA600-065B-4068-9230-CB6DA729E59F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4ACF152F-F65D-4C45-A7EB-B1EC1C5D95D9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4ACF152F-F65D-4C45-A7EB-B1EC1C5D95D9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4ACF152F-F65D-4C45-A7EB-B1EC1C5D95D9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4ACF152F-F65D-4C45-A7EB-B1EC1C5D95D9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7F0EB4C6-F7F4-42D5-AB69-B6AAEDECA5EE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7F0EB4C6-F7F4-42D5-AB69-B6AAEDECA5EE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7F0EB4C6-F7F4-42D5-AB69-B6AAEDECA5EE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7F0EB4C6-F7F4-42D5-AB69-B6AAEDECA5EE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4ADD2589-5227-46CD-8E5C-9C54FA7005C4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4ADD2589-5227-46CD-8E5C-9C54FA7005C4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4ADD2589-5227-46CD-8E5C-9C54FA7005C4}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{4ADD2589-5227-46CD-8E5C-9C54FA7005C4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4ADD2589-5227-46CD-8E5C-9C54FA7005C4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4ADD2589-5227-46CD-8E5C-9C54FA7005C4}.Release|Any CPU.Deploy.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{7F0EB4C6-F7F4-42D5-AB69-B6AAEDECA5EE} = {7FD3C556-92BC-4048-9C71-824ABC7E3B7F}
+		{4ADD2589-5227-46CD-8E5C-9C54FA7005C4} = {7FD3C556-92BC-4048-9C71-824ABC7E3B7F}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {183F40B6-274D-474E-A885-53F5B82F5399}
+	EndGlobalSection
+EndGlobal

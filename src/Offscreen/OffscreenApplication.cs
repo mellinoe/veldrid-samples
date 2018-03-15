@@ -52,7 +52,7 @@ namespace Offscreen
 
             _planeModel = new Model();
             _planeModel.LoadFromFile(
-                _gd,
+                GraphicsDevice,
                 factory,
                 GetAssetPath("models/plane2.dae"),
                 _vertexLayout,
@@ -60,14 +60,14 @@ namespace Offscreen
 
             _dragonModel = new Model();
             _dragonModel.LoadFromFile(
-                _gd,
+                GraphicsDevice,
                 factory,
                 GetAssetPath("models/chinesedragon.dae"),
                 _vertexLayout,
                 new Model.ModelCreateInfo(new Vector3(0.3f, -0.3f, 0.3f), Vector2.One, Vector3.Zero));
 
             _colorMap = KtxFile.LoadTexture(
-                _gd,
+                GraphicsDevice,
                 factory,
                 GetAssetPath("textures/darkmetal_bc3_unorm.ktx"),
                 PixelFormat.BC3_UNorm);
@@ -102,7 +102,7 @@ namespace Offscreen
                 _offscreenFB.OutputDescription);
             _offscreenPipeline = factory.CreateGraphicsPipeline(pd);
 
-            pd.Outputs = _gd.SwapchainFramebuffer.OutputDescription;
+            pd.Outputs = GraphicsDevice.SwapchainFramebuffer.OutputDescription;
             pd.RasterizerState = RasterizerStateDescription.Default;
             _dragonPipeline = factory.CreateGraphicsPipeline(pd);
 
@@ -128,7 +128,7 @@ namespace Offscreen
                 PrimitiveTopology.TriangleList,
                 mirrorShaders,
                 mirrorLayout,
-                _gd.SwapchainFramebuffer.OutputDescription);
+                GraphicsDevice.SwapchainFramebuffer.OutputDescription);
             _mirrorPipeline = factory.CreateGraphicsPipeline(ref mirrorPD);
 
             _uniformBuffers_vsShared = factory.CreateBuffer(new BufferDescription(208, BufferUsage.UniformBuffer | BufferUsage.Dynamic));
@@ -140,9 +140,9 @@ namespace Offscreen
             _mirrorResourceSet = factory.CreateResourceSet(new ResourceSetDescription(mirrorLayout,
                 _uniformBuffers_vsMirror,
                 _offscreenView,
-                _gd.LinearSampler,
+                GraphicsDevice.LinearSampler,
                 _colorView,
-                _gd.Aniso4xSampler));
+                GraphicsDevice.Aniso4xSampler));
 
             _cl = factory.CreateCommandList();
         }
@@ -166,8 +166,8 @@ namespace Offscreen
             DrawOffscreen();
             DrawMain();
             _cl.End();
-            _gd.SubmitCommands(_cl);
-            _gd.SwapBuffers();
+            GraphicsDevice.SubmitCommands(_cl);
+            GraphicsDevice.SwapBuffers();
         }
 
         private void DrawOffscreen()
@@ -186,7 +186,7 @@ namespace Offscreen
 
         private void DrawMain()
         {
-            _cl.SetFramebuffer(_gd.SwapchainFramebuffer);
+            _cl.SetFramebuffer(GraphicsDevice.SwapchainFramebuffer);
             _cl.SetFullViewports();
             _cl.ClearColorTarget(0, RgbaFloat.Black);
             _cl.ClearDepthStencil(1f);
@@ -227,11 +227,11 @@ namespace Offscreen
             ui.Model = Matrix4x4.CreateRotationY(DegreesToRadians(_dragonRotation.Y)) * ui.Model;
             ui.Model = Matrix4x4.CreateTranslation(_dragonPos) * ui.Model;
 
-            _gd.UpdateBuffer(_uniformBuffers_vsShared, 0, ref ui);
+            GraphicsDevice.UpdateBuffer(_uniformBuffers_vsShared, 0, ref ui);
 
             // Mirror
             ui.Model = Matrix4x4.Identity;
-            _gd.UpdateBuffer(_uniformBuffers_vsMirror, 0, ref ui);
+            GraphicsDevice.UpdateBuffer(_uniformBuffers_vsMirror, 0, ref ui);
         }
 
         private void UpdateUniformBufferOffscreen()
@@ -253,7 +253,7 @@ namespace Offscreen
             ui.Model = Matrix4x4.CreateScale(new Vector3(1, -1, 1)) * ui.Model;
             ui.Model = Matrix4x4.CreateTranslation(_dragonPos) * ui.Model;
 
-            _gd.UpdateBuffer(_uniformBuffers_vsOffScreen, 0, ref ui);
+            GraphicsDevice.UpdateBuffer(_uniformBuffers_vsOffScreen, 0, ref ui);
         }
 
         private static string GetAssetPath(string name)
