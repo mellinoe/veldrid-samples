@@ -1,0 +1,185 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">iPhoneSimulator</Platform>
+    <ProjectGuid>{59F506C0-8862-44BD-A1B7-C9941F1C2EC0}</ProjectGuid>
+    <ProjectTypeGuids>{FEACFBD2-3405-455C-9665-78FE426C6842};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>TexturedCube.iOS</RootNamespace>
+    <AssemblyName>TexturedCube.iOS</AssemblyName>
+    <IPhoneResourcePrefix>Resources</IPhoneResourcePrefix>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|iPhoneSimulator' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\iPhoneSimulator\Debug</OutputPath>
+    <DefineConstants>DEBUG;ENABLE_TEST_CLOUD;</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <CodesignKey>iPhone Developer</CodesignKey>
+    <MtouchDebug>true</MtouchDebug>
+    <MtouchNoSymbolStrip>true</MtouchNoSymbolStrip>
+    <MtouchFastDev>true</MtouchFastDev>
+    <IOSDebuggerPort>26366</IOSDebuggerPort>
+    <MtouchLink>None</MtouchLink>
+    <MtouchArch>x86_64</MtouchArch>
+    <MtouchHttpClientHandler>HttpClientHandler</MtouchHttpClientHandler>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|iPhone' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\iPhone\Release</OutputPath>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <CodesignKey>iPhone Developer</CodesignKey>
+    <MtouchFloat32>true</MtouchFloat32>
+    <CodesignEntitlements>Entitlements.plist</CodesignEntitlements>
+    <MtouchLink>SdkOnly</MtouchLink>
+    <MtouchArch>ARM64</MtouchArch>
+    <MtouchHttpClientHandler>HttpClientHandler</MtouchHttpClientHandler>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|iPhoneSimulator' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\iPhoneSimulator\Release</OutputPath>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <CodesignKey>iPhone Developer</CodesignKey>
+    <MtouchNoSymbolStrip>true</MtouchNoSymbolStrip>
+    <MtouchLink>None</MtouchLink>
+    <MtouchArch>x86_64</MtouchArch>
+    <MtouchHttpClientHandler>HttpClientHandler</MtouchHttpClientHandler>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|iPhone' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\iPhone\Debug</OutputPath>
+    <DefineConstants>DEBUG;ENABLE_TEST_CLOUD;</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <CodesignKey>iPhone Developer</CodesignKey>
+    <DeviceSpecificBuild>true</DeviceSpecificBuild>
+    <MtouchDebug>true</MtouchDebug>
+    <MtouchNoSymbolStrip>true</MtouchNoSymbolStrip>
+    <MtouchFastDev>true</MtouchFastDev>
+    <MtouchFloat32>true</MtouchFloat32>
+    <CodesignEntitlements>Entitlements.plist</CodesignEntitlements>
+    <IOSDebuggerPort>57343</IOSDebuggerPort>
+    <MtouchLink>SdkOnly</MtouchLink>
+    <MtouchArch>ARM64</MtouchArch>
+    <MtouchHttpClientHandler>HttpClientHandler</MtouchHttpClientHandler>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Core" />
+    <Reference Include="Xamarin.iOS" />
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>..\..\packages\Newtonsoft.Json.9.0.1\lib\portable-net45+wp80+win8+wpa81\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Buffers">
+      <HintPath>..\..\packages\System.Buffers.4.4.0\lib\netstandard2.0\System.Buffers.dll</HintPath>
+    </Reference>
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Runtime.CompilerServices.Unsafe">
+      <HintPath>..\..\packages\System.Runtime.CompilerServices.Unsafe.4.5.0-preview1-26216-02\lib\netstandard2.0\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Memory">
+      <HintPath>..\..\packages\System.Memory.4.5.0-preview1-26216-02\lib\netstandard2.0\System.Memory.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.DotNet.PlatformAbstractions">
+      <HintPath>..\..\packages\Microsoft.DotNet.PlatformAbstractions.2.0.3\lib\netstandard1.3\Microsoft.DotNet.PlatformAbstractions.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.DependencyModel">
+      <HintPath>..\..\packages\Microsoft.Extensions.DependencyModel.2.0.3\lib\netstandard1.6\Microsoft.Extensions.DependencyModel.dll</HintPath>
+    </Reference>
+    <Reference Include="NativeLibraryLoader">
+      <HintPath>..\..\packages\NativeLibraryLoader.1.0.8\lib\netstandard2.0\NativeLibraryLoader.dll</HintPath>
+    </Reference>
+    <Reference Include="SharpDX">
+      <HintPath>..\..\packages\SharpDX.4.0.1\lib\netstandard1.1\SharpDX.dll</HintPath>
+    </Reference>
+    <Reference Include="SharpDX.D3DCompiler">
+      <HintPath>..\..\packages\SharpDX.D3DCompiler.4.0.1\lib\netstandard1.1\SharpDX.D3DCompiler.dll</HintPath>
+    </Reference>
+    <Reference Include="SharpDX.DXGI">
+      <HintPath>..\..\packages\SharpDX.DXGI.4.0.1\lib\netstandard1.1\SharpDX.DXGI.dll</HintPath>
+    </Reference>
+    <Reference Include="SharpDX.Direct3D11">
+      <HintPath>..\..\packages\SharpDX.Direct3D11.4.0.1\lib\netstandard1.1\SharpDX.Direct3D11.dll</HintPath>
+    </Reference>
+    <Reference Include="vk">
+      <HintPath>..\..\packages\Vk.1.0.17\lib\netstandard1.4\vk.dll</HintPath>
+    </Reference>
+    <Reference Include="Veldrid.Utilities">
+      <HintPath>..\..\packages\Veldrid.Utilities.4.2.0-beta1-gdfef8fe723\lib\netstandard2.0\Veldrid.Utilities.dll</HintPath>
+    </Reference>
+    <Reference Include="ShaderGen.Primitives">
+      <HintPath>..\..\packages\ShaderGen.Primitives.1.2.0-gf5792ed443\lib\netstandard2.0\ShaderGen.Primitives.dll</HintPath>
+    </Reference>
+    <Reference Include="Veldrid.SDL2">
+      <HintPath>..\..\packages\Veldrid.SDL2.4.2.0-gff17370fb3\lib\netstandard2.0\Veldrid.SDL2.dll</HintPath>
+    </Reference>
+    <Reference Include="Veldrid">
+      <HintPath>..\..\packages\Veldrid.4.2.0-beta1-gdfef8fe723\lib\netstandard2.0\Veldrid.dll</HintPath>
+    </Reference>
+    <Reference Include="Veldrid.StartupUtilities">
+      <HintPath>..\..\packages\Veldrid.StartupUtilities.4.2.0-gf539020a4c\lib\netstandard2.0\Veldrid.StartupUtilities.dll</HintPath>
+    </Reference>
+    <Reference Include="Veldrid.MetalBindings">
+      <HintPath>..\..\packages\Veldrid.MetalBindings.4.2.0-beta1-gdfef8fe723\lib\netstandard2.0\Veldrid.MetalBindings.dll</HintPath>
+    </Reference>
+    <Reference Include="Veldrid.OpenGLBindings">
+      <HintPath>..\..\packages\Veldrid.OpenGLBindings.4.2.0-beta1-gdfef8fe723\lib\netstandard2.0\Veldrid.OpenGLBindings.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <ImageAsset Include="Assets.xcassets\AppIcon.appiconset\Contents.json">
+      <Visible>false</Visible>
+    </ImageAsset>
+    <ImageAsset Include="Assets.xcassets\Contents.json">
+      <Visible>false</Visible>
+    </ImageAsset>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Resources\" />
+  </ItemGroup>
+  <ItemGroup>
+    <InterfaceDefinition Include="LaunchScreen.storyboard" />
+    <InterfaceDefinition Include="Main.storyboard" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Info.plist" />
+    <None Include="Entitlements.plist" />
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Main.cs" />
+    <Compile Include="AppDelegate.cs" />
+    <Compile Include="ViewController.cs" />
+    <Compile Include="ViewController.designer.cs">
+      <DependentUpon>ViewController.cs</DependentUpon>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\SampleBase.iOS\SampleBase.iOS.csproj">
+      <Project>{f3f8be66-acf7-4d18-918c-a1d182e7c137}</Project>
+      <Name>SampleBase.iOS</Name>
+      <IsAppExtension>false</IsAppExtension>
+      <IsWatchApp>false</IsWatchApp>
+    </ProjectReference>
+    <ProjectReference Include="..\..\SampleBase\SampleBase.csproj">
+      <Project>{7af8692a-b52b-438c-a980-3b6bbcf15da8}</Project>
+      <Name>SampleBase</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Application\TexturedCube.csproj">
+      <Project>{eaff7e6a-4805-456d-9e2b-6897296aa46c}</Project>
+      <Name>TexturedCube</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildExtensionsPath)\Xamarin\iOS\Xamarin.iOS.CSharp.targets" />
+</Project>

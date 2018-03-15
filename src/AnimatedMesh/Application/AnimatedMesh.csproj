@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <ShaderOutputPath>$(BaseIntermediateOutputPath)Shaders</ShaderOutputPath>
+    <ShaderContentIncludePath>Shaders</ShaderContentIncludePath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="$(SrcDir)\Common\Model.cs" Link="Model.cs" />
+    <Compile Include="$(SrcDir)\Common\RawList.cs" Link="RawList.cs" />
+    <EmbeddedResource Include="$(SamplesAssetsDir)\models\goblin.dae">
+      <LogicalName>goblin.dae</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="$(SamplesAssetsDir)\textures\goblin_bc3_unorm.ktx">
+      <LogicalName>goblin_bc3_unorm.ktx</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="$(SrcDir)\SampleBase\SampleBase.csproj" />
+    <PackageReference Include="ShaderGen.Primitives" Version="$(ShaderGenVersion)" />
+    <PackageReference Include="ShaderGen.Build" Version="$(ShaderGenVersion)" PrivateAssets="All" />
+    <PackageReference Include="AssimpNet-netstandard" Version="3.3.1" />
+  </ItemGroup>
+
+  <Target Name="IncludeGeneratedShaderEmbeddedResource" AfterTargets="AssignTargetPaths" Condition="'$(ShaderContentIncludePath)' != ''">
+    <ItemGroup>
+      <EmbeddedResource Include="@(GeneratedShader)">
+        <LogicalName>%(FileName)%(Extension)</LogicalName>
+      </EmbeddedResource>
+    </ItemGroup>
+  </Target>
+
+</Project>

@@ -1,119 +1,125 @@
-﻿using System;
-using System.Diagnostics;
+﻿using AssetPrimitives;
+using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Runtime.InteropServices;
 using Veldrid;
-using Veldrid.Sdl2;
-using Veldrid.StartupUtilities;
-using Veldrid.Utilities;
 
 namespace SampleBase
 {
     public abstract class SampleApplication
     {
-        protected readonly Sdl2Window _window;
-        protected readonly GraphicsDevice _gd;
+        private readonly Dictionary<Type, BinaryAssetSerializer> _serializers = DefaultSerializers.Get();
+
         protected Camera _camera;
-        protected DisposeCollectorResourceFactory _factory;
-        private bool _windowResized;
 
-        public SampleApplication()
+        public ApplicationWindow Window { get; }
+        public GraphicsDevice GraphicsDevice { get; private set; }
+        public ResourceFactory ResourceFactory { get; private set; }
+        public Swapchain MainSwapchain { get; private set; }
+
+        public SampleApplication(ApplicationWindow window)
         {
-            WindowCreateInfo wci = new WindowCreateInfo
-            {
-                X = 100,
-                Y = 100,
-                WindowWidth = 1280,
-                WindowHeight = 720,
-                WindowTitle = GetTitle(),
-            };
-            _window = VeldridStartup.CreateWindow(ref wci);
-            _window.Resized += () =>
-            {
-                _windowResized = true;
-                OnWindowResized();
-            };
-            _window.MouseMove += OnMouseMove;
-            _window.KeyDown += OnKeyDown;
+            Window = window;
+            Window.Resized += HandleWindowResize;
+            Window.GraphicsDeviceCreated += OnGraphicsDeviceCreated;
+            Window.GraphicsDeviceDestroyed += OnDeviceDestroyed;
+            Window.Rendering += PreDraw;
+            Window.Rendering += Draw;
+            Window.KeyPressed += OnKeyDown;
 
-            GraphicsDeviceOptions options = new GraphicsDeviceOptions(false, PixelFormat.R16_UNorm, false);
-#if DEBUG
-            options.Debug = true;
-#endif
-            _gd = VeldridStartup.CreateGraphicsDevice(_window, options);
+            _camera = new Camera(Window.Width, Window.Height);
         }
 
-        protected virtual void OnMouseMove(MouseMoveEventArgs mouseMoveEvent)
+        public void OnGraphicsDeviceCreated(GraphicsDevice gd, ResourceFactory factory, Swapchain sc)
         {
+            GraphicsDevice = gd;
+            ResourceFactory = factory;
+            MainSwapchain = sc;
+            CreateResources(factory);
+            CreateSwapchainResources(factory);
         }
 
-        protected virtual void OnKeyDown(KeyEvent keyEvent)
+        protected virtual void OnDeviceDestroyed()
         {
+            GraphicsDevice = null;
+            ResourceFactory = null;
+            MainSwapchain = null;
         }
 
         protected virtual string GetTitle() => GetType().Name;
 
-        public void Run()
-        {
-            _camera = new Camera(_window.Width, _window.Height);
-            _factory = new DisposeCollectorResourceFactory(_gd.ResourceFactory);
-            CreateResources(_factory);
-
-            Stopwatch sw = Stopwatch.StartNew();
-            double previousElapsed = sw.Elapsed.TotalSeconds;
-
-            while (_window.Exists)
-            {
-                double newElapsed = sw.Elapsed.TotalSeconds;
-                float deltaSeconds = (float)(newElapsed - previousElapsed);
-
-                InputSnapshot inputSnapshot = _window.PumpEvents();
-                InputTracker.UpdateFrameInput(inputSnapshot);
-
-                if (_window.Exists)
-                {
-                    previousElapsed = newElapsed;
-                    if (_windowResized)
-                    {
-                        _gd.ResizeMainWindow((uint)_window.Width, (uint)_window.Height);
-                        HandleWindowResize();
-                    }
-
-                    _camera.Update(deltaSeconds);
-                    Draw(deltaSeconds);
-                }
-            }
-
-            _gd.WaitForIdle();
-            _factory.DisposeCollector.DisposeAll();
-            _gd.Dispose();
-        }
-
         protected abstract void CreateResources(ResourceFactory factory);
+
+        protected virtual void CreateSwapchainResources(ResourceFactory factory) { }
+
+        private void PreDraw(float deltaSeconds)
+        {
+            _camera.Update(deltaSeconds);
+        }
 
         protected abstract void Draw(float deltaSeconds);
 
-        protected virtual void OnWindowResized() { }
-
-        protected virtual void HandleWindowResize() { }
-
-        public static Shader LoadShader(ResourceFactory factory, string set, ShaderStages stage, string entryPoint)
+        protected virtual void HandleWindowResize()
         {
-            string path = Path.Combine(
-                AppContext.BaseDirectory,
-                "Shaders",
-                $"{set}-{stage.ToString().ToLower()}.{GetExtension(factory.BackendType)}");
-            return factory.CreateShader(new ShaderDescription(stage, File.ReadAllBytes(path), entryPoint));
+            _camera.WindowResized(Window.Width, Window.Height);
+        }
+
+        protected virtual void OnKeyDown(KeyEvent ke) { }
+
+        public Stream OpenEmbeddedAssetStream(string name) => GetType().Assembly.GetManifestResourceStream(name);
+
+        public Shader LoadShader(ResourceFactory factory, string set, ShaderStages stage, string entryPoint)
+        {
+            string name = $"{set}-{stage.ToString().ToLower()}.{GetExtension(factory.BackendType)}";
+            return factory.CreateShader(new ShaderDescription(stage, ReadEmbeddedAssetBytes(name), entryPoint));
+        }
+
+        public byte[] ReadEmbeddedAssetBytes(string name)
+        {
+            using (Stream stream = OpenEmbeddedAssetStream(name))
+            {
+                byte[] bytes = new byte[stream.Length];
+                using (MemoryStream ms = new MemoryStream(bytes))
+                {
+                    stream.CopyTo(ms);
+                    return bytes;
+                }
+            }
         }
 
         private static string GetExtension(GraphicsBackend backendType)
         {
+			bool isMacOS = RuntimeInformation.OSDescription.Contains("Darwin");
+
             return (backendType == GraphicsBackend.Direct3D11)
                 ? "hlsl.bytes"
                 : (backendType == GraphicsBackend.Vulkan)
                     ? "450.glsl.spv"
                     : (backendType == GraphicsBackend.Metal)
-                        ? "metallib"
-                        : "330.glsl";
+					    ? isMacOS ? "metallib" : "ios.metallib"
+                        : (backendType == GraphicsBackend.OpenGL)
+                            ? "330.glsl"
+                            : "300.glsles";
+        }
+
+        public T LoadEmbeddedAsset<T>(string name)
+        {
+            if (!_serializers.TryGetValue(typeof(T), out BinaryAssetSerializer serializer))
+            {
+                throw new InvalidOperationException("No serializer registered for type " + typeof(T).Name);
+            }
+
+            using (Stream stream = GetType().Assembly.GetManifestResourceStream(name))
+            {
+                if (stream == null)
+                {
+                    throw new InvalidOperationException("No embedded asset with the name " + name);
+                }
+
+                BinaryReader reader = new BinaryReader(stream);
+                return (T)serializer.Read(reader);
+            }
         }
     }
 }

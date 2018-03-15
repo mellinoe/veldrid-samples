@@ -1,0 +1,14 @@
+#version 300 es
+
+uniform sampler2D Tex;
+uniform sampler2D Tex11;
+uniform sampler2D Tex22;
+
+in mediump vec2 fsin_TexCoords;
+out mediump vec4 OutColor;
+
+void main()
+{
+
+    OutColor = texture(Tex, fsin_TexCoords) + texture(Tex11, fsin_TexCoords) * .01f + texture(Tex22, fsin_TexCoords) * .01f;
+}

@@ -1,5 +1,6 @@
-﻿using Assimp;
+using Assimp;
 using System;
+using System.IO;
 using System.Numerics;
 using Veldrid;
 
@@ -25,9 +26,37 @@ namespace Common
             ModelCreateInfo? createInfo,
             PostProcessSteps flags = DefaultPostProcessSteps)
         {
+            using (FileStream fs = File.OpenRead(filename))
+            {
+                string extension = Path.GetExtension(filename);
+                Init(gd, factory, fs, extension, layout, createInfo, flags);
+            }
+        }
+
+        public Model(
+            GraphicsDevice gd,
+            ResourceFactory factory,
+            Stream stream,
+            string extension,
+            VertexLayoutDescription layout,
+            ModelCreateInfo? createInfo,
+            PostProcessSteps flags = DefaultPostProcessSteps)
+        {
+            Init(gd, factory, stream, extension, layout, createInfo, flags);
+        }
+
+        private void Init(
+            GraphicsDevice gd,
+            ResourceFactory factory,
+            Stream stream,
+            string extension,
+            VertexLayoutDescription layout,
+            ModelCreateInfo? createInfo,
+            PostProcessSteps flags = DefaultPostProcessSteps)
+        {
             // Load file
             AssimpContext assimpContext = new AssimpContext();
-            Scene pScene = assimpContext.ImportFile(filename, flags);
+            Scene pScene = assimpContext.ImportFileFromStream(stream, DefaultPostProcessSteps, extension);
 
             parts.Clear();
             parts.Count = (uint)pScene.Meshes.Count;

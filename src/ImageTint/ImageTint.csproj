@@ -11,6 +11,15 @@
     <ProjectReference Include="..\SampleBase\SampleBase.csproj" />
     <PackageReference Include="ShaderGen.Primitives" Version="$(ShaderGenVersion)" />
     <PackageReference Include="ShaderGen.Build" Version="$(ShaderGenVersion)" PrivateAssets="All" />
+    <PackageReference Include="Veldrid.ImageSharp" Version="$(VeldridVersion)" />
   </ItemGroup>
+
+  <Target Name="IncludeGeneratedShaderEmbeddedResource" AfterTargets="AssignTargetPaths" Condition="'$(ShaderContentIncludePath)' != ''">
+    <ItemGroup>
+      <EmbeddedResource Include="@(GeneratedShader)">
+        <LogicalName>%(FileName)%(Extension)</LogicalName>
+      </EmbeddedResource>
+    </ItemGroup>
+  </Target>
 
 </Project>

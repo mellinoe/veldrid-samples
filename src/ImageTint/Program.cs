@@ -1,6 +1,8 @@
 ﻿using SampleBase;
 using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 using System;
+using System.IO;
 using System.Numerics;
 using Veldrid;
 using Veldrid.ImageSharp;
@@ -39,7 +41,7 @@ namespace ImageTint
                 {
                     WindowInitialState = WindowState.Hidden,
                 },
-                new GraphicsDeviceOptions(),
+                new GraphicsDeviceOptions() { ResourceBindingModel = ResourceBindingModel.Improved },
                 out Sdl2Window window,
                 out GraphicsDevice gd);
 
@@ -78,8 +80,8 @@ namespace ImageTint
                 },
                 new[]
                 {
-                    SampleApplication.LoadShader(factory, "TintShader", ShaderStages.Vertex, "VS"),
-                    SampleApplication.LoadShader(factory, "TintShader", ShaderStages.Fragment, "FS")
+                    LoadShader(factory, "TintShader", ShaderStages.Vertex, "VS"),
+                    LoadShader(factory, "TintShader", ShaderStages.Fragment, "FS")
                 });
 
             ResourceLayout layout = factory.CreateResourceLayout(new ResourceLayoutDescription(
@@ -162,6 +164,40 @@ namespace ImageTint
             gd.Dispose();
             window.Close();
             return 0;
+        }
+
+        public static Stream OpenEmbeddedAssetStream(string name, Type t) => t.Assembly.GetManifestResourceStream(name);
+
+        public static Shader LoadShader(ResourceFactory factory, string set, ShaderStages stage, string entryPoint)
+        {
+            string name = $"{set}-{stage.ToString().ToLower()}.{GetExtension(factory.BackendType)}";
+            return factory.CreateShader(new ShaderDescription(stage, ReadEmbeddedAssetBytes(name), entryPoint));
+        }
+
+        public static byte[] ReadEmbeddedAssetBytes(string name)
+        {
+            using (Stream stream = OpenEmbeddedAssetStream(name, typeof(Program)))
+            {
+                byte[] bytes = new byte[stream.Length];
+                using (MemoryStream ms = new MemoryStream(bytes))
+                {
+                    stream.CopyTo(ms);
+                    return bytes;
+                }
+            }
+        }
+
+        private static string GetExtension(GraphicsBackend backendType)
+        {
+            return (backendType == GraphicsBackend.Direct3D11)
+                ? "hlsl.bytes"
+                : (backendType == GraphicsBackend.Vulkan)
+                    ? "450.glsl.spv"
+                    : (backendType == GraphicsBackend.Metal)
+                        ? "ios.metallib"
+                        : (backendType == GraphicsBackend.OpenGL)
+                            ? "330.glsl"
+                            : "300.glsles";
         }
     }
 

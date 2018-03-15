@@ -24,6 +24,14 @@ namespace SampleBase
             Mipmaps = mipmaps;
         }
 
+        public static KtxFile Load(byte[] bytes, bool readKeyValuePairs)
+        {
+            using (MemoryStream ms = new MemoryStream(bytes))
+            {
+                return Load(ms, readKeyValuePairs);
+            }
+        }
+
         public static KtxFile Load(Stream s, bool readKeyValuePairs)
         {
             using (BinaryReader br = new BinaryReader(s))
@@ -153,14 +161,35 @@ namespace SampleBase
         public static unsafe Texture LoadTexture(
             GraphicsDevice gd,
             ResourceFactory factory,
+            byte[] bytes,
+            PixelFormat format)
+        {
+            using (MemoryStream ms = new MemoryStream(bytes))
+            {
+                return LoadTexture(gd, factory, ms, format);
+            }
+        }
+
+
+        public static unsafe Texture LoadTexture(
+            GraphicsDevice gd,
+            ResourceFactory factory,
             string assetPath,
             PixelFormat format)
         {
-            KtxFile ktxTex2D;
             using (FileStream fs = File.OpenRead(assetPath))
             {
-                ktxTex2D = Load(fs, false);
+                return LoadTexture(gd, factory, fs, format);
             }
+        }
+
+        public static unsafe Texture LoadTexture(
+            GraphicsDevice gd,
+            ResourceFactory factory,
+            Stream assetStream,
+            PixelFormat format)
+        {
+            KtxFile ktxTex2D = Load(assetStream, false);
 
             uint width = ktxTex2D.Header.PixelWidth;
             uint height = ktxTex2D.Header.PixelHeight;

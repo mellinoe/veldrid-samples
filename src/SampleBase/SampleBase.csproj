@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.0</TargetFramework>
+    <TargetFramework>netstandard2.0</TargetFramework>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
@@ -9,7 +9,10 @@
     <PackageReference Include="Veldrid" Version="$(VeldridVersion)" />
     <PackageReference Include="Veldrid.StartupUtilities" Version="$(VeldridVersion)" />
     <PackageReference Include="Veldrid.Utilities" Version="$(VeldridVersion)" />
-    <PackageReference Include="Veldrid.ImageSharp" Version="$(VeldridVersion)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AssetPrimitives\AssetPrimitives.csproj" />
   </ItemGroup>
 
 </Project>
