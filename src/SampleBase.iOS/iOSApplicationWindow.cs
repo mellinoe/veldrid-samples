@@ -1,23 +1,32 @@
-﻿using System;
+﻿using CoreAnimation;
+using Foundation;
+using System;
 using UIKit;
 using Veldrid;
 
 namespace SampleBase.iOS
 {
-    public class UIViewApplicationWindow : ApplicationWindow
+    public class UIViewApplicationWindow : UIViewController, ApplicationWindow
     {
-        private readonly UIView _view;
         private readonly GraphicsDeviceOptions _options;
+        private readonly GraphicsBackend _backend;
         private GraphicsDevice _gd;
+        private CADisplayLink _timer;
+        private Swapchain _sc;
 
-        public UIViewApplicationWindow(UIView view, GraphicsDeviceOptions options)
+        public UIViewApplicationWindow(GraphicsDeviceOptions options, GraphicsBackend backend)
         {
-            _view = view;
+            if (backend != GraphicsBackend.Metal && backend != GraphicsBackend.Vulkan && backend != GraphicsBackend.OpenGLES)
+            {
+                throw new VeldridException($"{backend} is not supported in a UIViewApplicationWindow.");
+            }
+
             _options = options;
+            _backend = backend;
         }
 
-        public uint Width => (uint)_view.Frame.Width;
-        public uint Height => (uint)_view.Frame.Height;
+        public uint Width => (uint)View.Frame.Width;
+        public uint Height => (uint)View.Frame.Width;
 
         public event Action<float> Rendering;
         public event Action<GraphicsDevice, ResourceFactory, Swapchain> GraphicsDeviceCreated;
@@ -26,15 +35,51 @@ namespace SampleBase.iOS
 
         public void Run()
         {
-            SwapchainSource scSource = SwapchainSource.CreateUIView(_view.Handle);
-            SwapchainDescription scDesc = new SwapchainDescription(
-                scSource,
-                Width,
-                Height,
-                _options.SwapchainDepthFormat,
-                _options.SyncToVerticalBlank);
-            _gd = GraphicsDevice.CreateMetal(_options, scDesc);
-            GraphicsDeviceCreated?.Invoke(_gd, _gd.ResourceFactory, _gd.MainSwapchain);
+            _timer = CADisplayLink.Create(Render);
+            _timer.FrameInterval = 1;
+            _timer.AddToRunLoop(NSRunLoop.Main, NSRunLoop.NSDefaultRunLoopMode);
+        }
+
+        private void Render()
+        {
+            float elapsed = (float)(_timer.TargetTimestamp - _timer.Timestamp);
+            Rendering?.Invoke(elapsed);
+        }
+
+        public override void ViewDidLoad()
+        {
+            base.ViewDidLoad();
+
+            if (_backend == GraphicsBackend.Metal)
+            {
+                _gd = GraphicsDevice.CreateMetal(new GraphicsDeviceOptions(true));
+            }
+            else if (_backend == GraphicsBackend.Vulkan)
+            {
+                throw new NotImplementedException();
+            }
+            else if (_backend == GraphicsBackend.OpenGLES)
+            {
+                throw new NotImplementedException();
+            }
+
+            SwapchainSource ss = SwapchainSource.CreateUIView(this.View.Handle);
+            _sc = _gd.ResourceFactory.CreateSwapchain(new SwapchainDescription(
+                ss,
+                (uint)View.Frame.Width,
+                (uint)View.Frame.Height,
+                PixelFormat.R32_Float,
+                false));
+
+            GraphicsDeviceCreated?.Invoke(_gd, _gd.ResourceFactory, _sc);
+        }
+
+        // Called whenever view changes orientation or layout is changed
+        public override void ViewDidLayoutSubviews()
+        {
+            base.ViewDidLayoutSubviews();
+            _sc.Resize((uint)View.Frame.Width, (uint)View.Frame.Height);
+            Resized?.Invoke();
         }
     }
 }
