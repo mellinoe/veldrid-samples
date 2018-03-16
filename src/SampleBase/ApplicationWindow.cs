@@ -6,7 +6,8 @@ namespace SampleBase
     public interface ApplicationWindow
     {
         event Action<float> Rendering;
-        event Action<GraphicsDevice, ResourceFactory> GraphicsDeviceCreated;
+        event Action<GraphicsDevice, ResourceFactory, Swapchain> GraphicsDeviceCreated;
+        event Action<Swapchain> SwapchainChanged;
         event Action Resized;
 
         uint Width { get; }

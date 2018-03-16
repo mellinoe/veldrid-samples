@@ -16,7 +16,8 @@ namespace SampleBase
         private bool _windowResized = true;
 
         public event Action<float> Rendering;
-        public event Action<GraphicsDevice, ResourceFactory> GraphicsDeviceCreated;
+        public event Action<GraphicsDevice, ResourceFactory, Swapchain> GraphicsDeviceCreated;
+        public event Action<Swapchain> SwapchainChanged;
         public event Action Resized;
 
         public uint Width => (uint)_window.Width;
@@ -49,7 +50,7 @@ namespace SampleBase
 #endif
             _gd = VeldridStartup.CreateGraphicsDevice(_window, options);
             _factory = new DisposeCollectorResourceFactory(_gd.ResourceFactory);
-            GraphicsDeviceCreated?.Invoke(_gd, _factory);
+            GraphicsDeviceCreated?.Invoke(_gd, _factory, _gd.MainSwapchain);
 
             Stopwatch sw = Stopwatch.StartNew();
             double previousElapsed = sw.Elapsed.TotalSeconds;

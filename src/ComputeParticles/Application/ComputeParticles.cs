@@ -7,7 +7,7 @@ using Veldrid;
 
 namespace ComputeParticles
 {
-    internal class ComputeParticles : SampleApplication
+    public class ComputeParticles : SampleApplication
     {
         public const int ParticleCount = 1024;
 
@@ -23,6 +23,11 @@ namespace ComputeParticles
         private ResourceSet _screenSizeResourceSet;
         private ResourceSet _computeScreenSizeResourceSet;
         private ResourceSet _computeResourceSet;
+        private bool _initialized;
+
+        public ComputeParticles(ApplicationWindow window) : base(window)
+        {
+        }
 
         protected override void CreateResources(ResourceFactory factory)
         {
@@ -36,7 +41,7 @@ namespace ComputeParticles
 
             _computeShader = factory.CreateShader(new ShaderDescription(
                 ShaderStages.Compute,
-                File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "Shaders", $"Compute.{GetExtension(factory.BackendType)}")),
+                ReadEmbeddedAssetBytes($"Compute.{GetExtension(factory.BackendType)}"),
                 "CS"));
 
             ResourceLayout particleStorageLayout = factory.CreateResourceLayout(new ResourceLayoutDescription(
@@ -57,11 +62,11 @@ namespace ComputeParticles
 
             _vertexShader = factory.CreateShader(new ShaderDescription(
                 ShaderStages.Vertex,
-                File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "Shaders", $"Vertex.{GetExtension(factory.BackendType)}")),
+                ReadEmbeddedAssetBytes($"Vertex.{GetExtension(factory.BackendType)}"),
                 "VS"));
             _fragmentShader = factory.CreateShader(new ShaderDescription(
                 ShaderStages.Fragment,
-                File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "Shaders", $"Fragment.{GetExtension(factory.BackendType)}")),
+                ReadEmbeddedAssetBytes($"Fragment.{GetExtension(factory.BackendType)}"),
                 "FS"));
 
             ShaderSetDescription shaderSet = new ShaderSetDescription(
@@ -85,7 +90,7 @@ namespace ComputeParticles
                 PrimitiveTopology.PointList,
                 shaderSet,
                 new[] { particleStorageLayout, screenSizeLayout },
-                GraphicsDevice.SwapchainFramebuffer.OutputDescription);
+                MainSwapchain.Framebuffer.OutputDescription);
 
             _graphicsPipeline = factory.CreateGraphicsPipeline(ref particleDrawPipelineDesc);
 
@@ -100,30 +105,31 @@ namespace ComputeParticles
             _cl = factory.CreateCommandList();
 
             InitResources(factory);
+            _initialized = true;
         }
 
-        private object GetExtension(GraphicsBackend backendType)
+        private string GetExtension(GraphicsBackend backendType)
         {
             return backendType == GraphicsBackend.Direct3D11 ? "hlsl.bytes"
                 : backendType == GraphicsBackend.Vulkan ? "spv"
-                    : backendType == GraphicsBackend.Metal
-                        ? "metal"
-                        : "430.glsl";
+                    : backendType == GraphicsBackend.Metal ? "metal"
+                        : backendType == GraphicsBackend.OpenGL ? "430.glsl"
+                            : "300.glsles";
         }
 
         private void InitResources(ResourceFactory factory)
         {
             _cl.Begin();
-            _cl.UpdateBuffer(_screenSizeBuffer, 0, new Vector4(_window.Width, _window.Height, 0, 0));
+            _cl.UpdateBuffer(_screenSizeBuffer, 0, new Vector4(Window.Width, Window.Height, 0, 0));
 
             ParticleInfo[] initialParticles = new ParticleInfo[ParticleCount];
             Random r = new Random();
             for (int i = 0; i < ParticleCount; i++)
             {
-                ParticleInfo pi = new ParticleInfo();
-                pi.Position = new Vector2((float)(r.NextDouble() * _window.Width), (float)(r.NextDouble() * _window.Height));
-                pi.Velocity = new Vector2((float)(r.NextDouble() * 3), (float)(r.NextDouble() * 3));
-                pi.Color = new Vector4(0.4f + (float)r.NextDouble() * .6f, 0.4f + (float)r.NextDouble() * .6f, 0.4f + (float)r.NextDouble() * .6f, 1);
+                ParticleInfo pi = new ParticleInfo(
+                    new Vector2((float)(r.NextDouble() * Window.Width), (float)(r.NextDouble() * Window.Height)),
+                    new Vector2((float)(r.NextDouble() * 3), (float)(r.NextDouble() * 3)),
+                    new Vector4(0.4f + (float)r.NextDouble() * .6f, 0.4f + (float)r.NextDouble() * .6f, 0.4f + (float)r.NextDouble() * .6f, 1));
                 initialParticles[i] = pi;
             }
             _cl.UpdateBuffer(_particleBuffer, 0, initialParticles);
@@ -135,11 +141,13 @@ namespace ComputeParticles
 
         protected override void HandleWindowResize()
         {
-            GraphicsDevice.UpdateBuffer(_screenSizeBuffer, 0, new Vector4(_window.Width, _window.Height, 0, 0));
+            GraphicsDevice.UpdateBuffer(_screenSizeBuffer, 0, new Vector4(Window.Width, Window.Height, 0, 0));
         }
 
         protected override void Draw(float deltaSeconds)
         {
+            if (!_initialized) { return; }
+
             _cl.Begin();
 
             _cl.SetPipeline(_computePipeline);
@@ -147,7 +155,7 @@ namespace ComputeParticles
             _cl.SetComputeResourceSet(1, _computeScreenSizeResourceSet);
             _cl.Dispatch(1024, 1, 1);
 
-            _cl.SetFramebuffer(GraphicsDevice.SwapchainFramebuffer);
+            _cl.SetFramebuffer(MainSwapchain.Framebuffer);
             _cl.SetFullViewports();
             _cl.SetFullScissorRects();
             _cl.ClearColorTarget(0, RgbaFloat.Black);
@@ -158,20 +166,40 @@ namespace ComputeParticles
             _cl.End();
 
             GraphicsDevice.SubmitCommands(_cl);
-            GraphicsDevice.SwapBuffers();
+            GraphicsDevice.SwapBuffers(MainSwapchain);
         }
     }
 
     struct ParticleInfo
     {
-        public Vector2 Position;
-        public Vector2 Velocity;
-        public Vector4 Color;
+        // TODO: REVERT ALL OF THIS WHEN MONO IS FIXED.
+
+        //public Vector2 Position;
+        public float PositionX;
+        public float PositionY;
+
+        //public Vector2 Velocity;
+        public float VelocityX;
+        public float VelocityY;
+
+        //public Vector4 Color;
+        public float ColorX;
+        public float ColorY;
+        public float ColorZ;
+        public float ColorW;
+
         public ParticleInfo(Vector2 position, Vector2 velocity, Vector4 color)
         {
-            Position = position;
-            Velocity = velocity;
-            Color = color;
+            PositionX = position.X;
+            PositionY = position.Y;
+
+            VelocityX = velocity.X;
+            VelocityY = velocity.Y;
+
+            ColorX = color.X;
+            ColorY = color.Y;
+            ColorZ = color.Z;
+            ColorW = color.W;
         }
     }
 }

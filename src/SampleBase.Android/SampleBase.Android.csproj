@@ -48,7 +48,9 @@
     <Compile Include="AndroidApplicationWindow.cs" />
     <Compile Include="Resources\Resource.Designer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="VeldridView.cs" />
+    <Compile Include="VeldridSurfaceView.cs" />
+    <Compile Include="VeldridGLESView.cs" />
+    <Compile Include="VeldridVulkanView.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />
@@ -78,17 +80,15 @@
     </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\Android\Xamarin.Android.CSharp.targets" />
-
   <!-- Workaround for https://github.com/xamarin/xamarin-android/issues/1162 -->
   <Target Name="ReplaceRefAssemblies" AfterTargets="_ResolveAssemblies">
     <ItemGroup>
-      <ResolvedAssembliesFixedWindows Include="@(ResolvedAssemblies->Replace('\ref\','\lib\'))" />
-      <ResolvedAssembliesFixedUnix Include="@(ResolvedAssemblies->Replace('/ref/','/lib/'))" />
+      <ResolvedAssembliesFixedWindows Include="@(ResolvedAssemblies-&gt;Replace('\ref\','\lib\'))" />
+      <ResolvedAssembliesFixedUnix Include="@(ResolvedAssemblies-&gt;Replace('/ref/','/lib/'))" />
       <ResolvedAssembliesFixed Include="@(ResolvedAssembliesFixedWindows)" Condition="@(ResolvedAssembliesFixedWindows) != @(ResolvedAssemblies)" />
       <ResolvedAssembliesFixed Include="@(ResolvedAssembliesFixedUnix)" Condition="@(ResolvedAssembliesFixedUnix) != @(ResolvedAssemblies)" />
       <ResolvedAssemblies Remove="@(ResolvedAssemblies)" />
       <ResolvedAssemblies Include="@(ResolvedAssembliesFixed)" />
     </ItemGroup>
   </Target>
-
 </Project>

@@ -2,41 +2,45 @@
 using System.Diagnostics;
 using Android.Content;
 using Veldrid;
-using Veldrid.Utilities;
 
 namespace SampleBase.Android
 {
-    public class AndroidApplicationWindow : VeldridView, ApplicationWindow
+    public class AndroidApplicationWindow : ApplicationWindow
     {
         // This is supposed to be a DisposeCollectorResourceFactory but it crashes mono
         private ResourceFactory _disposeFactory;
         private readonly Stopwatch _sw;
         private double _previousSeconds;
+        private VeldridSurfaceView _view;
 
-        public event Action<GraphicsDevice, ResourceFactory> GraphicsDeviceCreated;
+        public event Action<GraphicsDevice, ResourceFactory, Swapchain> GraphicsDeviceCreated;
+        public event Action<Swapchain> SwapchainChanged;
 
-        uint ApplicationWindow.Width => (uint)Width;
-        uint ApplicationWindow.Height => (uint)Height;
+        public uint Width => (uint)_view.Width;
+        public uint Height => (uint)_view.Height;
 
-        private Action<float> _appRendering;
+        public event Action<float> Rendering;
+        public event Action Resized;
 
-        event Action<float> ApplicationWindow.Rendering
+        public AndroidApplicationWindow(Context context, VeldridSurfaceView view)
         {
-            add => _appRendering += value;
-            remove => _appRendering -= value;
-        }
+            _view = view;
+            _view.Rendering += OnViewRendering;
+            _view.DeviceCreated += OnViewCreatedDevice;
+            _view.SwapchainChanged += OnViewSwapchainChanged;
+            _view.Resized += OnViewResized;
 
-        public AndroidApplicationWindow(Context context, GraphicsDeviceOptions options) : base(context, options)
-        {
-            Rendering += OnViewRendering;
-            DeviceCreated += OnViewCreatedDevice;
             _sw = Stopwatch.StartNew();
         }
 
+        private void OnViewSwapchainChanged() => SwapchainChanged?.Invoke(_view.MainSwapchain);
+
+        private void OnViewResized() => Resized?.Invoke();
+
         private void OnViewCreatedDevice()
         {
-            _disposeFactory = GraphicsDevice.ResourceFactory;
-            GraphicsDeviceCreated?.Invoke(GraphicsDevice, _disposeFactory);
+            _disposeFactory = _view.GraphicsDevice.ResourceFactory;
+            GraphicsDeviceCreated?.Invoke(_view.GraphicsDevice, _disposeFactory, _view.MainSwapchain);
         }
 
         private void OnViewRendering()
@@ -44,12 +48,12 @@ namespace SampleBase.Android
             double newSeconds = _sw.Elapsed.TotalSeconds;
             double deltaSeconds = newSeconds - _previousSeconds;
             _previousSeconds = newSeconds;
-            _appRendering?.Invoke((float)deltaSeconds);
+            Rendering?.Invoke((float)deltaSeconds);
         }
 
         public void Run()
         {
-            RunContinuousRenderLoop();
+            _view.RunContinuousRenderLoop();
         }
     }
 }

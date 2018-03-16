@@ -1,0 +1,11 @@
+#version 300 es
+
+in vec2 Position;
+in vec2 TexCoords;
+out vec2 fsin_TexCoords;
+
+void main()
+{
+    fsin_TexCoords = TexCoords;
+    gl_Position = vec4(Position, 0.f, 1.f);
+}

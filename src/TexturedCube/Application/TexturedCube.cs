@@ -11,6 +11,9 @@ namespace TexturedCube
 {
     public class TexturedCube : SampleApplication
     {
+        private readonly ImageSharpTexture _stoneISTexture;
+        private readonly VertexPositionTexture[] _vertices;
+        private readonly ushort[] _indices;
         private DeviceBuffer _projectionBuffer;
         private DeviceBuffer _viewBuffer;
         private DeviceBuffer _worldBuffer;
@@ -23,38 +26,34 @@ namespace TexturedCube
         private ResourceSet _projViewSet;
         private ResourceSet _worldTextureSet;
         private float _ticks;
+        private bool _initialized;
 
-        public TexturedCube(ApplicationWindow window) : base(window) { }
-
-        protected override void CreateResources(ResourceFactory factory)
+        public TexturedCube(ApplicationWindow window) : base(window)
         {
-            _cl = factory.CreateCommandList();
-            _cl.Begin();
-            _projectionBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
-            _viewBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
-            _worldBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
-
-            VertexPositionTexture[] vertices = GetCubeVertices();
-            _vertexBuffer = factory.CreateBuffer(new BufferDescription((uint)(VertexPositionTexture.SizeInBytes * vertices.Length), BufferUsage.VertexBuffer));
-            _cl.UpdateBuffer(_vertexBuffer, 0, vertices);
-
-            ushort[] indices = GetCubeIndices();
-            _indexBuffer = factory.CreateBuffer(new BufferDescription(sizeof(ushort) * (uint)indices.Length, BufferUsage.IndexBuffer));
-            _cl.UpdateBuffer(_indexBuffer, 0, indices);
-
             Image<Rgba32> image;
             using (Stream s = OpenEmbeddedAssetStream("spnza_bricks_a_diff.png"))
             {
                 image = Image.Load(s);
             }
+            _stoneISTexture = new ImageSharpTexture(image);
+            _vertices = GetCubeVertices();
+            _indices = GetCubeIndices();
+        }
 
-            ImageSharpTexture stoneImage = new ImageSharpTexture(image);
-            _surfaceTexture = stoneImage.CreateDeviceTexture(GraphicsDevice, factory);
+        protected override void CreateResources(ResourceFactory factory)
+        {
+            _projectionBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
+            _viewBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
+            _worldBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
+
+            _vertexBuffer = factory.CreateBuffer(new BufferDescription((uint)(VertexPositionTexture.SizeInBytes * _vertices.Length), BufferUsage.VertexBuffer));
+            GraphicsDevice.UpdateBuffer(_vertexBuffer, 0, _vertices);
+
+            _indexBuffer = factory.CreateBuffer(new BufferDescription(sizeof(ushort) * (uint)_indices.Length, BufferUsage.IndexBuffer));
+            GraphicsDevice.UpdateBuffer(_indexBuffer, 0, _indices);
+
+            _surfaceTexture = _stoneISTexture.CreateDeviceTexture(GraphicsDevice, factory);
             _surfaceTextureView = factory.CreateTextureView(_surfaceTexture);
-
-            _cl.End();
-            GraphicsDevice.SubmitCommands(_cl);
-            GraphicsDevice.WaitForIdle();
 
             ShaderSetDescription shaderSet = new ShaderSetDescription(
                 new[]
@@ -87,7 +86,7 @@ namespace TexturedCube
                 PrimitiveTopology.TriangleList,
                 shaderSet,
                 new[] { projViewLayout, worldTextureLayout },
-                GraphicsDevice.SwapchainFramebuffer.OutputDescription));
+                MainSwapchain.Framebuffer.OutputDescription));
 
             _projViewSet = factory.CreateResourceSet(new ResourceSetDescription(
                 projViewLayout,
@@ -99,10 +98,14 @@ namespace TexturedCube
                 _worldBuffer,
                 _surfaceTextureView,
                 GraphicsDevice.Aniso4xSampler));
+
+            _cl = factory.CreateCommandList();
+            _initialized = true;
         }
 
         protected override void Draw(float deltaSeconds)
         {
+            if (!_initialized) return;
             _ticks += deltaSeconds * 1000f;
             _cl.Begin();
 
@@ -119,8 +122,7 @@ namespace TexturedCube
                 * Matrix4x4.CreateFromAxisAngle(Vector3.UnitX, (_ticks / 3000f));
             _cl.UpdateBuffer(_worldBuffer, 0, ref rotation);
 
-            _cl.SetFramebuffer(GraphicsDevice.SwapchainFramebuffer);
-            _cl.SetFullViewports();
+            _cl.SetFramebuffer(MainSwapchain.Framebuffer);
             _cl.ClearColorTarget(0, RgbaFloat.Black);
             _cl.ClearDepthStencil(1f);
             _cl.SetPipeline(_pipeline);
@@ -132,7 +134,8 @@ namespace TexturedCube
 
             _cl.End();
             GraphicsDevice.SubmitCommands(_cl);
-            GraphicsDevice.SwapBuffers();
+            GraphicsDevice.SwapBuffers(MainSwapchain);
+            GraphicsDevice.WaitForIdle();
         }
 
         private static VertexPositionTexture[] GetCubeVertices()

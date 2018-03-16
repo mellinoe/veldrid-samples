@@ -6,7 +6,7 @@ using Veldrid;
 
 namespace ComputeTexture
 {
-    internal class ComputeTexture : SampleApplication
+    public class ComputeTexture : SampleApplication
     {
         private DeviceBuffer _screenSizeBuffer;
         private DeviceBuffer _shiftBuffer;
@@ -26,6 +26,9 @@ namespace ComputeTexture
         private TextureView _computeTargetTextureView;
         private ResourceLayout _graphicsLayout;
         private float _ticks;
+        private bool _initialized;
+
+        public ComputeTexture(ApplicationWindow window) : base(window) { }
 
         protected override void CreateResources(ResourceFactory factory)
         {
@@ -36,7 +39,7 @@ namespace ComputeTexture
 
             _computeShader = factory.CreateShader(new ShaderDescription(
                 ShaderStages.Compute,
-                File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "Shaders", $"Compute.{GetExtension(factory.BackendType)}")),
+                ReadEmbeddedAssetBytes($"Compute.{GetExtension(factory.BackendType)}"),
                 "CS"));
 
             _computeLayout = factory.CreateResourceLayout(new ResourceLayoutDescription(
@@ -52,11 +55,11 @@ namespace ComputeTexture
 
             _vertexShader = factory.CreateShader(new ShaderDescription(
                 ShaderStages.Vertex,
-                File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "Shaders", $"Vertex.{GetExtension(factory.BackendType)}")),
+                ReadEmbeddedAssetBytes($"Vertex.{GetExtension(factory.BackendType)}"),
                 "VS"));
             _fragmentShader = factory.CreateShader(new ShaderDescription(
                 ShaderStages.Fragment,
-                File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "Shaders", $"Fragment.{GetExtension(factory.BackendType)}")),
+                ReadEmbeddedAssetBytes($"Fragment.{GetExtension(factory.BackendType)}"),
                 "FS"));
 
             ShaderSetDescription shaderSet = new ShaderSetDescription(
@@ -85,7 +88,7 @@ namespace ComputeTexture
                 PrimitiveTopology.TriangleList,
                 shaderSet,
                 new[] { _graphicsLayout },
-                GraphicsDevice.SwapchainFramebuffer.OutputDescription);
+                MainSwapchain.Framebuffer.OutputDescription);
 
             _graphicsPipeline = factory.CreateGraphicsPipeline(ref fullScreenQuadDesc);
 
@@ -93,6 +96,7 @@ namespace ComputeTexture
 
             CreateWindowSizedResources(factory);
             InitResources(factory);
+            _initialized = true;
         }
 
         private void CreateWindowSizedResources(ResourceFactory factory)
@@ -103,8 +107,8 @@ namespace ComputeTexture
             _graphicsResourceSet?.Dispose();
 
             _computeTargetTexture = factory.CreateTexture(TextureDescription.Texture2D(
-                (uint)_window.Width,
-                (uint)_window.Height,
+                Window.Width,
+                Window.Height,
                 1,
                 1,
                 PixelFormat.R32_G32_B32_A32_Float,
@@ -130,15 +134,15 @@ namespace ComputeTexture
         {
             return backendType == GraphicsBackend.Direct3D11 ? "hlsl.bytes"
                 : backendType == GraphicsBackend.Vulkan ? "spv"
-                    : backendType == GraphicsBackend.Metal
-                        ? "metal"
-                        : "430.glsl";
+                    : backendType == GraphicsBackend.Metal ? "metal"
+                        : backendType == GraphicsBackend.OpenGL ? "430.glsl"
+                            : "300.glsles";
         }
 
         private void InitResources(ResourceFactory factory)
         {
             _cl.Begin();
-            _cl.UpdateBuffer(_screenSizeBuffer, 0, new Vector4(_window.Width, _window.Height, 0, 0));
+            _cl.UpdateBuffer(_screenSizeBuffer, 0, new Vector4(Window.Width, Window.Height, 0, 0));
 
             Vector4[] quadVerts =
             {
@@ -160,26 +164,28 @@ namespace ComputeTexture
 
         protected override void HandleWindowResize()
         {
-            GraphicsDevice.UpdateBuffer(_screenSizeBuffer, 0, new Vector4(_window.Width, _window.Height, 0, 0));
-            CreateWindowSizedResources(_factory);
+            GraphicsDevice.UpdateBuffer(_screenSizeBuffer, 0, new Vector4(Window.Width, Window.Height, 0, 0));
+            CreateWindowSizedResources(ResourceFactory);
         }
 
         protected override void Draw(float deltaSeconds)
         {
+            if (!_initialized) { return; }
+
             _cl.Begin();
             _ticks += deltaSeconds * 1000f;
             Vector4 shifts = new Vector4(
-                _window.Width * MathF.Cos(_ticks / 500f), // Red shift
-                _window.Height * MathF.Sin(_ticks / 1250f), // Green shift
-                MathF.Sin(_ticks / 1000f), // Blue shift
+                Window.Width * (float)Math.Cos(_ticks / 500f), // Red shift
+                Window.Height * (float)Math.Sin(_ticks / 1250f), // Green shift
+                (float)Math.Sin(_ticks / 1000f), // Blue shift
                 0); // Padding
             _cl.UpdateBuffer(_shiftBuffer, 0, ref shifts);
 
             _cl.SetPipeline(_computePipeline);
             _cl.SetComputeResourceSet(0, _computeResourceSet);
-            _cl.Dispatch((uint)_window.Width, (uint)_window.Height, 1);
+            _cl.Dispatch((uint)Window.Width, (uint)Window.Height, 1);
 
-            _cl.SetFramebuffer(GraphicsDevice.SwapchainFramebuffer);
+            _cl.SetFramebuffer(MainSwapchain.Framebuffer);
             _cl.SetFullViewports();
             _cl.SetFullScissorRects();
             _cl.ClearColorTarget(0, RgbaFloat.Black);
@@ -191,7 +197,7 @@ namespace ComputeTexture
 
             _cl.End();
             GraphicsDevice.SubmitCommands(_cl);
-            GraphicsDevice.SwapBuffers();
+            GraphicsDevice.SwapBuffers(MainSwapchain);
         }
     }
 

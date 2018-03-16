@@ -4,11 +4,11 @@ using Android.OS;
 using SampleBase.Android;
 using Veldrid;
 
-namespace TexturedCube.Android
+namespace ComputeParticles.Android
 {
     [Activity(
         MainLauncher = true,
-        Label = "TexturedCube.Android",
+        Label = "ComputeParticles.Android",
         ConfigurationChanges = ConfigChanges.KeyboardHidden | ConfigChanges.Orientation | ConfigChanges.ScreenSize
         )]
     public class MainActivity : Activity
@@ -25,11 +25,11 @@ namespace TexturedCube.Android
 #endif
 
             GraphicsDeviceOptions options = new GraphicsDeviceOptions(debug, PixelFormat.R16_UNorm, false);
-            //_view = new VeldridGLESView(this, options);
-            _view = new VeldridVulkanView(this, options);
+            _view = new VeldridGLESView(this, options);
+            //_view = new VeldridVulkanView(this, options);
             AndroidApplicationWindow window = new AndroidApplicationWindow(this, _view);
             window.GraphicsDeviceCreated += (g, r, s) => window.Run();
-            TexturedCube tc = new TexturedCube(window);
+            ComputeParticles app = new ComputeParticles(window);
             SetContentView(_view);
         }
 
