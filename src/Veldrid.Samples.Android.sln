@@ -29,7 +29,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ComputeTexture", "ComputeTe
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ComputeTexture.Android", "ComputeTexture\Android\ComputeTexture.Android\ComputeTexture.Android.csproj", "{875317C9-E772-4584-9FC1-83560180F927}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TexturedCube.iOS", "TexturedCube.iOS\TexturedCube.iOS.csproj", "{250B0A9E-CBFA-4686-8DE6-1C3D1636744C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TexturedCube.iOS", "TexturedCube\iOS\TexturedCube.iOS.csproj", "{250B0A9E-CBFA-4686-8DE6-1C3D1636744C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
