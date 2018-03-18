@@ -14,6 +14,16 @@ namespace Veldrid.Android
             uint width,
             uint height)
         {
+            IntPtr aNativeWindow = ANativeWindow_fromSurface(jniHandle, surfaceHandle);
+            return CreateOpenGLESGraphicsDevice(options, aNativeWindow, width, height);
+        }
+
+        public static GraphicsDevice CreateOpenGLESGraphicsDevice(
+            GraphicsDeviceOptions options,
+            IntPtr aNativeWindow,
+            uint width,
+            uint height)
+        {
             IntPtr display = eglGetDisplay(0);
             if (display == IntPtr.Zero)
             {
@@ -60,7 +70,6 @@ namespace Veldrid.Android
                 throw new VeldridException("Failed to get the EGLConfig's format: " + eglGetError());
             }
 
-            IntPtr aNativeWindow = ANativeWindow_fromSurface(jniHandle, surfaceHandle);
             ANativeWindow_setBuffersGeometry(aNativeWindow, 0, 0, format);
 
             IntPtr eglWindowSurface = eglCreateWindowSurface(display, bestConfig, aNativeWindow, null);

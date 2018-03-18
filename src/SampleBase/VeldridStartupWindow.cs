@@ -17,6 +17,7 @@ namespace SampleBase
 
         public event Action<float> Rendering;
         public event Action<GraphicsDevice, ResourceFactory, Swapchain> GraphicsDeviceCreated;
+        public event Action GraphicsDeviceDestroyed;
         public event Action<Swapchain> SwapchainChanged;
         public event Action Resized;
 
@@ -48,7 +49,7 @@ namespace SampleBase
 #if DEBUG
             options.Debug = true;
 #endif
-            _gd = VeldridStartup.CreateGraphicsDevice(_window, options);
+            _gd = VeldridStartup.CreateGraphicsDevice(_window, options, GraphicsBackend.OpenGL);
             _factory = new DisposeCollectorResourceFactory(_gd.ResourceFactory);
             GraphicsDeviceCreated?.Invoke(_gd, _factory, _gd.MainSwapchain);
 
@@ -79,6 +80,7 @@ namespace SampleBase
             _gd.WaitForIdle();
             _factory.DisposeCollector.DisposeAll();
             _gd.Dispose();
+            GraphicsDeviceDestroyed?.Invoke();
         }
 
         protected virtual void OnMouseMove(MouseMoveEventArgs mouseMoveEvent)

@@ -6,10 +6,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Veldrid" Version="4.1.0" />
-    <PackageReference Include="Veldrid.StartupUtilities" Version="$(VeldridVersion)" />
-    <PackageReference Include="Veldrid.Utilities" Version="$(VeldridVersion)" />
-    <PackageReference Include="Veldrid.ImageSharp" Version="$(VeldridVersion)" />
+    <PackageReference Include="Veldrid" Version="4.2.0-g5dd99bc961" />
+    <PackageReference Include="Veldrid.OpenGLBindings" Version="4.2.0-g5dd99bc961" />
+    <PackageReference Include="Veldrid.StartupUtilities" Version="4.1.0" />
+    <PackageReference Include="Veldrid.Utilities" Version="4.1.0" />
+    <PackageReference Include="Veldrid.ImageSharp" Version="4.1.0" />
   </ItemGroup>
 
 </Project>

@@ -1,4 +1,5 @@
-﻿using Android.Content;
+﻿using Android.App;
+using Android.Content;
 using Android.Graphics;
 using Android.Runtime;
 using Android.Views;
@@ -6,15 +7,18 @@ using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using Veldrid;
+using Veldrid.Android;
 
 namespace SampleBase.Android
 {
-    public abstract class VeldridSurfaceView : SurfaceView, ISurfaceHolderCallback
+    public class VeldridSurfaceView : SurfaceView, ISurfaceHolderCallback
     {
+        private readonly GraphicsBackend _backend;
         protected GraphicsDeviceOptions DeviceOptions { get; }
         private bool _surfaceDestroyed;
-        private bool _sizeChanged;
         private bool _paused;
+        private Action _endOfFrameAction;
+        private bool _enabled;
 
         public GraphicsDevice GraphicsDevice { get; protected set; }
         public Swapchain MainSwapchain { get; protected set; }
@@ -25,31 +29,71 @@ namespace SampleBase.Android
         public event Action Resized;
         public event Action SwapchainChanged;
 
-        public VeldridSurfaceView(Context context) : base(context)
+        public VeldridSurfaceView(Context context, GraphicsBackend backend)
+            : this(context, backend, new GraphicsDeviceOptions())
         {
-            bool debug = false;
-#if DEBUG
-            debug = true;
-#endif
-            DeviceOptions = new GraphicsDeviceOptions(debug);
-            Holder.AddCallback(this);
         }
 
-        public VeldridSurfaceView(Context context, GraphicsDeviceOptions deviceOptions) : base(context)
+        public VeldridSurfaceView(Context context, GraphicsBackend backend, GraphicsDeviceOptions deviceOptions) : base(context)
         {
+            if (!(backend == GraphicsBackend.Vulkan || backend == GraphicsBackend.OpenGLES))
+            {
+                throw new NotSupportedException($"{backend} is not supported on Android.");
+            }
+
+            _backend = backend;
             DeviceOptions = deviceOptions;
             Holder.AddCallback(this);
         }
 
-        public void SurfaceCreated(ISurfaceHolder holder)
+        public void Disable()
         {
-            HandleSurfaceCreated();
+            _enabled = false;
         }
 
-        protected abstract (GraphicsDevice, Swapchain) CreateGraphicsDevice(
-            IntPtr surfaceHandle,
-            uint width,
-            uint height);
+        public void RunAtEndOfFrame(Action a) { _endOfFrameAction = a; }
+
+        public void SurfaceCreated(ISurfaceHolder holder)
+        {
+            bool deviceCreated = false;
+            if (_backend == GraphicsBackend.Vulkan)
+            {
+                if (GraphicsDevice == null)
+                {
+                    GraphicsDevice = GraphicsDevice.CreateVulkan(DeviceOptions);
+                    deviceCreated = true;
+                }
+
+                Debug.Assert(MainSwapchain == null);
+                IntPtr aNativeWindow = AndroidRuntime.ANativeWindow_fromSurface(JNIEnv.Handle, holder.Surface.Handle);
+                SwapchainSource ss = SwapchainSource.CreateANativeWindow(aNativeWindow);
+                SwapchainDescription sd = new SwapchainDescription(
+                    ss,
+                    (uint)Width,
+                    (uint)Height,
+                    DeviceOptions.SwapchainDepthFormat,
+                    DeviceOptions.SyncToVerticalBlank);
+                MainSwapchain = GraphicsDevice.ResourceFactory.CreateSwapchain(sd);
+            }
+            else
+            {
+                Debug.Assert(GraphicsDevice == null && MainSwapchain == null);
+                GraphicsDevice = AndroidStartup.CreateOpenGLESGraphicsDevice(
+                    DeviceOptions,
+                    holder.Surface.Handle,
+                    JNIEnv.Handle,
+                    (uint)Width,
+                    (uint)Height);
+                MainSwapchain = GraphicsDevice.MainSwapchain;
+                deviceCreated = true;
+            }
+
+            if (deviceCreated)
+            {
+                DeviceCreated?.Invoke();
+            }
+            SwapchainChanged?.Invoke();
+        }
 
         public void RunContinuousRenderLoop()
         {
@@ -63,35 +107,31 @@ namespace SampleBase.Android
 
         public void SurfaceChanged(ISurfaceHolder holder, [GeneratedEnum] Format format, int width, int height)
         {
-            _sizeChanged = true;
+            MainSwapchain.Resize((uint)width, (uint)height);
+            Resized?.Invoke();
         }
 
         private void RenderLoop()
         {
-            while (true)
+            _enabled = true;
+            while (_enabled)
             {
                 try
                 {
-                    if (_paused)
+                    if (_paused) { continue; }
+
+                    if (GraphicsDevice != null)
                     {
-                        continue;
+                        Rendering?.Invoke();
                     }
 
                     if (_surfaceDestroyed)
                     {
-                        _surfaceDestroyed = false;
-                        _sizeChanged = false;
                         HandleSurfaceDestroyed();
                     }
-                    else if (_sizeChanged)
-                    {
-                        _sizeChanged = false;
-                        HandleSizeChanged();
-                    }
-                    else if (GraphicsDevice != null)
-                    {
-                        Rendering?.Invoke();
-                    }
+
+                    _endOfFrameAction?.Invoke();
+                    _endOfFrameAction = null;
                 }
                 catch (Exception e)
                 {
@@ -101,16 +141,20 @@ namespace SampleBase.Android
             }
         }
 
-        protected abstract void HandleSizeChanged();
-
-        protected abstract void HandleSurfaceDestroyed();
-        protected abstract void HandleSurfaceCreated();
-
-        protected override void OnSizeChanged(int w, int h, int oldw, int oldh)
+        private void HandleSurfaceDestroyed()
         {
-            if (GraphicsDevice != null)
+            if (_backend == GraphicsBackend.Vulkan)
             {
-                _sizeChanged = true;
+                MainSwapchain.Dispose();
+                MainSwapchain = null;
+                SwapchainChanged?.Invoke();
+            }
+            else
+            {
+                GraphicsDevice.Dispose();
+                GraphicsDevice = null;
+                MainSwapchain = null;
+                DeviceDisposed?.Invoke();
             }
         }
 
@@ -123,10 +167,5 @@ namespace SampleBase.Android
         {
             _paused = false;
         }
-
-        protected void FireDeviceCreatedEvent() => DeviceCreated?.Invoke();
-        protected void FireResizedEvent() => Resized?.Invoke();
-        protected void FireGraphicsDeviceDisposedEvent() => DeviceDisposed?.Invoke();
-        protected void FireSwapchainChangedEvent() => SwapchainChanged?.Invoke();
     }
 }

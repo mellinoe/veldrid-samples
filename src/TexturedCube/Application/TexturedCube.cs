@@ -5,7 +5,6 @@ using System.IO;
 using System.Numerics;
 using Veldrid;
 using Veldrid.ImageSharp;
-using Veldrid.Utilities;
 
 namespace TexturedCube
 {
@@ -101,6 +100,12 @@ namespace TexturedCube
 
             _cl = factory.CreateCommandList();
             _initialized = true;
+        }
+
+        protected override void OnDeviceDestroyed()
+        {
+            base.OnDeviceDestroyed();
+            _initialized = false;
         }
 
         protected override void Draw(float deltaSeconds)

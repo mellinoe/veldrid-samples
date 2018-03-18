@@ -7,6 +7,7 @@ namespace SampleBase
     {
         event Action<float> Rendering;
         event Action<GraphicsDevice, ResourceFactory, Swapchain> GraphicsDeviceCreated;
+        event Action GraphicsDeviceDestroyed;
         event Action<Swapchain> SwapchainChanged;
         event Action Resized;
 

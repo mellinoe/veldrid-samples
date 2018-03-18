@@ -13,7 +13,10 @@ namespace TexturedCube.Android
         )]
     public class MainActivity : Activity
     {
+        private GraphicsDeviceOptions _options;
         private VeldridSurfaceView _view;
+        private AndroidApplicationWindow _window;
+        private TexturedCube _tc;
 
         protected override void OnCreate(Bundle savedInstanceState)
         {
@@ -24,13 +27,28 @@ namespace TexturedCube.Android
             debug = true;
 #endif
 
-            GraphicsDeviceOptions options = new GraphicsDeviceOptions(debug, PixelFormat.R16_UNorm, false);
-            //_view = new VeldridGLESView(this, options);
-            _view = new VeldridVulkanView(this, options);
-            AndroidApplicationWindow window = new AndroidApplicationWindow(this, _view);
-            window.GraphicsDeviceCreated += (g, r, s) => window.Run();
-            TexturedCube tc = new TexturedCube(window);
+            _options = new GraphicsDeviceOptions(debug, PixelFormat.R16_UNorm, false);
+            _view = new VeldridSurfaceView(this, GraphicsBackend.Vulkan, _options);
+            _window = new AndroidApplicationWindow(this, _view);
+            _window.GraphicsDeviceCreated += (g, r, s) => _window.Run();
+            _tc = new TexturedCube(_window);
             SetContentView(_view);
+        }
+
+        public override void OnBackPressed()
+        {
+            System.Diagnostics.Debug.WriteLine("Back pressed.");
+            VeldridSurfaceView oldView = _view;
+            oldView.RunAtEndOfFrame(() => oldView.Disable());
+            _view = new VeldridSurfaceView(
+                this,
+                oldView.GraphicsDevice.BackendType == GraphicsBackend.Vulkan
+                    ? GraphicsBackend.OpenGLES
+                    : GraphicsBackend.Vulkan,
+                _options);
+            _window.SetView(_view);
+            SetContentView(_view);
+            _view.RunContinuousRenderLoop();
         }
 
         protected override void OnPause()

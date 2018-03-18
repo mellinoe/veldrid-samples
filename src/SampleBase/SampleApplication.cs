@@ -17,17 +17,25 @@ namespace SampleBase
             Window = window;
             Window.Resized += HandleWindowResize;
             Window.GraphicsDeviceCreated += OnGraphicsDeviceCreated;
+            Window.GraphicsDeviceDestroyed += OnDeviceDestroyed;
             Window.SwapchainChanged += OnSwapchainChanged;
             Window.Rendering += Draw;
         }
 
-        private void OnGraphicsDeviceCreated(GraphicsDevice gd, ResourceFactory factory, Swapchain sc)
+        public void OnGraphicsDeviceCreated(GraphicsDevice gd, ResourceFactory factory, Swapchain sc)
         {
             GraphicsDevice = gd;
             ResourceFactory = factory;
             MainSwapchain = sc;
             CreateResources(factory);
             CreateSwapchainResources(factory);
+        }
+
+        protected virtual void OnDeviceDestroyed()
+        {
+            GraphicsDevice = null;
+            ResourceFactory = null;
+            MainSwapchain = null;
         }
 
         private void OnSwapchainChanged(Swapchain sc)

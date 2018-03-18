@@ -14,6 +14,7 @@ namespace SampleBase.Android
         private VeldridSurfaceView _view;
 
         public event Action<GraphicsDevice, ResourceFactory, Swapchain> GraphicsDeviceCreated;
+        public event Action GraphicsDeviceDestroyed;
         public event Action<Swapchain> SwapchainChanged;
 
         public uint Width => (uint)_view.Width;
@@ -24,14 +25,22 @@ namespace SampleBase.Android
 
         public AndroidApplicationWindow(Context context, VeldridSurfaceView view)
         {
+            SetView(view);
+
+            _sw = Stopwatch.StartNew();
+        }
+
+        public void SetView(VeldridSurfaceView view)
+        {
             _view = view;
             _view.Rendering += OnViewRendering;
             _view.DeviceCreated += OnViewCreatedDevice;
             _view.SwapchainChanged += OnViewSwapchainChanged;
             _view.Resized += OnViewResized;
-
-            _sw = Stopwatch.StartNew();
+            _view.DeviceDisposed += OnViewDeviceDisposed;
         }
+
+        private void OnViewDeviceDisposed() => GraphicsDeviceDestroyed?.Invoke();
 
         private void OnViewSwapchainChanged() => SwapchainChanged?.Invoke(_view.MainSwapchain);
 

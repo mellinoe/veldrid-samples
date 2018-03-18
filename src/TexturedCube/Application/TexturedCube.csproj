@@ -6,6 +6,10 @@
     <ShaderContentIncludePath>Shaders</ShaderContentIncludePath>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
   <ItemGroup>
     <EmbeddedResource Include="$(SamplesAssetsDir)\sponza\spnza_bricks_a_diff.png">
       <LogicalName>spnza_bricks_a_diff.png</LogicalName>
