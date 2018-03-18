@@ -16,4 +16,14 @@
     </Content>
   </ItemGroup>
 
+  <ItemGroup>
+    <None Remove="Shaders\Fragment.330.glsl" />
+    <None Remove="Shaders\Vertex.330.glsl" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Shaders\Fragment.330.glsl" />
+    <Content Include="Shaders\Vertex.330.glsl" />
+  </ItemGroup>
+
 </Project>

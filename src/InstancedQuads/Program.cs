@@ -1,19 +1,15 @@
 ﻿using System.IO;
 using System.Numerics;
 using Veldrid;
-using Veldrid.Sdl2;
-using Veldrid.StartupUtilities;
 
 namespace InstancedQuads
 {
     class Program
     {
-
         static void Main(string[] args)
         {
             new InstancingApplication().Run();
         }
-
 
         public static Shader LoadShader(GraphicsDevice gd, ShaderStages stage)
         {
@@ -24,14 +20,14 @@ namespace InstancedQuads
                     extension = "hlsl.bytes";
                     // not implemented
                     throw new System.NotImplementedException();
-                    //break;
+                //break;
                 case GraphicsBackend.Vulkan:
                     extension = "spv";
                     // not implemented
                     throw new System.NotImplementedException();
-                    //break;
+                //break;
                 case GraphicsBackend.OpenGL:
-                    extension = "glsl";
+                    extension = "330.glsl";
                     break;
                 case GraphicsBackend.Metal:
                     extension = "metallib";
@@ -44,7 +40,6 @@ namespace InstancedQuads
             byte[] shaderBytes = File.ReadAllBytes(path);
             return gd.ResourceFactory.CreateShader(new ShaderDescription(stage, shaderBytes, entryPoint));
         }
- 
     }
 
     public struct VertexPositionColour
@@ -58,6 +53,5 @@ namespace InstancedQuads
         }
         // 8 Bytes for Position + 16 Bytes for Colour
         public const uint SizeInBytes = 24;
-        
     }
 }

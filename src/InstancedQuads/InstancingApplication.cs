@@ -1,13 +1,10 @@
-using System.IO;
 using System.Numerics;
 using Veldrid;
-using Veldrid.Sdl2;
-using Veldrid.StartupUtilities;
 using SampleBase;
 
 namespace InstancedQuads
 {
-    class InstancingApplication : SampleApplication 
+    class InstancingApplication : SampleApplication
     {
         private CommandList _commandList;
         private DeviceBuffer _vertexBuffer;
@@ -18,24 +15,23 @@ namespace InstancedQuads
         private Shader _fragmentShader;
         private Pipeline _pipeline;
         private ResourceSet _resourceSet;
-        private ResourceLayout _resourceLayout; 
+        private ResourceLayout _resourceLayout;
 
         protected override void CreateResources(ResourceFactory factory)
         {
-
-            _camera.Position = new Vector3(0,0,10);
+            _camera.Position = new Vector3(0, 0, 10);
             // Setup Uniform Layout, (Opengl) Veldrid expects a single struct per Uniform
             // One Matrix4x4 = 64 Bytes for floats => 128 for 2
-            _cameraProjViewBuffer = factory.CreateBuffer(new BufferDescription(128,BufferUsage.UniformBuffer));
+            _cameraProjViewBuffer = factory.CreateBuffer(new BufferDescription(128, BufferUsage.UniformBuffer));
 
-            ResourceLayoutElementDescription resourceLayoutElementDescription = new ResourceLayoutElementDescription("projView",ResourceKind.UniformBuffer,ShaderStages.Vertex);
-            ResourceLayoutElementDescription[] resourceLayoutElementDescriptions = {resourceLayoutElementDescription};
+            ResourceLayoutElementDescription resourceLayoutElementDescription = new ResourceLayoutElementDescription("projView", ResourceKind.UniformBuffer, ShaderStages.Vertex);
+            ResourceLayoutElementDescription[] resourceLayoutElementDescriptions = { resourceLayoutElementDescription };
             ResourceLayoutDescription resourceLayoutDescription = new ResourceLayoutDescription(resourceLayoutElementDescriptions);
-            BindableResource[] bindableResources = new BindableResource[]{_cameraProjViewBuffer};
+            BindableResource[] bindableResources = new BindableResource[] { _cameraProjViewBuffer };
 
             _resourceLayout = factory.CreateResourceLayout(resourceLayoutDescription);
-            ResourceSetDescription resourceSetDescription = new ResourceSetDescription(_resourceLayout,bindableResources);
-            
+            ResourceSetDescription resourceSetDescription = new ResourceSetDescription(_resourceLayout, bindableResources);
+
             _resourceSet = factory.CreateResourceSet(resourceSetDescription);
 
             VertexPositionColour[] quadVerticies = {
@@ -47,43 +43,44 @@ namespace InstancedQuads
 
             ushort[] quadIndicies = { 0, 1, 2, 3 };
 
-            float[] _xOffset = {-2,2};
+            float[] _xOffset = { -2, 2 };
 
             // declare (VBO) buffers
-            _vertexBuffer 
+            _vertexBuffer
                 = factory.CreateBuffer(new BufferDescription(4 * VertexPositionColour.SizeInBytes, BufferUsage.VertexBuffer));
-            _indexBuffer 
-                = factory.CreateBuffer(new BufferDescription(4*sizeof(ushort),BufferUsage.IndexBuffer));
+            _indexBuffer
+                = factory.CreateBuffer(new BufferDescription(4 * sizeof(ushort), BufferUsage.IndexBuffer));
             _xOffsetBuffer
-                = factory.CreateBuffer(new BufferDescription(2*sizeof(float),BufferUsage.VertexBuffer));
+                = factory.CreateBuffer(new BufferDescription(2 * sizeof(float), BufferUsage.VertexBuffer));
 
             // fill buffers with data
-            _gd.UpdateBuffer(_vertexBuffer,0,quadVerticies);
-            _gd.UpdateBuffer(_indexBuffer,0,quadIndicies);
-            _gd.UpdateBuffer(_xOffsetBuffer,0,_xOffset);
-            _gd.UpdateBuffer(_cameraProjViewBuffer,0,_camera.ViewMatrix);
-            _gd.UpdateBuffer(_cameraProjViewBuffer,64,_camera.ProjectionMatrix);
+            _gd.UpdateBuffer(_vertexBuffer, 0, quadVerticies);
+            _gd.UpdateBuffer(_indexBuffer, 0, quadIndicies);
+            _gd.UpdateBuffer(_xOffsetBuffer, 0, _xOffset);
+            _gd.UpdateBuffer(_cameraProjViewBuffer, 0, _camera.ViewMatrix);
+            _gd.UpdateBuffer(_cameraProjViewBuffer, 64, _camera.ProjectionMatrix);
 
-            VertexLayoutDescription vertexLayout 
+            VertexLayoutDescription vertexLayout
                 = new VertexLayoutDescription(
-                    new VertexElementDescription("Position",VertexElementSemantic.Position,VertexElementFormat.Float2),
-                    new VertexElementDescription("Color",VertexElementSemantic.Color,VertexElementFormat.Float4)
+                    new VertexElementDescription("Position", VertexElementSemantic.Position, VertexElementFormat.Float2),
+                    new VertexElementDescription("Color", VertexElementSemantic.Color, VertexElementFormat.Float4)
                 );
-            
-            VertexElementDescription vertexElementPerInstance
-                = new VertexElementDescription("xOff",VertexElementSemantic.Position,VertexElementFormat.Float1);
 
-            VertexLayoutDescription vertexLayoutPerInstance 
+            VertexElementDescription vertexElementPerInstance
+                = new VertexElementDescription("xOff", VertexElementSemantic.Position, VertexElementFormat.Float1);
+
+            VertexLayoutDescription vertexLayoutPerInstance
                 = new VertexLayoutDescription(
                     stride: 4,
                     instanceStepRate: 1,
-                    elements: new VertexElementDescription[] {vertexElementPerInstance}
+                    elements: new VertexElementDescription[] { vertexElementPerInstance }
                 );
 
             _vertexShader = Program.LoadShader(_gd, ShaderStages.Vertex);
             _fragmentShader = Program.LoadShader(_gd, ShaderStages.Fragment);
 
-            GraphicsPipelineDescription pipelineDescription = new GraphicsPipelineDescription(){
+            GraphicsPipelineDescription pipelineDescription = new GraphicsPipelineDescription()
+            {
                 BlendState = BlendStateDescription.SingleOverrideBlend,
                 DepthStencilState = new DepthStencilStateDescription(
                     depthTestEnabled: true,
@@ -97,11 +94,11 @@ namespace InstancedQuads
                     scissorTestEnabled: false
                 ),
                 PrimitiveTopology = PrimitiveTopology.TriangleStrip,
-                ResourceLayouts = new ResourceLayout[] {_resourceLayout},
+                ResourceLayouts = new ResourceLayout[] { _resourceLayout },
                 ShaderSet = new ShaderSetDescription(
                     // The ordering of layouts directly impacts shader layout schemes
-                    vertexLayouts: new VertexLayoutDescription[] {vertexLayout,vertexLayoutPerInstance},
-                    shaders: new Shader[] {_vertexShader,_fragmentShader}
+                    vertexLayouts: new VertexLayoutDescription[] { vertexLayout, vertexLayoutPerInstance },
+                    shaders: new Shader[] { _vertexShader, _fragmentShader }
                 ),
                 Outputs = _gd.SwapchainFramebuffer.OutputDescription
             };
@@ -111,7 +108,6 @@ namespace InstancedQuads
             _commandList = factory.CreateCommandList();
 
         }
-
 
         protected override void Draw(float delta)
         {
@@ -125,15 +121,15 @@ namespace InstancedQuads
             _commandList.ClearDepthStencil(1f);
             _commandList.SetPipeline(_pipeline);
             // Set uniforms
-            _commandList.SetGraphicsResourceSet(0,_resourceSet); // Always after SetPipeline
+            _commandList.SetGraphicsResourceSet(0, _resourceSet); // Always after SetPipeline
 
-            _commandList.UpdateBuffer(_cameraProjViewBuffer,0,_camera.ViewMatrix);
-            _commandList.UpdateBuffer(_cameraProjViewBuffer,64,_camera.ProjectionMatrix);
+            _commandList.UpdateBuffer(_cameraProjViewBuffer, 0, _camera.ViewMatrix);
+            _commandList.UpdateBuffer(_cameraProjViewBuffer, 64, _camera.ProjectionMatrix);
 
             // Set all relevant state to draw our quad.
-            _commandList.SetVertexBuffer(0,_vertexBuffer);
-            _commandList.SetIndexBuffer(_indexBuffer,IndexFormat.UInt16);
-            _commandList.SetVertexBuffer(1,_xOffsetBuffer);
+            _commandList.SetVertexBuffer(0, _vertexBuffer);
+            _commandList.SetIndexBuffer(_indexBuffer, IndexFormat.UInt16);
+            _commandList.SetVertexBuffer(1, _xOffsetBuffer);
 
             // Issue a Draw command for two instances with 4 indices.
             _commandList.DrawIndexed(
