@@ -29,8 +29,6 @@ namespace AnimatedMesh
         private CommandList _cl;
         private Pipeline _pipeline;
 
-        private Camera _camera;
-
         private Animation _animation;
         private Dictionary<string, uint> _boneIDsByName = new Dictionary<string, uint>();
         private double _previousAnimSeconds = 0;
@@ -154,7 +152,6 @@ namespace AnimatedMesh
             _gd.UpdateBuffer(_indexBuffer, 0, indices.ToArray());
 
             _cl = factory.CreateCommandList();
-            _camera = new Camera(_window.Width, _window.Height);
             _camera.Position = new Vector3(0, 3, 5f);
             _camera.MoveSpeed = 1000f;
             _camera.FarDistance = 100000;

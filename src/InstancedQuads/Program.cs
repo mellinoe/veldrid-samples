@@ -18,14 +18,10 @@ namespace InstancedQuads
             {
                 case GraphicsBackend.Direct3D11:
                     extension = "hlsl.bytes";
-                    // not implemented
-                    throw new System.NotImplementedException();
-                //break;
+                    break;
                 case GraphicsBackend.Vulkan:
                     extension = "spv";
-                    // not implemented
-                    throw new System.NotImplementedException();
-                //break;
+                    break;
                 case GraphicsBackend.OpenGL:
                     extension = "330.glsl";
                     break;

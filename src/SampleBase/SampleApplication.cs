@@ -39,7 +39,7 @@ namespace SampleBase
 #if DEBUG
             options.Debug = true;
 #endif
-            _gd = VeldridStartup.CreateGraphicsDevice(_window,options,GraphicsBackend.OpenGL);
+            _gd = VeldridStartup.CreateGraphicsDevice(_window, options, GraphicsBackend.OpenGL);
         }
 
         protected virtual void OnMouseMove(MouseMoveEventArgs mouseMoveEvent)
@@ -54,7 +54,7 @@ namespace SampleBase
 
         public void Run()
         {
-            _camera = new Camera(_window.Width,_window.Height);
+            _camera = new Camera(_window.Width, _window.Height);
             _factory = new DisposeCollectorResourceFactory(_gd.ResourceFactory);
             CreateResources(_factory);
 

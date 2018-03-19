@@ -23,11 +23,10 @@ struct projView
 vertex PixelInput VS(VertexInput input[[stage_in]],constant projView &pj [[ buffer(2) ]])
 {
     PixelInput output;
-    float2 position = input.Position;
-    position.x += input.xOff;
-    float4 positionCS = pj.Proj*pj.View*float4(position, 5, 1);
-    output.Position = positionCS;
-    float4 Color = input.Color;
-    output.Color = Color;
+
+    float4 offsetPosition = float4(input.Position.x + input.xOff, input.Position.y, 0, 1);
+    output.Position = pj.Proj * pj.View * offsetPosition;
+
+    output.Color = input.Color;
     return output;
 }

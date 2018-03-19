@@ -40,8 +40,7 @@ namespace SampleBase
         public Matrix4x4 ProjectionMatrix => _projectionMatrix;
 
         public Vector3 Position { get => _position; set { _position = value; UpdateViewMatrix(); } }
-        public Vector3 LookDirection => _lookDirection;
-
+        public Vector3 LookDirection { get => _lookDirection; set { _lookDirection = value; UpdateViewMatrix(); } }
 
         public float FarDistance { get => _far; set { _far = value; UpdatePerspectiveMatrix(); } }
         public float FieldOfView => _fov;

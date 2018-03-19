@@ -1,6 +1,7 @@
 using System.Numerics;
 using Veldrid;
 using SampleBase;
+using System.Runtime.CompilerServices;
 
 namespace InstancedQuads
 {
@@ -20,9 +21,9 @@ namespace InstancedQuads
         protected override void CreateResources(ResourceFactory factory)
         {
             _camera.Position = new Vector3(0, 0, 10);
-            // Setup Uniform Layout, (Opengl) Veldrid expects a single struct per Uniform
-            // One Matrix4x4 = 64 Bytes for floats => 128 for 2
-            _cameraProjViewBuffer = factory.CreateBuffer(new BufferDescription(128, BufferUsage.UniformBuffer));
+            _camera.LookDirection = new Vector3(0, 0, -1);
+            _cameraProjViewBuffer = factory.CreateBuffer(
+                new BufferDescription((uint)(Unsafe.SizeOf<Matrix4x4>() * 2), BufferUsage.UniformBuffer | BufferUsage.Dynamic));
 
             ResourceLayoutElementDescription resourceLayoutElementDescription = new ResourceLayoutElementDescription("projView", ResourceKind.UniformBuffer, ShaderStages.Vertex);
             ResourceLayoutElementDescription[] resourceLayoutElementDescriptions = { resourceLayoutElementDescription };
@@ -34,16 +35,17 @@ namespace InstancedQuads
 
             _resourceSet = factory.CreateResourceSet(resourceSetDescription);
 
-            VertexPositionColour[] quadVerticies = {
-                new VertexPositionColour(new Vector2(-1.0f,1.0f),RgbaFloat.Red),
-                new VertexPositionColour(new Vector2(1.0f,1.0f),RgbaFloat.Green),
-                new VertexPositionColour(new Vector2(-1.0f,-1.0f),RgbaFloat.Blue),
-                new VertexPositionColour(new Vector2(1.0f,-1.0f),RgbaFloat.Yellow)
+            VertexPositionColour[] quadVerticies =
+            {
+                new VertexPositionColour(new Vector2(-1.0f, 1.0f), RgbaFloat.Red),
+                new VertexPositionColour(new Vector2(1.0f, 1.0f), RgbaFloat.Green),
+                new VertexPositionColour(new Vector2(-1.0f, -1.0f), RgbaFloat.Blue),
+                new VertexPositionColour(new Vector2(1.0f, -1.0f), RgbaFloat.Yellow)
             };
 
             ushort[] quadIndicies = { 0, 1, 2, 3 };
 
-            float[] _xOffset = { -2, 2 };
+            float[] _xOffset = { -14, -10, -6, -2, 2, 6, 10, 14 };
 
             // declare (VBO) buffers
             _vertexBuffer
@@ -51,14 +53,12 @@ namespace InstancedQuads
             _indexBuffer
                 = factory.CreateBuffer(new BufferDescription(4 * sizeof(ushort), BufferUsage.IndexBuffer));
             _xOffsetBuffer
-                = factory.CreateBuffer(new BufferDescription(2 * sizeof(float), BufferUsage.VertexBuffer));
+                = factory.CreateBuffer(new BufferDescription(8 * sizeof(float), BufferUsage.VertexBuffer));
 
             // fill buffers with data
             _gd.UpdateBuffer(_vertexBuffer, 0, quadVerticies);
             _gd.UpdateBuffer(_indexBuffer, 0, quadIndicies);
             _gd.UpdateBuffer(_xOffsetBuffer, 0, _xOffset);
-            _gd.UpdateBuffer(_cameraProjViewBuffer, 0, _camera.ViewMatrix);
-            _gd.UpdateBuffer(_cameraProjViewBuffer, 64, _camera.ProjectionMatrix);
 
             VertexLayoutDescription vertexLayout
                 = new VertexLayoutDescription(
@@ -123,8 +123,10 @@ namespace InstancedQuads
             // Set uniforms
             _commandList.SetGraphicsResourceSet(0, _resourceSet); // Always after SetPipeline
 
-            _commandList.UpdateBuffer(_cameraProjViewBuffer, 0, _camera.ViewMatrix);
-            _commandList.UpdateBuffer(_cameraProjViewBuffer, 64, _camera.ProjectionMatrix);
+            MappedResourceView<Matrix4x4> writeMap = _gd.Map<Matrix4x4>(_cameraProjViewBuffer, MapMode.Write);
+            writeMap[0] = _camera.ViewMatrix;
+            writeMap[1] = _camera.ProjectionMatrix;
+            _gd.Unmap(_cameraProjViewBuffer);
 
             // Set all relevant state to draw our quad.
             _commandList.SetVertexBuffer(0, _vertexBuffer);
@@ -134,7 +136,7 @@ namespace InstancedQuads
             // Issue a Draw command for two instances with 4 indices.
             _commandList.DrawIndexed(
                 indexCount: 4,
-                instanceCount: 2,
+                instanceCount: 8,
                 indexStart: 0,
                 vertexOffset: 0,
                 instanceStart: 0);

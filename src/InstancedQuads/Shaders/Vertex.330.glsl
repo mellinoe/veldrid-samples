@@ -6,20 +6,16 @@ layout(std140) uniform projView
     mat4 Proj;
 };
 
-layout(location = 0)in vec2 Position;
-layout(location = 1)in vec4 Color;
-layout(location = 2)in float xOff;
+in vec2 Position;
+in vec4 Color;
+in float xOff;
 
-// flat out vec4 fsin_Color; // takes colour from "dominant" vertex
 smooth out vec4 fsin_Color;
-// noperspective out vec4 fsin_Color; // interpolates in screen space
 
 void main()
 {
-    vec2 posOff = vec2(Position.x + xOff,Position.y);
-    vec4 worldPos = vec4(posOff, 5, 1);
-    mat4 viewMatrix = View;
-    mat4 projMatrix = Proj;
-    gl_Position = projMatrix*viewMatrix*worldPos;
+    vec4 offsetPosition = vec4(Position.x + xOff, Position.y, 0, 1);
+    gl_Position = Proj * View * offsetPosition;
+
     fsin_Color = Color;
 }
