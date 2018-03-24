@@ -1,7 +1,6 @@
 #!/bin/bash
 
 # executed from .sln space
-cd $1
 for metal_shader in *.metal 
 do
     fname=${metal_shader%.*}
@@ -12,7 +11,7 @@ do
         break
     fi
     echo "Compiling $metal_shader"
-    xcrun -sdk macosx metal "$metal_shader" -o "$fname.air"
+    xcrun -sdk macosx metal -x metal "$metal_shader" -o "$fname.air"
     xcrun -sdk macosx metallib "$fname.air" -o "$fname.metallib"
     rm "$fname.air"
 done
