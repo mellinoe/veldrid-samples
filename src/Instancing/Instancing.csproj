@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SampleBase\SampleBase.csproj" />
+    <PackageReference Include="NativeLibraryLoader" Version="1.0.5" />
+    <PackageReference Include="AssimpNet-netstandard" Version="3.3.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="$(MSBuildThisFileDirectory)/Shaders/**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Compile Include="..\Common\Model.cs" Link="Model.cs" />
+    <Compile Include="..\Common\RawList.cs" Link="RawList.cs" />
+    <Content Include="..\..\assets\textures\texturearray_rocks_bc3_unorm.ktx">
+      <Link>Assets/textures/texturearray_rocks_bc3_unorm.ktx</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\assets\textures\lavaplanet_bc3_unorm.ktx">
+      <Link>Assets/textures/lavaplanet_bc3_unorm.ktx</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\assets\models\rock01.dae">
+      <Link>assets/models/rock01.dae</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\assets\models\sphere.obj">
+      <Link>assets/models/sphere.obj</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+</Project>

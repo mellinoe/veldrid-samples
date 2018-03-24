@@ -18,7 +18,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Offscreen", "Offscreen\Offs
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AnimatedMesh", "AnimatedMesh\AnimatedMesh.csproj", "{48F23362-815E-4DCD-A243-0F129ABE9832}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InstancedQuads", "InstancedQuads\InstancedQuads.csproj", "{AFEEC8C1-81D1-4074-A7E4-42D67D0C85FC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Instancing", "Instancing\Instancing.csproj", "{AFEEC8C1-81D1-4074-A7E4-42D67D0C85FC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

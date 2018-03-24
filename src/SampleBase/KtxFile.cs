@@ -9,19 +9,19 @@ using Veldrid;
 
 namespace SampleBase
 {
-    // A ridiculously bad KTX file parser.
+    // A hand-crafted KTX file parser.
     // https://www.khronos.org/opengles/sdk/tools/KTX/file_format_spec
     public class KtxFile
     {
         public KtxHeader Header { get; }
         public KtxKeyValuePair[] KeyValuePairs { get; }
-        public KtxFace[] Faces { get; }
+        public KtxMipmapLevel[] Mipmaps { get; }
 
-        public KtxFile(KtxHeader header, KtxKeyValuePair[] keyValuePairs, KtxFace[] faces)
+        public KtxFile(KtxHeader header, KtxKeyValuePair[] keyValuePairs, KtxMipmapLevel[] mipmaps)
         {
             Header = header;
             KeyValuePairs = keyValuePairs;
-            Faces = faces;
+            Mipmaps = mipmaps;
         }
 
         public static KtxFile Load(Stream s, bool readKeyValuePairs)
@@ -50,34 +50,49 @@ namespace SampleBase
                     br.BaseStream.Seek(header.BytesOfKeyValueData, SeekOrigin.Current); // Skip over header data.
                 }
 
+                uint numberOfMipmapLevels = Math.Max(1, header.NumberOfMipmapLevels);
+                uint numberOfArrayElements = Math.Max(1, header.NumberOfArrayElements);
                 uint numberOfFaces = Math.Max(1, header.NumberOfFaces);
-                List<KtxFace> faces = new List<KtxFace>((int)numberOfFaces);
-                for (int i = 0; i < numberOfFaces; i++)
+
+                uint baseWidth = Math.Max(1, header.PixelWidth);
+                uint baseHeight = Math.Max(1, header.PixelHeight);
+                uint baseDepth = Math.Max(1, header.PixelDepth);
+
+                KtxMipmapLevel[] images = new KtxMipmapLevel[numberOfMipmapLevels];
+                for (int mip = 0; mip < numberOfMipmapLevels; mip++)
                 {
-                    faces.Add(new KtxFace(header.NumberOfMipmapLevels));
-                }
-                for (uint mipLevel = 0; mipLevel < header.NumberOfMipmapLevels; mipLevel++)
-                {
+                    uint mipWidth = Math.Max(1, baseWidth / (uint)(Math.Pow(2, mip)));
+                    uint mipHeight = Math.Max(1, baseHeight / (uint)(Math.Pow(2, mip)));
+                    uint mipDepth = Math.Max(1, baseDepth / (uint)(Math.Pow(2, mip)));
+
                     uint imageSize = br.ReadUInt32();
-                    // For cubemap textures, imageSize is actually the size of an individual face.
-                    bool isCubemap = header.NumberOfFaces == 6 && header.NumberOfArrayElements == 0;
-                    for (uint face = 0; face < numberOfFaces; face++)
+                    uint arrayElementSize = imageSize / numberOfArrayElements;
+                    KtxArrayElement[] arrayElements = new KtxArrayElement[numberOfArrayElements];
+                    for (int arr = 0; arr < numberOfArrayElements; arr++)
                     {
-                        byte[] faceData = br.ReadBytes((int)imageSize);
-                        faces[(int)face].Mipmaps[mipLevel] = new KtxMipmap(imageSize, faceData, header.PixelWidth / (uint)(Math.Pow(2, mipLevel)), header.PixelHeight / (uint)(Math.Pow(2, mipLevel)));
-                        uint cubePadding = 0u;
-                        if (isCubemap)
+                        uint faceSize = arrayElementSize / numberOfFaces;
+                        KtxFace[] faces = new KtxFace[numberOfFaces];
+                        for (int face = 0; face < numberOfFaces; face++)
                         {
-                            cubePadding = 3 - ((imageSize + 3) % 4);
+                            faces[face] = new KtxFace(br.ReadBytes((int)faceSize));
                         }
-                        br.BaseStream.Seek(cubePadding, SeekOrigin.Current);
+
+                        arrayElements[arr] = new KtxArrayElement(faces);
                     }
+
+                    images[mip] = new KtxMipmapLevel(
+                        mipWidth,
+                        mipHeight,
+                        mipDepth,
+                        imageSize,
+                        arrayElementSize,
+                        arrayElements);
 
                     uint mipPaddingBytes = 3 - ((imageSize + 3) % 4);
                     br.BaseStream.Seek(mipPaddingBytes, SeekOrigin.Current);
                 }
 
-                return new KtxFile(header, kvps, faces.ToArray());
+                return new KtxFile(header, kvps, images);
             }
         }
 
@@ -135,81 +150,47 @@ namespace SampleBase
             }
         }
 
-        public ulong GetTotalSize()
-        {
-            ulong totalSize = 0;
-
-            for (int mipLevel = 0; mipLevel < Header.NumberOfMipmapLevels; mipLevel++)
-            {
-                for (int face = 0; face < Header.NumberOfFaces; face++)
-                {
-                    KtxMipmap mipmap = Faces[face].Mipmaps[mipLevel];
-                    totalSize += mipmap.SizeInBytes;
-                }
-            }
-
-            return totalSize;
-        }
-
-        public byte[] GetSubresourceData(uint mipLevel)
-        {
-            Debug.Assert(Faces.Length == 1);
-
-            return Faces[0].Mipmaps[mipLevel].Data;
-        }
-
-        public byte[] GetAllTextureData()
-        {
-            byte[] result = new byte[GetTotalSize()];
-            uint start = 0;
-            for (int face = 0; face < Header.NumberOfFaces; face++)
-            {
-                for (int mipLevel = 0; mipLevel < Header.NumberOfMipmapLevels; mipLevel++)
-                {
-                    KtxMipmap mipmap = Faces[face].Mipmaps[mipLevel];
-                    mipmap.Data.CopyTo(result, (int)start);
-                    start += mipmap.SizeInBytes;
-                }
-            }
-
-            return result;
-        }
-
         public static unsafe Texture LoadTexture(
             GraphicsDevice gd,
             ResourceFactory factory,
             string assetPath,
             PixelFormat format)
         {
-            KtxFile tex2D;
+            KtxFile ktxTex2D;
             using (FileStream fs = File.OpenRead(assetPath))
             {
-                tex2D = KtxFile.Load(fs, false);
+                ktxTex2D = Load(fs, false);
             }
 
-            uint width = tex2D.Header.PixelWidth;
-            uint height = tex2D.Header.PixelHeight;
+            uint width = ktxTex2D.Header.PixelWidth;
+            uint height = ktxTex2D.Header.PixelHeight;
             if (height == 0) height = width;
 
-            uint mipLevels = tex2D.Header.NumberOfMipmapLevels;
+            uint arrayLayers = Math.Max(1, ktxTex2D.Header.NumberOfArrayElements);
+            uint mipLevels = Math.Max(1, ktxTex2D.Header.NumberOfMipmapLevels);
 
             Texture ret = factory.CreateTexture(TextureDescription.Texture2D(
-                width, height, mipLevels, 1,
+                width, height, mipLevels, arrayLayers,
                 format, TextureUsage.Sampled));
 
             Texture stagingTex = factory.CreateTexture(TextureDescription.Texture2D(
-                width, height, mipLevels, 1,
+                width, height, mipLevels, arrayLayers,
                 format, TextureUsage.Staging));
 
             // Copy texture data into staging buffer
             for (uint level = 0; level < mipLevels; level++)
             {
-                KtxMipmap mipmap = tex2D.Faces[0].Mipmaps[level];
-                byte[] pixelData = mipmap.Data;
-                fixed (byte* pixelDataPtr = &pixelData[0])
+                KtxMipmapLevel mipmap = ktxTex2D.Mipmaps[level];
+                for (uint layer = 0; layer < arrayLayers; layer++)
                 {
-                    gd.UpdateTexture(stagingTex, (IntPtr)pixelDataPtr, (uint)pixelData.Length,
-                        0, 0, 0, mipmap.Width, mipmap.Height, 1, level, 0);
+                    KtxArrayElement ktxLayer = mipmap.ArrayElements[layer];
+                    Debug.Assert(ktxLayer.Faces.Length == 1);
+                    byte[] pixelData = ktxLayer.Faces[0].Data;
+                    fixed (byte* pixelDataPtr = &pixelData[0])
+                    {
+                        gd.UpdateTexture(stagingTex, (IntPtr)pixelDataPtr, (uint)pixelData.Length,
+                            0, 0, 0, mipmap.Width, mipmap.Height, 1, level, layer);
+                    }
                 }
             }
 
@@ -217,10 +198,15 @@ namespace SampleBase
             copyCL.Begin();
             for (uint level = 0; level < mipLevels; level++)
             {
-                uint levelWidth = tex2D.Faces[0].Mipmaps[level].Width;
-                uint levelHeight = tex2D.Faces[0].Mipmaps[level].Height;
-                copyCL.CopyTexture(stagingTex, 0, 0, 0, level, 0,
-                    ret, 0, 0, 0, level, 0, levelWidth, levelHeight, 1, 1);
+                KtxMipmapLevel mipLevel = ktxTex2D.Mipmaps[level];
+                for (uint layer = 0; layer < arrayLayers; layer++)
+                {
+                    copyCL.CopyTexture(
+                        stagingTex, 0, 0, 0, level, layer,
+                        ret, 0, 0, 0, level, layer,
+                        mipLevel.Width, mipLevel.Height, mipLevel.Depth,
+                        1);
+                }
             }
             copyCL.End();
             gd.SubmitCommands(copyCL);
@@ -263,40 +249,46 @@ namespace SampleBase
         public readonly uint BytesOfKeyValueData;
     }
 
-    public class KtxFace
+    // for each mipmap_level in numberOfMipmapLevels
+    public class KtxMipmapLevel
     {
-        public uint Width { get; set; }
-        public uint Height { get; set; }
-        public uint NumberOfMipmapLevels { get; }
-        public KtxMipmap[] Mipmaps { get; }
-
-        public KtxFace(uint width, uint height, uint numberOfMipmapLevels, KtxMipmap[] mipmaps)
+        public KtxMipmapLevel(uint width, uint height, uint depth, uint totalSize, uint arraySliceSize, KtxArrayElement[] slices)
         {
             Width = width;
             Height = height;
-            NumberOfMipmapLevels = numberOfMipmapLevels;
-            Mipmaps = mipmaps;
+            Depth = depth;
+            TotalSize = totalSize;
+            ArrayElementSize = arraySliceSize;
+            ArrayElements = slices;
         }
 
-        public KtxFace(uint numberOfMipmapLevels)
-        {
-            NumberOfMipmapLevels = numberOfMipmapLevels;
-            Mipmaps = new KtxMipmap[numberOfMipmapLevels];
-        }
-    }
-
-    public class KtxMipmap
-    {
-        public uint SizeInBytes { get; }
-        public byte[] Data { get; }
         public uint Width { get; }
         public uint Height { get; }
-        public KtxMipmap(uint sizeInBytes, byte[] data, uint width, uint height)
+        public uint Depth { get; }
+        public uint TotalSize { get; }
+        public uint ArrayElementSize { get; }
+        public KtxArrayElement[] ArrayElements { get; }
+    }
+
+    // for each array_element in numberOfArrayElements
+    public class KtxArrayElement
+    {
+        public KtxArrayElement(KtxFace[] faces)
         {
-            SizeInBytes = sizeInBytes;
-            Data = data;
-            Width = Math.Max(1, width);
-            Height = Math.Max(1, height);
+            Faces = faces;
         }
+
+        public KtxFace[] Faces { get; }
+    }
+
+    // for each face in numberOfFaces
+    public class KtxFace
+    {
+        public KtxFace(byte[] data)
+        {
+            Data = data;
+        }
+
+        public byte[] Data { get; }
     }
 }

@@ -22,8 +22,8 @@ namespace SampleBase
             {
                 X = 100,
                 Y = 100,
-                WindowWidth = 960,
-                WindowHeight = 540,
+                WindowWidth = 1280,
+                WindowHeight = 720,
                 WindowTitle = GetTitle(),
             };
             _window = VeldridStartup.CreateWindow(ref wci);
@@ -35,11 +35,11 @@ namespace SampleBase
             _window.MouseMove += OnMouseMove;
             _window.KeyDown += OnKeyDown;
 
-            GraphicsDeviceOptions options = new GraphicsDeviceOptions(false, PixelFormat.R16_UNorm, true);
+            GraphicsDeviceOptions options = new GraphicsDeviceOptions(false, PixelFormat.R16_UNorm, false);
 #if DEBUG
             options.Debug = true;
 #endif
-            _gd = VeldridStartup.CreateGraphicsDevice(_window, options, GraphicsBackend.OpenGL);
+            _gd = VeldridStartup.CreateGraphicsDevice(_window, options, GraphicsBackend.Direct3D11);
         }
 
         protected virtual void OnMouseMove(MouseMoveEventArgs mouseMoveEvent)

@@ -40,7 +40,6 @@ namespace SampleBase
         public Matrix4x4 ProjectionMatrix => _projectionMatrix;
 
         public Vector3 Position { get => _position; set { _position = value; UpdateViewMatrix(); } }
-        public Vector3 LookDirection { get => _lookDirection; set { _lookDirection = value; UpdateViewMatrix(); } }
 
         public float FarDistance { get => _far; set { _far = value; UpdatePerspectiveMatrix(); } }
         public float FieldOfView => _fov;
@@ -52,6 +51,7 @@ namespace SampleBase
         public float Pitch { get => _pitch; set { _pitch = value; UpdateViewMatrix(); } }
 
         public float MoveSpeed { get => _moveSpeed; set => _moveSpeed = value; }
+        public Vector3 Forward => GetLookDir();
 
         public void Update(float deltaSeconds)
         {
@@ -122,11 +122,17 @@ namespace SampleBase
 
         private void UpdateViewMatrix()
         {
-            Quaternion lookRotation = Quaternion.CreateFromYawPitchRoll(Yaw, Pitch, 0f);
-            Vector3 lookDir = Vector3.Transform(-Vector3.UnitZ, lookRotation);
+            Vector3 lookDir = GetLookDir();
             _lookDirection = lookDir;
             _viewMatrix = Matrix4x4.CreateLookAt(_position, _position + _lookDirection, Vector3.UnitY);
             ViewChanged?.Invoke(_viewMatrix);
+        }
+
+        private Vector3 GetLookDir()
+        {
+            Quaternion lookRotation = Quaternion.CreateFromYawPitchRoll(Yaw, Pitch, 0f);
+            Vector3 lookDir = Vector3.Transform(-Vector3.UnitZ, lookRotation);
+            return lookDir;
         }
 
         public CameraInfo GetCameraInfo() => new CameraInfo

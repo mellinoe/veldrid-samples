@@ -1,10 +1,14 @@
-The assets for the "offscreen" and "AnimatedMesh" demos have been taken from Sascha Willems's "Vulkan" repository. They are used under the MIT license, copied below. These files include:
+The assets for the "Offscreen", "AnimatedMesh", and "Instancing" demos have been taken from Sascha Willems's "Vulkan" repository. They are used under the MIT license, copied below. These files include:
 
 * models/chinesedragon.dae
-* Models/goblin.dae
+* models/goblin.dae
 * models/plane2.dae
+* models/sphere.obj
+* models/rock01.dae
 * textures/darkmetal_bc3_unorm.ktx
 * textures/goblin_bc3_unorm.ktx
+* textures/texturearray_rocks_bc3_unorm.ktx
+* textures/lavaplanet_bc3_unorm.ktx
 
 The MIT License (MIT)
 

@@ -9,6 +9,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="..\Common\Model.cs" Link="Model.cs" />
+    <Compile Include="..\Common\RawList.cs" Link="RawList.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Content Include="..\..\assets\models\chinesedragon.dae">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>models\chinesedragon.dae</Link>

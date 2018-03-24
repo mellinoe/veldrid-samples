@@ -1,4 +1,5 @@
-﻿using SampleBase;
+﻿using Common;
+using SampleBase;
 using System;
 using System.IO;
 using System.Numerics;
@@ -50,16 +51,14 @@ namespace Offscreen
                 new VertexElementDescription("Color", VertexElementSemantic.Color, VertexElementFormat.Float3),
                 new VertexElementDescription("Normal", VertexElementSemantic.Normal, VertexElementFormat.Float3));
 
-            _planeModel = new Model();
-            _planeModel.LoadFromFile(
+            _planeModel = new Model(
                 _gd,
                 factory,
                 GetAssetPath("models/plane2.dae"),
                 _vertexLayout,
                 new Model.ModelCreateInfo(new Vector3(0.5f, 0.5f, 0.5f), Vector2.One, Vector3.Zero));
 
-            _dragonModel = new Model();
-            _dragonModel.LoadFromFile(
+            _dragonModel = new Model(
                 _gd,
                 factory,
                 GetAssetPath("models/chinesedragon.dae"),
@@ -179,9 +178,9 @@ namespace Offscreen
 
             _cl.SetPipeline(_offscreenPipeline);
             _cl.SetGraphicsResourceSet(0, _offscreenResourceSet);
-            _cl.SetVertexBuffer(0, _dragonModel._vertexBuffer);
-            _cl.SetIndexBuffer(_dragonModel._indexBuffer, IndexFormat.UInt32);
-            _cl.DrawIndexed(_dragonModel._indexCount, 1, 0, 0, 0);
+            _cl.SetVertexBuffer(0, _dragonModel.VertexBuffer);
+            _cl.SetIndexBuffer(_dragonModel.IndexBuffer, IndexFormat.UInt32);
+            _cl.DrawIndexed(_dragonModel.IndexCount, 1, 0, 0, 0);
         }
 
         private void DrawMain()
@@ -193,15 +192,15 @@ namespace Offscreen
 
             _cl.SetPipeline(_mirrorPipeline);
             _cl.SetGraphicsResourceSet(0, _mirrorResourceSet);
-            _cl.SetVertexBuffer(0, _planeModel._vertexBuffer);
-            _cl.SetIndexBuffer(_planeModel._indexBuffer, IndexFormat.UInt32);
-            _cl.DrawIndexed(_planeModel._indexCount, 1, 0, 0, 0);
+            _cl.SetVertexBuffer(0, _planeModel.VertexBuffer);
+            _cl.SetIndexBuffer(_planeModel.IndexBuffer, IndexFormat.UInt32);
+            _cl.DrawIndexed(_planeModel.IndexCount, 1, 0, 0, 0);
 
             _cl.SetPipeline(_dragonPipeline);
             _cl.SetGraphicsResourceSet(0, _dragonResourceSet);
-            _cl.SetVertexBuffer(0, _dragonModel._vertexBuffer);
-            _cl.SetIndexBuffer(_dragonModel._indexBuffer, IndexFormat.UInt32);
-            _cl.DrawIndexed(_dragonModel._indexCount, 1, 0, 0, 0);
+            _cl.SetVertexBuffer(0, _dragonModel.VertexBuffer);
+            _cl.SetIndexBuffer(_dragonModel.IndexBuffer, IndexFormat.UInt32);
+            _cl.DrawIndexed(_dragonModel.IndexCount, 1, 0, 0, 0);
         }
 
         public static float DegreesToRadians(float degrees)
