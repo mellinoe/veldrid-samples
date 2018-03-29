@@ -1,4 +1,4 @@
-#version 300 es
+#version 310 es
 
 struct ParticleInfo
 {
@@ -7,7 +7,7 @@ struct ParticleInfo
     vec4 Color;
 };
 
-layout(std140) buffer ParticlesBuffer
+layout(std140, binding = 0) buffer ParticlesBuffer
 {
     ParticleInfo Particles[];
 };

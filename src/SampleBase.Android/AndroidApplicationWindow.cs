@@ -25,19 +25,13 @@ namespace SampleBase.Android
 
         public AndroidApplicationWindow(Context context, VeldridSurfaceView view)
         {
-            SetView(view);
-
-            _sw = Stopwatch.StartNew();
-        }
-
-        public void SetView(VeldridSurfaceView view)
-        {
             _view = view;
             _view.Rendering += OnViewRendering;
             _view.DeviceCreated += OnViewCreatedDevice;
             _view.SwapchainChanged += OnViewSwapchainChanged;
             _view.Resized += OnViewResized;
             _view.DeviceDisposed += OnViewDeviceDisposed;
+            _sw = Stopwatch.StartNew();
         }
 
         private void OnViewDeviceDisposed() => GraphicsDeviceDestroyed?.Invoke();

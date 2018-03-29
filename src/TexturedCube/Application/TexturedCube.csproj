@@ -20,6 +20,8 @@
     <ProjectReference Include="..\..\SampleBase\SampleBase.csproj" />
     <PackageReference Include="ShaderGen.Primitives" Version="$(ShaderGenVersion)" />
     <PackageReference Include="ShaderGen.Build" Version="$(ShaderGenVersion)" PrivateAssets="All" />
+    <PackageReference Include="SixLabors.ImageSharp" Version="1.0.0-beta0003" />
+    <PackageReference Include="Veldrid.ImageSharp" Version="4.2.0-g73f7272721" />
   </ItemGroup>
 
   <Target Name="IncludeGeneratedShaderEmbeddedResource" AfterTargets="AssignTargetPaths" Condition="'$(ShaderContentIncludePath)' != ''">

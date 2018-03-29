@@ -19,6 +19,7 @@ namespace SampleBase.Android
         private bool _paused;
         private Action _endOfFrameAction;
         private bool _enabled;
+        private bool _needsResize;
 
         public GraphicsDevice GraphicsDevice { get; protected set; }
         public Swapchain MainSwapchain { get; protected set; }
@@ -107,8 +108,7 @@ namespace SampleBase.Android
 
         public void SurfaceChanged(ISurfaceHolder holder, [GeneratedEnum] Format format, int width, int height)
         {
-            MainSwapchain.Resize((uint)width, (uint)height);
-            Resized?.Invoke();
+            _needsResize = true;
         }
 
         private void RenderLoop()
@@ -119,6 +119,13 @@ namespace SampleBase.Android
                 try
                 {
                     if (_paused) { continue; }
+
+                    if (_needsResize)
+                    {
+                        _needsResize = false;
+                        MainSwapchain.Resize((uint)Width, (uint)Height);
+                        Resized?.Invoke();
+                    }
 
                     if (GraphicsDevice != null)
                     {

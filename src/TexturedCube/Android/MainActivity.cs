@@ -2,6 +2,7 @@
 using Android.Content.PM;
 using Android.OS;
 using SampleBase.Android;
+using System.Threading;
 using Veldrid;
 
 namespace TexturedCube.Android
@@ -28,27 +29,14 @@ namespace TexturedCube.Android
 #endif
 
             _options = new GraphicsDeviceOptions(debug, PixelFormat.R16_UNorm, false);
-            _view = new VeldridSurfaceView(this, GraphicsBackend.Vulkan, _options);
+            GraphicsBackend backend = GraphicsDevice.IsBackendSupported(GraphicsBackend.Vulkan)
+                ? GraphicsBackend.Vulkan
+                : GraphicsBackend.OpenGLES;
+            _view = new VeldridSurfaceView(this, backend, _options);
             _window = new AndroidApplicationWindow(this, _view);
             _window.GraphicsDeviceCreated += (g, r, s) => _window.Run();
             _tc = new TexturedCube(_window);
             SetContentView(_view);
-        }
-
-        public override void OnBackPressed()
-        {
-            System.Diagnostics.Debug.WriteLine("Back pressed.");
-            VeldridSurfaceView oldView = _view;
-            oldView.RunAtEndOfFrame(() => oldView.Disable());
-            _view = new VeldridSurfaceView(
-                this,
-                oldView.GraphicsDevice.BackendType == GraphicsBackend.Vulkan
-                    ? GraphicsBackend.OpenGLES
-                    : GraphicsBackend.Vulkan,
-                _options);
-            _window.SetView(_view);
-            SetContentView(_view);
-            _view.RunContinuousRenderLoop();
         }
 
         protected override void OnPause()

@@ -27,6 +27,7 @@ namespace ComputeTexture
         private ResourceLayout _graphicsLayout;
         private float _ticks;
         private bool _initialized;
+        private uint _computeTexSize = 512;
 
         public ComputeTexture(ApplicationWindow window) : base(window) { }
 
@@ -50,7 +51,7 @@ namespace ComputeTexture
             ComputePipelineDescription computePipelineDesc = new ComputePipelineDescription(
                 _computeShader,
                 _computeLayout,
-                1, 1, 1);
+                16, 16, 1);
             _computePipeline = factory.CreateComputePipeline(ref computePipelineDesc);
 
             _vertexShader = factory.CreateShader(new ShaderDescription(
@@ -84,7 +85,7 @@ namespace ComputeTexture
             GraphicsPipelineDescription fullScreenQuadDesc = new GraphicsPipelineDescription(
                 BlendStateDescription.SingleOverrideBlend,
                 DepthStencilStateDescription.Disabled,
-                new RasterizerStateDescription(FaceCullMode.Back, PolygonFillMode.Solid, FrontFace.Clockwise, false, false),
+                new RasterizerStateDescription(FaceCullMode.Back, PolygonFillMode.Solid, FrontFace.Clockwise, true, false),
                 PrimitiveTopology.TriangleList,
                 shaderSet,
                 new[] { _graphicsLayout },
@@ -107,8 +108,8 @@ namespace ComputeTexture
             _graphicsResourceSet?.Dispose();
 
             _computeTargetTexture = factory.CreateTexture(TextureDescription.Texture2D(
-                Window.Width,
-                Window.Height,
+                _computeTexSize,
+                _computeTexSize,
                 1,
                 1,
                 PixelFormat.R32_G32_B32_A32_Float,
@@ -142,7 +143,7 @@ namespace ComputeTexture
         private void InitResources(ResourceFactory factory)
         {
             _cl.Begin();
-            _cl.UpdateBuffer(_screenSizeBuffer, 0, new Vector4(Window.Width, Window.Height, 0, 0));
+            _cl.UpdateBuffer(_screenSizeBuffer, 0, new Vector4(_computeTexSize, _computeTexSize, 0, 0));
 
             Vector4[] quadVerts =
             {
@@ -183,7 +184,7 @@ namespace ComputeTexture
 
             _cl.SetPipeline(_computePipeline);
             _cl.SetComputeResourceSet(0, _computeResourceSet);
-            _cl.Dispatch((uint)Window.Width, (uint)Window.Height, 1);
+            _cl.Dispatch(_computeTexSize / 16, _computeTexSize / 16, 1);
 
             _cl.SetFramebuffer(MainSwapchain.Framebuffer);
             _cl.SetFullViewports();

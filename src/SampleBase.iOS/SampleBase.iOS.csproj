@@ -51,13 +51,13 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Veldrid">
-      <Version>4.2.0-g5dd99bc961</Version>
+      <Version>4.2.0-g73f7272721</Version>
     </PackageReference>
     <PackageReference Include="Veldrid.MetalBindings">
-      <Version>4.2.0-g5dd99bc961</Version>
+      <Version>4.2.0-g73f7272721</Version>
     </PackageReference>
     <PackageReference Include="Veldrid.OpenGLBindings">
-      <Version>4.2.0-g5dd99bc961</Version>
+      <Version>4.2.0-g73f7272721</Version>
     </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\iOS\Xamarin.iOS.CSharp.targets" />

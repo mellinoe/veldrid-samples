@@ -3,8 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27428.1
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Veldrid.Android", "Veldrid.Android\Veldrid.Android.csproj", "{AC8420D5-F302-4A5D-9193-E274F241F092}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "TexturedCube", "TexturedCube", "{7FD3C556-92BC-4048-9C71-824ABC7E3B7F}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SampleBase", "SampleBase\SampleBase.csproj", "{6A6CA600-065B-4068-9230-CB6DA729E59F}"
@@ -41,18 +39,6 @@ Global
 		Release|iPhoneSimulator = Release|iPhoneSimulator
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{AC8420D5-F302-4A5D-9193-E274F241F092}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{AC8420D5-F302-4A5D-9193-E274F241F092}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{AC8420D5-F302-4A5D-9193-E274F241F092}.Debug|iPhone.ActiveCfg = Debug|Any CPU
-		{AC8420D5-F302-4A5D-9193-E274F241F092}.Debug|iPhone.Build.0 = Debug|Any CPU
-		{AC8420D5-F302-4A5D-9193-E274F241F092}.Debug|iPhoneSimulator.ActiveCfg = Debug|Any CPU
-		{AC8420D5-F302-4A5D-9193-E274F241F092}.Debug|iPhoneSimulator.Build.0 = Debug|Any CPU
-		{AC8420D5-F302-4A5D-9193-E274F241F092}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{AC8420D5-F302-4A5D-9193-E274F241F092}.Release|Any CPU.Build.0 = Release|Any CPU
-		{AC8420D5-F302-4A5D-9193-E274F241F092}.Release|iPhone.ActiveCfg = Release|Any CPU
-		{AC8420D5-F302-4A5D-9193-E274F241F092}.Release|iPhone.Build.0 = Release|Any CPU
-		{AC8420D5-F302-4A5D-9193-E274F241F092}.Release|iPhoneSimulator.ActiveCfg = Release|Any CPU
-		{AC8420D5-F302-4A5D-9193-E274F241F092}.Release|iPhoneSimulator.Build.0 = Release|Any CPU
 		{6A6CA600-065B-4068-9230-CB6DA729E59F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{6A6CA600-065B-4068-9230-CB6DA729E59F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6A6CA600-065B-4068-9230-CB6DA729E59F}.Debug|iPhone.ActiveCfg = Debug|Any CPU

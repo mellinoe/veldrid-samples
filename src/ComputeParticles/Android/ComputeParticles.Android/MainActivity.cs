@@ -25,8 +25,10 @@ namespace ComputeParticles.Android
 #endif
 
             GraphicsDeviceOptions options = new GraphicsDeviceOptions(debug, PixelFormat.R16_UNorm, false);
-            //_view = new VeldridGLESView(this, options);
-            _view = new VeldridVulkanView(this, options);
+            GraphicsBackend backend = GraphicsDevice.IsBackendSupported(GraphicsBackend.Vulkan)
+                ? GraphicsBackend.Vulkan
+                : GraphicsBackend.OpenGLES;
+            _view = new VeldridSurfaceView(this, backend, options);
             AndroidApplicationWindow window = new AndroidApplicationWindow(this, _view);
             window.GraphicsDeviceCreated += (g, r, s) => window.Run();
             ComputeParticles app = new ComputeParticles(window);

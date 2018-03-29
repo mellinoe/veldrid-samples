@@ -15,7 +15,7 @@ cbuffer ShiftBuffer : register(b1)
 
 RWTexture2D<float4> Tex : register(u0);
 
-[numthreads(1, 1, 1)]
+[numthreads(16, 16, 1)]
 void CS(uint3 dtid : SV_DispatchThreadID)
 {
     float x = (dtid.x + RShift);
