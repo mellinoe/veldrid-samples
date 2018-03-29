@@ -14,15 +14,10 @@ namespace SampleBase.iOS
         private CADisplayLink _timer;
         private Swapchain _sc;
 
-        public UIViewApplicationWindow(GraphicsDeviceOptions options, GraphicsBackend backend)
+		public UIViewApplicationWindow(IntPtr handle) : base(handle)
         {
-            if (backend != GraphicsBackend.Metal && backend != GraphicsBackend.Vulkan && backend != GraphicsBackend.OpenGLES)
-            {
-                throw new VeldridException($"{backend} is not supported in a UIViewApplicationWindow.");
-            }
-
-            _options = options;
-            _backend = backend;
+			_backend = GraphicsBackend.Metal;
+			_options = new GraphicsDeviceOptions();
         }
 
         public uint Width => (uint)View.Frame.Width;
@@ -58,10 +53,10 @@ namespace SampleBase.iOS
             {
                 throw new NotImplementedException();
             }
-            else if (_backend == GraphicsBackend.OpenGLES)
-            {
-                throw new NotImplementedException();
-            }
+            //else if (_backend == GraphicsBackend.OpenGLES)
+            //{
+            //    throw new NotImplementedException();
+            //}
 
             SwapchainSource ss = SwapchainSource.CreateUIView(this.View.Handle);
             _sc = _gd.ResourceFactory.CreateSwapchain(new SwapchainDescription(

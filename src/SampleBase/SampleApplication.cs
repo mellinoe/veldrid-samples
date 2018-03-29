@@ -82,7 +82,7 @@ namespace SampleBase
                 : (backendType == GraphicsBackend.Vulkan)
                     ? "450.glsl.spv"
                     : (backendType == GraphicsBackend.Metal)
-                        ? "metallib"
+                        ? "ios.metallib"
                         : (backendType == GraphicsBackend.OpenGL)
                             ? "330.glsl"
                             : "300.glsles";
