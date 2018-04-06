@@ -67,10 +67,13 @@
       <Version>4.4.0</Version>
     </PackageReference>
     <PackageReference Include="Veldrid">
-      <Version>4.2.0-g73f7272721</Version>
+      <Version>4.2.0-beta1-gef09f22217</Version>
     </PackageReference>
-    <PackageReference Include="Veldrid.Android">
-      <Version>4.2.0-g73f7272721</Version>
+    <PackageReference Include="Veldrid.MetalBindings">
+      <Version>4.2.0-beta1-gef09f22217</Version>
+    </PackageReference>
+    <PackageReference Include="Veldrid.OpenGLBindings">
+      <Version>4.2.0-beta1-gef09f22217</Version>
     </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\Android\Xamarin.Android.CSharp.targets" />

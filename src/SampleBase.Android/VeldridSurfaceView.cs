@@ -66,8 +66,7 @@ namespace SampleBase.Android
                 }
 
                 Debug.Assert(MainSwapchain == null);
-                IntPtr aNativeWindow = AndroidRuntime.ANativeWindow_fromSurface(JNIEnv.Handle, holder.Surface.Handle);
-                SwapchainSource ss = SwapchainSource.CreateANativeWindow(aNativeWindow);
+                SwapchainSource ss = SwapchainSource.CreateAndroidSurface(holder.Surface.Handle, JNIEnv.Handle);
                 SwapchainDescription sd = new SwapchainDescription(
                     ss,
                     (uint)Width,
@@ -79,12 +78,14 @@ namespace SampleBase.Android
             else
             {
                 Debug.Assert(GraphicsDevice == null && MainSwapchain == null);
-                GraphicsDevice = AndroidStartup.CreateOpenGLESGraphicsDevice(
-                    DeviceOptions,
-                    holder.Surface.Handle,
-                    JNIEnv.Handle,
+                SwapchainSource ss = SwapchainSource.CreateAndroidSurface(holder.Surface.Handle, JNIEnv.Handle);
+                SwapchainDescription sd = new SwapchainDescription(
+                    ss,
                     (uint)Width,
-                    (uint)Height);
+                    (uint)Height,
+                    DeviceOptions.SwapchainDepthFormat,
+                    DeviceOptions.SyncToVerticalBlank);
+                GraphicsDevice = GraphicsDevice.CreateOpenGLES(DeviceOptions, sd);
                 MainSwapchain = GraphicsDevice.MainSwapchain;
                 deviceCreated = true;
             }
@@ -120,6 +121,12 @@ namespace SampleBase.Android
                 {
                     if (_paused) { continue; }
 
+                    if (_surfaceDestroyed)
+                    {
+                        HandleSurfaceDestroyed();
+                        continue;
+                    }
+
                     if (_needsResize)
                     {
                         _needsResize = false;
@@ -130,11 +137,6 @@ namespace SampleBase.Android
                     if (GraphicsDevice != null)
                     {
                         Rendering?.Invoke();
-                    }
-
-                    if (_surfaceDestroyed)
-                    {
-                        HandleSurfaceDestroyed();
                     }
 
                     _endOfFrameAction?.Invoke();

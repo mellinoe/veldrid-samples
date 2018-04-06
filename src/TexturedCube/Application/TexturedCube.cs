@@ -11,6 +11,7 @@ namespace TexturedCube
 {
     public class TexturedCube : SampleApplication
     {
+        private readonly ImageSharpTexture _stoneISTexture;
         private readonly VertexPositionTexture[] _vertices;
         private readonly ushort[] _indices;
         private DeviceBuffer _projectionBuffer;
@@ -29,6 +30,13 @@ namespace TexturedCube
 
         public TexturedCube(ApplicationWindow window) : base(window)
         {
+            //Image<Rgba32> image;
+            //using (Stream s = OpenEmbeddedAssetStream("spnza_bricks_a_diff.png"))
+            //{
+            //    image = Image.Load(s);
+            //}
+            //_stoneISTexture = new ImageSharpTexture(image);
+
             _vertices = GetCubeVertices();
             _indices = GetCubeIndices();
         }
@@ -45,9 +53,10 @@ namespace TexturedCube
             _indexBuffer = factory.CreateBuffer(new BufferDescription(sizeof(ushort) * (uint)_indices.Length, BufferUsage.IndexBuffer));
             GraphicsDevice.UpdateBuffer(_indexBuffer, 0, _indices);
 
-			_surfaceTexture = factory.CreateTexture(TextureDescription.Texture2D(1, 1, 1, 1, PixelFormat.R8_G8_B8_A8_UNorm, TextureUsage.Sampled));
-			RgbaByte pink = RgbaByte.Pink;
-			GraphicsDevice.UpdateTexture(_surfaceTexture, (IntPtr)(&pink), 4, 0, 0, 0, 1, 1, 1, 0, 0);
+            _surfaceTexture = factory.CreateTexture(TextureDescription.Texture2D(1, 1, 1, 1, PixelFormat.R8_G8_B8_A8_UNorm, TextureUsage.Sampled));
+            RgbaByte pink = RgbaByte.Pink;
+            GraphicsDevice.UpdateTexture(_surfaceTexture, (IntPtr)(&pink), 4, 0, 0, 0, 1, 1, 1, 0, 0);
+            //_surfaceTexture = _stoneISTexture.CreateDeviceTexture(GraphicsDevice, ResourceFactory);
             _surfaceTextureView = factory.CreateTextureView(_surfaceTexture);
 
             ShaderSetDescription shaderSet = new ShaderSetDescription(
