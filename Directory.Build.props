@@ -7,7 +7,7 @@
     <BaseIntermediateOutputPath>$([System.IO.Path]::GetFullPath('$(RepositoryRootDirectory)bin\obj\$(MSBuildProjectName)'))\</BaseIntermediateOutputPath>
     <SamplesAssetsDir>$(MSBuildThisFileDirectory)assets</SamplesAssetsDir>
     <SrcDir>$(RepositoryRootDirectory)/src</SrcDir>
-    <VeldridVersion>4.2.0-beta1</VeldridVersion>
+    <VeldridVersion>4.2.0</VeldridVersion>
     <ShaderGenVersion>1.2.0-g6c2ba50db6</ShaderGenVersion>
   </PropertyGroup>
 </Project>
