@@ -134,7 +134,6 @@ namespace GettingStarted
 
             // We want to render directly to the output window.
             _commandList.SetFramebuffer(_graphicsDevice.SwapchainFramebuffer);
-            _commandList.SetFullViewports();
             _commandList.ClearColorTarget(0, RgbaFloat.Black);
 
             // Set all relevant state to draw our quad.
