@@ -80,15 +80,4 @@
     </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\Android\Xamarin.Android.CSharp.targets" />
-  <!-- Workaround for https://github.com/xamarin/xamarin-android/issues/1162 -->
-  <Target Name="ReplaceRefAssemblies" AfterTargets="_ResolveAssemblies">
-    <ItemGroup>
-      <ResolvedAssembliesFixedWindows Include="@(ResolvedAssemblies-&gt;Replace('\ref\','\lib\'))" />
-      <ResolvedAssembliesFixedUnix Include="@(ResolvedAssemblies-&gt;Replace('/ref/','/lib/'))" />
-      <ResolvedAssembliesFixed Include="@(ResolvedAssembliesFixedWindows)" Condition="@(ResolvedAssembliesFixedWindows) != @(ResolvedAssemblies)" />
-      <ResolvedAssembliesFixed Include="@(ResolvedAssembliesFixedUnix)" Condition="@(ResolvedAssembliesFixedUnix) != @(ResolvedAssemblies)" />
-      <ResolvedAssemblies Remove="@(ResolvedAssemblies)" />
-      <ResolvedAssemblies Include="@(ResolvedAssembliesFixed)" />
-    </ItemGroup>
-  </Target>
 </Project>
