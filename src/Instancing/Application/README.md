@@ -1,6 +1,6 @@
 # Instancing
 
-![Instancing](../../images/instancing.jpg)
+![Instancing](../../../images/instancing.jpg)
 
 This example has been adapted from Sascha Willem's "instancing" Vulkan sample project from https://github.com/SaschaWillems/Vulkan.
 
