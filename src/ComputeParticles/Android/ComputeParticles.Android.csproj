@@ -16,7 +16,7 @@
     <AndroidResgenFile>Resources\Resource.Designer.cs</AndroidResgenFile>
     <AndroidResgenClass>Resource</AndroidResgenClass>
     <GenerateSerializationAssemblies>Off</GenerateSerializationAssemblies>
-    <AndroidUseLatestPlatformSdk>True</AndroidUseLatestPlatformSdk>
+    <AndroidUseLatestPlatformSdk>false</AndroidUseLatestPlatformSdk>
     <TargetFrameworkVersion>v7.1</TargetFrameworkVersion>
     <AndroidManifest>Properties\AndroidManifest.xml</AndroidManifest>
     <MonoAndroidResourcePrefix>Resources</MonoAndroidResourcePrefix>
@@ -97,14 +97,4 @@
     </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\Android\Xamarin.Android.CSharp.targets" />
-  <Target Name="ReplaceRefAssemblies" AfterTargets="_ResolveAssemblies">
-    <ItemGroup>
-      <ResolvedAssembliesFixedWindows Include="@(ResolvedAssemblies-&gt;Replace('\ref\','\lib\'))" />
-      <ResolvedAssembliesFixedUnix Include="@(ResolvedAssemblies-&gt;Replace('/ref/','/lib/'))" />
-      <ResolvedAssembliesFixed Include="@(ResolvedAssembliesFixedWindows)" Condition="@(ResolvedAssembliesFixedWindows) != @(ResolvedAssemblies)" />
-      <ResolvedAssembliesFixed Include="@(ResolvedAssembliesFixedUnix)" Condition="@(ResolvedAssembliesFixedUnix) != @(ResolvedAssemblies)" />
-      <ResolvedAssemblies Remove="@(ResolvedAssemblies)" />
-      <ResolvedAssemblies Include="@(ResolvedAssembliesFixed)" />
-    </ItemGroup>
-  </Target>
 </Project>
