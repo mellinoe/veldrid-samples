@@ -24,6 +24,7 @@ namespace SampleBase.Android
         public event Action<float> Rendering;
         public event Action Resized;
         public event Action<KeyEvent> KeyPressed;
+        public event Action<InputSnapshot> SnapshotReceived;
 
         public AndroidApplicationWindow(Context context, VeldridSurfaceView view)
         {

@@ -19,6 +19,7 @@ namespace SampleBase
         public event Action GraphicsDeviceDestroyed;
         public event Action Resized;
         public event Action<KeyEvent> KeyPressed;
+        public event Action<InputSnapshot> SnapshotReceived;
 
         public uint Width => (uint)_window.Width;
         public uint Height => (uint)_window.Height;
@@ -67,6 +68,7 @@ namespace SampleBase
 
                 InputSnapshot inputSnapshot = _window.PumpEvents();
                 InputTracker.UpdateFrameInput(inputSnapshot);
+                SnapshotReceived?.Invoke(inputSnapshot);
 
                 if (_window.Exists)
                 {

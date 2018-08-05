@@ -27,6 +27,7 @@ namespace SampleBase
             Window.Rendering += PreDraw;
             Window.Rendering += Draw;
             Window.KeyPressed += OnKeyDown;
+            Window.SnapshotReceived += ProcessInputs;
 
             _camera = new Camera(Window.Width, Window.Height);
         }
@@ -66,6 +67,8 @@ namespace SampleBase
         }
 
         protected virtual void OnKeyDown(KeyEvent ke) { }
+
+        protected virtual void ProcessInputs(InputSnapshot snapshot) { }
 
         public Stream OpenEmbeddedAssetStream(string name) => GetType().Assembly.GetManifestResourceStream(name);
 

@@ -12,6 +12,7 @@ namespace SampleBase
         event Action GraphicsDeviceDestroyed;
         event Action Resized;
         event Action<KeyEvent> KeyPressed;
+        event Action<InputSnapshot> SnapshotReceived;
 
         uint Width { get; }
         uint Height { get; }
