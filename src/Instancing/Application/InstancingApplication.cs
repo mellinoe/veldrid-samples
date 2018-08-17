@@ -210,7 +210,7 @@ namespace Instancing
             // Starfield resources
             ResourceLayout invCameraInfoLayout = ResourceFactory.CreateResourceLayout(new ResourceLayoutDescription(
                 new ResourceLayoutElementDescription("InvCameraInfo", ResourceKind.UniformBuffer, ShaderStages.Fragment)));
-            _viewInfoBuffer = ResourceFactory.CreateBuffer(new BufferDescription((uint)Unsafe.SizeOf<InvCameraInfo>(), BufferUsage.UniformBuffer | BufferUsage.Dynamic));
+            _viewInfoBuffer = ResourceFactory.CreateBuffer(new BufferDescription((uint)Unsafe.SizeOf<MatrixPair>(), BufferUsage.UniformBuffer | BufferUsage.Dynamic));
             _viewInfoSet = ResourceFactory.CreateResourceSet(new ResourceSetDescription(invCameraInfoLayout, _viewInfoBuffer));
 
             ShaderSetDescription starfieldShaders = new ShaderSetDescription(
@@ -244,27 +244,24 @@ namespace Instancing
             _commandList.Begin();
 
             // Update per-frame resources.
-            MappedResourceView<Matrix4x4> writeMap = GraphicsDevice.Map<Matrix4x4>(_cameraProjViewBuffer, MapMode.Write);
-            writeMap[0] = _camera.ViewMatrix;
-            writeMap[1] = _camera.ProjectionMatrix;
-            GraphicsDevice.Unmap(_cameraProjViewBuffer);
+            _commandList.UpdateBuffer(_cameraProjViewBuffer, 0, new MatrixPair(_camera.ViewMatrix, _camera.ProjectionMatrix));
 
             if (_lightFromCamera)
             {
-                GraphicsDevice.UpdateBuffer(_lightInfoBuffer, 0, new LightInfo(_camera.Forward, _camera.Position));
+                _commandList.UpdateBuffer(_lightInfoBuffer, 0, new LightInfo(_camera.Forward, _camera.Position));
             }
             else
             {
-                GraphicsDevice.UpdateBuffer(_lightInfoBuffer, 0, new LightInfo(_lightDir, _camera.Position));
+                _commandList.UpdateBuffer(_lightInfoBuffer, 0, new LightInfo(_lightDir, _camera.Position));
             }
 
             _localRotation += delta * ((float)Math.PI * 2 / 9);
             _globalRotation += -delta * ((float)Math.PI * 2 / 240);
-            GraphicsDevice.UpdateBuffer(_rotationInfoBuffer, 0, new Vector4(_localRotation, _globalRotation, 0, 0));
+            _commandList.UpdateBuffer(_rotationInfoBuffer, 0, new Vector4(_localRotation, _globalRotation, 0, 0));
 
             Matrix4x4.Invert(_camera.ProjectionMatrix, out Matrix4x4 inverseProjection);
             Matrix4x4.Invert(_camera.ViewMatrix, out Matrix4x4 inverseView);
-            GraphicsDevice.UpdateBuffer(_viewInfoBuffer, 0, new InvCameraInfo(
+            _commandList.UpdateBuffer(_viewInfoBuffer, 0, new MatrixPair(
                 inverseProjection,
                 inverseView));
 
@@ -308,6 +305,7 @@ namespace Instancing
             // End() must be called before commands can be submitted for execution.
             _commandList.End();
             GraphicsDevice.SubmitCommands(_commandList);
+            GraphicsDevice.WaitForIdle();
 
             // Once commands have been submitted, the rendered image can be presented to the application window.
             GraphicsDevice.SwapBuffers(MainSwapchain);
@@ -379,15 +377,15 @@ namespace Instancing
         }
     }
 
-    public struct InvCameraInfo
+    public struct MatrixPair
     {
-        public Matrix4x4 InverseProjection;
-        public Matrix4x4 InverseView;
+        public Matrix4x4 First;
+        public Matrix4x4 Second;
 
-        public InvCameraInfo(Matrix4x4 inverseProjection, Matrix4x4 inverseView)
+        public MatrixPair(Matrix4x4 first, Matrix4x4 second)
         {
-            InverseProjection = inverseProjection;
-            InverseView = inverseView;
+            First = first;
+            Second = second;
         }
     }
 }
