@@ -4,6 +4,7 @@ using System.IO;
 using System.Numerics;
 using System.Runtime.InteropServices;
 using Veldrid;
+using Veldrid.SPIRV;
 
 namespace ComputeTexture
 {
@@ -17,8 +18,6 @@ namespace ComputeTexture
         private ResourceLayout _computeLayout;
         private Pipeline _computePipeline;
         private ResourceSet _computeResourceSet;
-        private Shader _vertexShader;
-        private Shader _fragmentShader;
         private Pipeline _graphicsPipeline;
         private ResourceSet _graphicsResourceSet;
         private CommandList _cl;
@@ -38,10 +37,10 @@ namespace ComputeTexture
             _vertexBuffer = factory.CreateBuffer(new BufferDescription(16 * 4, BufferUsage.VertexBuffer));
             _indexBuffer = factory.CreateBuffer(new BufferDescription(2 * 6, BufferUsage.IndexBuffer));
 
-            _computeShader = factory.CreateShader(new ShaderDescription(
+            _computeShader = factory.CreateFromSpirv(new ShaderDescription(
                 ShaderStages.Compute,
-                ReadEmbeddedAssetBytes($"Compute.{GetExtension(factory.BackendType)}"),
-                "CS"));
+                ReadEmbeddedAssetBytes("Compute.glsl"),
+                "main"));
 
             _computeLayout = factory.CreateResourceLayout(new ResourceLayoutDescription(
                 new ResourceLayoutElementDescription("Tex", ResourceKind.TextureReadWrite, ShaderStages.Compute),
@@ -54,27 +53,24 @@ namespace ComputeTexture
                 16, 16, 1);
             _computePipeline = factory.CreateComputePipeline(ref computePipelineDesc);
 
-            _vertexShader = factory.CreateShader(new ShaderDescription(
-                ShaderStages.Vertex,
-                ReadEmbeddedAssetBytes($"Vertex.{GetExtension(factory.BackendType)}"),
-                "VS"));
-            _fragmentShader = factory.CreateShader(new ShaderDescription(
-                ShaderStages.Fragment,
-                ReadEmbeddedAssetBytes($"Fragment.{GetExtension(factory.BackendType)}"),
-                "FS"));
+            Shader[] shaders = factory.CreateFromSpirv(
+                new ShaderDescription(
+                    ShaderStages.Vertex,
+                    ReadEmbeddedAssetBytes("Vertex.glsl"),
+                    "main"),
+                new ShaderDescription(
+                    ShaderStages.Fragment,
+                    ReadEmbeddedAssetBytes("Fragment.glsl"),
+                    "main"));
 
             ShaderSetDescription shaderSet = new ShaderSetDescription(
                 new VertexLayoutDescription[]
                 {
                     new VertexLayoutDescription(
-                        new VertexElementDescription("Position", VertexElementSemantic.Position, VertexElementFormat.Float2),
+                        new VertexElementDescription("Position", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float2),
                         new VertexElementDescription("TexCoord", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float2))
                 },
-                new[]
-                {
-                    _vertexShader,
-                    _fragmentShader
-                });
+                shaders);
 
             _graphicsLayout = factory.CreateResourceLayout(new ResourceLayoutDescription(
                 new ResourceLayoutElementDescription("Tex", ResourceKind.TextureReadOnly, ShaderStages.Fragment),
@@ -130,17 +126,6 @@ namespace ComputeTexture
                 GraphicsDevice.PointSampler));
         }
 
-        private string GetExtension(GraphicsBackend backendType)
-        {
-            bool isMacOS = RuntimeInformation.OSDescription.Contains("Darwin");
-
-            return backendType == GraphicsBackend.Direct3D11 ? "hlsl.bytes"
-                : backendType == GraphicsBackend.Vulkan ? "spv"
-                    : backendType == GraphicsBackend.Metal
-                        ? isMacOS ? "metallib" : "ios.metallib"
-                        : backendType == GraphicsBackend.OpenGL ? "430.glsl"
-                            : "300.glsles";
-        }
         private void InitResources(ResourceFactory factory)
         {
             _cl.Begin();

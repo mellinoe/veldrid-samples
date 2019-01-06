@@ -5,6 +5,7 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Veldrid;
+using Veldrid.SPIRV;
 
 namespace ComputeParticles
 {
@@ -40,10 +41,10 @@ namespace ComputeParticles
 
             _screenSizeBuffer = factory.CreateBuffer(new BufferDescription(16, BufferUsage.UniformBuffer));
 
-            _computeShader = factory.CreateShader(new ShaderDescription(
+            _computeShader = factory.CreateFromSpirv(new ShaderDescription(
                 ShaderStages.Compute,
-                ReadEmbeddedAssetBytes($"Compute.{GetExtension(factory.BackendType)}"),
-                "CS"));
+                ReadEmbeddedAssetBytes($"Compute.glsl"),
+                "main"));
 
             ResourceLayout particleStorageLayout = factory.CreateResourceLayout(new ResourceLayoutDescription(
                 new ResourceLayoutElementDescription("ParticlesBuffer", ResourceKind.StructuredBufferReadWrite, ShaderStages.Compute)));
@@ -61,22 +62,19 @@ namespace ComputeParticles
 
             _computeScreenSizeResourceSet = factory.CreateResourceSet(new ResourceSetDescription(screenSizeLayout, _screenSizeBuffer));
 
-            _vertexShader = factory.CreateShader(new ShaderDescription(
-                ShaderStages.Vertex,
-                ReadEmbeddedAssetBytes($"Vertex.{GetExtension(factory.BackendType)}"),
-                "VS"));
-            _fragmentShader = factory.CreateShader(new ShaderDescription(
-                ShaderStages.Fragment,
-                ReadEmbeddedAssetBytes($"Fragment.{GetExtension(factory.BackendType)}"),
-                "FS"));
+            var shaders = factory.CreateFromSpirv(
+                new ShaderDescription(
+                    ShaderStages.Vertex,
+                    ReadEmbeddedAssetBytes($"Vertex.glsl"),
+                    "main"),
+                new ShaderDescription(
+                    ShaderStages.Fragment,
+                    ReadEmbeddedAssetBytes($"Fragment.glsl"),
+                    "main"));
 
             ShaderSetDescription shaderSet = new ShaderSetDescription(
                 Array.Empty<VertexLayoutDescription>(),
-                new[]
-                {
-                    _vertexShader,
-                    _fragmentShader
-                });
+                shaders);
 
             particleStorageLayout = factory.CreateResourceLayout(new ResourceLayoutDescription(
                 new ResourceLayoutElementDescription("ParticlesBuffer", ResourceKind.StructuredBufferReadOnly, ShaderStages.Vertex)));
@@ -107,18 +105,6 @@ namespace ComputeParticles
 
             InitResources(factory);
             _initialized = true;
-        }
-
-        private string GetExtension(GraphicsBackend backendType)
-        {
-            bool isMacOS = RuntimeInformation.OSDescription.Contains("Darwin");
-
-            return backendType == GraphicsBackend.Direct3D11 ? "hlsl.bytes"
-                : backendType == GraphicsBackend.Vulkan ? "spv"
-                    : backendType == GraphicsBackend.Metal
-                        ? isMacOS ? "metallib" : "ios.metallib"
-                        : backendType == GraphicsBackend.OpenGL ? "430.glsl"
-                            : "300.glsles";
         }
 
         private void InitResources(ResourceFactory factory)

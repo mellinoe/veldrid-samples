@@ -3,6 +3,8 @@ using System.Numerics;
 using Veldrid;
 using Veldrid.Sdl2;
 using Veldrid.StartupUtilities;
+using Veldrid.SPIRV;
+using System.Text;
 
 namespace GettingStarted
 {
@@ -12,8 +14,7 @@ namespace GettingStarted
         private static CommandList _commandList;
         private static DeviceBuffer _vertexBuffer;
         private static DeviceBuffer _indexBuffer;
-        private static Shader _vertexShader;
-        private static Shader _fragmentShader;
+        private static Shader[] _shaders;
         private static Pipeline _pipeline;
 
         static void Main(string[] args)
@@ -70,11 +71,19 @@ namespace GettingStarted
             _graphicsDevice.UpdateBuffer(_indexBuffer, 0, quadIndices);
 
             VertexLayoutDescription vertexLayout = new VertexLayoutDescription(
-                new VertexElementDescription("Position", VertexElementSemantic.Position, VertexElementFormat.Float2),
-                new VertexElementDescription("Color", VertexElementSemantic.Color, VertexElementFormat.Float4));
+                new VertexElementDescription("Position", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float2),
+                new VertexElementDescription("Color", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float4));
 
-            _vertexShader = LoadShader(ShaderStages.Vertex);
-            _fragmentShader = LoadShader(ShaderStages.Fragment);
+            ShaderDescription vertexShaderDesc = new ShaderDescription(
+                ShaderStages.Vertex,
+                Encoding.UTF8.GetBytes(VertexCode),
+                "main");
+            ShaderDescription fragmentShaderDesc = new ShaderDescription(
+                ShaderStages.Fragment,
+                Encoding.UTF8.GetBytes(FragmentCode),
+                "main");
+
+            _shaders = factory.CreateFromSpirv(vertexShaderDesc, fragmentShaderDesc);
 
             // Create pipeline
             GraphicsPipelineDescription pipelineDescription = new GraphicsPipelineDescription();
@@ -93,38 +102,12 @@ namespace GettingStarted
             pipelineDescription.ResourceLayouts = System.Array.Empty<ResourceLayout>();
             pipelineDescription.ShaderSet = new ShaderSetDescription(
                 vertexLayouts: new VertexLayoutDescription[] { vertexLayout },
-                shaders: new Shader[] { _vertexShader, _fragmentShader });
+                shaders: _shaders);
             pipelineDescription.Outputs = _graphicsDevice.SwapchainFramebuffer.OutputDescription;
 
             _pipeline = factory.CreateGraphicsPipeline(pipelineDescription);
 
             _commandList = factory.CreateCommandList();
-        }
-
-        private static Shader LoadShader(ShaderStages stage)
-        {
-            string extension = null;
-            switch (_graphicsDevice.BackendType)
-            {
-                case GraphicsBackend.Direct3D11:
-                    extension = "hlsl.bytes";
-                    break;
-                case GraphicsBackend.Vulkan:
-                    extension = "spv";
-                    break;
-                case GraphicsBackend.OpenGL:
-                    extension = "glsl";
-                    break;
-                case GraphicsBackend.Metal:
-                    extension = "metallib";
-                    break;
-                default: throw new System.InvalidOperationException();
-            }
-
-            string entryPoint = stage == ShaderStages.Vertex ? "VS" : "FS";
-            string path = Path.Combine(System.AppContext.BaseDirectory, "Shaders", $"{stage.ToString()}.{extension}");
-            byte[] shaderBytes = File.ReadAllBytes(path);
-            return _graphicsDevice.ResourceFactory.CreateShader(new ShaderDescription(stage, shaderBytes, entryPoint));
         }
 
         private static void Draw()
@@ -159,13 +142,40 @@ namespace GettingStarted
         private static void DisposeResources()
         {
             _pipeline.Dispose();
-            _vertexShader.Dispose();
-            _fragmentShader.Dispose();
+            foreach (Shader shader in _shaders)
+            {
+                shader.Dispose();
+            }
             _commandList.Dispose();
             _vertexBuffer.Dispose();
             _indexBuffer.Dispose();
             _graphicsDevice.Dispose();
         }
+
+        private const string VertexCode = @"
+#version 450
+
+layout(location = 0) in vec2 Position;
+layout(location = 1) in vec4 Color;
+
+layout(location = 0) out vec4 fsin_Color;
+
+void main()
+{
+    gl_Position = vec4(Position, 0, 1);
+    fsin_Color = Color;
+}";
+
+        private const string FragmentCode = @"
+#version 450
+
+layout(location = 0) in vec4 fsin_Color;
+layout(location = 0) out vec4 fsout_Color;
+
+void main()
+{
+    fsout_Color = fsin_Color;
+}";
     }
 
     struct VertexPositionColor

@@ -22,14 +22,14 @@ namespace Common
             GraphicsDevice gd,
             ResourceFactory factory,
             string filename,
-            VertexLayoutDescription layout,
+            VertexElementSemantic[] elementSemantics,
             ModelCreateInfo? createInfo,
             PostProcessSteps flags = DefaultPostProcessSteps)
         {
             using (FileStream fs = File.OpenRead(filename))
             {
                 string extension = Path.GetExtension(filename);
-                Init(gd, factory, fs, extension, layout, createInfo, flags);
+                Init(gd, factory, fs, extension, elementSemantics, createInfo, flags);
             }
         }
 
@@ -38,11 +38,11 @@ namespace Common
             ResourceFactory factory,
             Stream stream,
             string extension,
-            VertexLayoutDescription layout,
+            VertexElementSemantic[] elementSemantics,
             ModelCreateInfo? createInfo,
             PostProcessSteps flags = DefaultPostProcessSteps)
         {
-            Init(gd, factory, stream, extension, layout, createInfo, flags);
+            Init(gd, factory, stream, extension, elementSemantics, createInfo, flags);
         }
 
         private void Init(
@@ -50,7 +50,7 @@ namespace Common
             ResourceFactory factory,
             Stream stream,
             string extension,
-            VertexLayoutDescription layout,
+            VertexElementSemantic[] elementSemantics,
             ModelCreateInfo? createInfo,
             PostProcessSteps flags = DefaultPostProcessSteps)
         {
@@ -100,9 +100,9 @@ namespace Common
                     Vector3D pTangent = paiMesh.HasTangentBasis ? paiMesh.Tangents[j] : Zero3D;
                     Vector3D pBiTangent = paiMesh.HasTangentBasis ? paiMesh.BiTangents[j] : Zero3D;
 
-                    foreach (var component in layout.Elements)
+                    foreach (VertexElementSemantic component in elementSemantics)
                     {
-                        switch (component.Semantic)
+                        switch (component)
                         {
                             case VertexElementSemantic.Position:
                                 vertices.Add(pPos.X * scale.X + center.X);

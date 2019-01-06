@@ -8,6 +8,7 @@ using Common;
 using System.Runtime.InteropServices;
 using AssetPrimitives;
 using System.Diagnostics;
+using Veldrid.SPIRV;
 
 // This example has been adapted from Sascha Willem's "instancing" example from https://github.com/SaschaWillems/Vulkan.
 
@@ -63,8 +64,8 @@ namespace Instancing
             _lightDir = Vector3.Normalize(new Vector3(0.3f, -0.75f, -0.3f));
 
             VertexLayoutDescription sharedVertexLayout = new VertexLayoutDescription(
-                new VertexElementDescription("Position", VertexElementSemantic.Position, VertexElementFormat.Float3),
-                new VertexElementDescription("Normal", VertexElementSemantic.Normal, VertexElementFormat.Float3),
+                new VertexElementDescription("Position", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float3),
+                new VertexElementDescription("Normal", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float3),
                 new VertexElementDescription("TexCoord", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float2));
 
             bool etc2Supported = GraphicsDevice.GetPixelFormatSupport(
@@ -111,7 +112,7 @@ namespace Instancing
             _rockModel = rock.MeshParts[0].CreateDeviceResources(GraphicsDevice, ResourceFactory);
 
             VertexLayoutDescription vertexLayoutPerInstance = new VertexLayoutDescription(
-                new VertexElementDescription("InstancePosition", VertexElementSemantic.Position, VertexElementFormat.Float3),
+                new VertexElementDescription("InstancePosition", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float3),
                 new VertexElementDescription("InstanceRotation", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float3),
                 new VertexElementDescription("InstanceScale", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float3),
                 new VertexElementDescription("InstanceTexArrayIndex", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Int1));
@@ -155,9 +156,6 @@ namespace Instancing
 
             GraphicsDevice.UpdateBuffer(_instanceVB, 0, infos);
 
-            Shader instanceVS = LoadShader(ResourceFactory, "Instance", ShaderStages.Vertex, "VS");
-            Shader instanceFS = LoadShader(ResourceFactory, "Instance", ShaderStages.Fragment, "FS");
-
             GraphicsPipelineDescription pipelineDescription = new GraphicsPipelineDescription()
             {
                 BlendState = BlendStateDescription.SingleOverrideBlend,
@@ -177,7 +175,7 @@ namespace Instancing
                 ShaderSet = new ShaderSetDescription(
                     // The ordering of layouts directly impacts shader layout schemes
                     vertexLayouts: new VertexLayoutDescription[] { sharedVertexLayout, vertexLayoutPerInstance },
-                    shaders: new Shader[] { instanceVS, instanceFS }
+                    shaders: LoadShaders("Instance")
                 ),
                 Outputs = MainSwapchain.Framebuffer.OutputDescription
             };
@@ -189,11 +187,7 @@ namespace Instancing
             // except no instance vertex buffer is needed, and different shaders are used.
             pipelineDescription.ShaderSet = new ShaderSetDescription(
                 new[] { sharedVertexLayout },
-                new[]
-                {
-                    LoadShader(ResourceFactory, "Planet", ShaderStages.Vertex, "VS"),
-                    LoadShader(ResourceFactory, "Planet", ShaderStages.Fragment, "FS"),
-                });
+                LoadShaders("Planet"));
             _planetPipeline = ResourceFactory.CreateGraphicsPipeline(pipelineDescription);
 
             ProcessedModel planet = LoadEmbeddedAsset<ProcessedModel>("sphere.binary");
@@ -215,11 +209,7 @@ namespace Instancing
 
             ShaderSetDescription starfieldShaders = new ShaderSetDescription(
                 Array.Empty<VertexLayoutDescription>(),
-                new[]
-                {
-                    LoadShader(ResourceFactory, "Starfield", ShaderStages.Vertex, "VS"),
-                    LoadShader(ResourceFactory, "Starfield", ShaderStages.Fragment, "FS"),
-                });
+                LoadShaders("Starfield"));
 
             _starfieldPipeline = ResourceFactory.CreateGraphicsPipeline(new GraphicsPipelineDescription(
                 BlendStateDescription.SingleOverrideBlend,
@@ -309,6 +299,13 @@ namespace Instancing
 
             // Once commands have been submitted, the rendered image can be presented to the application window.
             GraphicsDevice.SwapBuffers(MainSwapchain);
+        }
+
+        private Shader[] LoadShaders(string setName)
+        {
+            return ResourceFactory.CreateFromSpirv(
+                new ShaderDescription(ShaderStages.Vertex, ReadEmbeddedAssetBytes(setName + "-vertex.glsl"), "main"),
+                new ShaderDescription(ShaderStages.Fragment, ReadEmbeddedAssetBytes(setName + "-fragment.glsl"), "main"));
         }
     }
 

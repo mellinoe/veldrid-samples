@@ -8,13 +8,7 @@
   <ItemGroup>
     <PackageReference Include="Veldrid" Version="$(VeldridVersion)" />
     <PackageReference Include="Veldrid.StartupUtilities" Version="$(VeldridVersion)" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include="$(MSBuildThisFileDirectory)Shaders\**">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>Shaders\%(RecursiveDir)\%(FileName)%(Extension)</Link>
-    </Content>
+    <PackageReference Include="Veldrid.Spirv" Version="$(VeldridSpirvVersion)" />
   </ItemGroup>
 
 </Project>

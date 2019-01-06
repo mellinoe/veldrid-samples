@@ -6,6 +6,7 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using Veldrid;
 using Veldrid.Sdl2;
+using Veldrid.SPIRV;
 using Veldrid.Utilities;
 
 namespace Offscreen
@@ -45,10 +46,10 @@ namespace Offscreen
         protected override void CreateResources(ResourceFactory factory)
         {
             _vertexLayout = new VertexLayoutDescription(
-                new VertexElementDescription("Position", VertexElementSemantic.Position, VertexElementFormat.Float3),
+                new VertexElementDescription("Position", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float3),
                 new VertexElementDescription("UV", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float2),
-                new VertexElementDescription("Color", VertexElementSemantic.Color, VertexElementFormat.Float3),
-                new VertexElementDescription("Normal", VertexElementSemantic.Normal, VertexElementFormat.Float3));
+                new VertexElementDescription("Color", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float3),
+                new VertexElementDescription("Normal", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float3));
 
             using (Stream planeModelStream = OpenEmbeddedAssetStream("plane2.dae"))
             {
@@ -57,7 +58,7 @@ namespace Offscreen
                     factory,
                     planeModelStream,
                     "dae",
-                    _vertexLayout,
+                    new[] { VertexElementSemantic.Position, VertexElementSemantic.TextureCoordinate, VertexElementSemantic.Color, VertexElementSemantic.Normal },
                     new Model.ModelCreateInfo(new Vector3(0.5f, 0.5f, 0.5f), Vector2.One, Vector3.Zero));
             }
 
@@ -68,7 +69,7 @@ namespace Offscreen
                     factory,
                     dragonModelStream,
                     "dae",
-                    _vertexLayout,
+                    new[] { VertexElementSemantic.Position, VertexElementSemantic.TextureCoordinate, VertexElementSemantic.Color, VertexElementSemantic.Normal },
                     new Model.ModelCreateInfo(new Vector3(0.3f, -0.3f, 0.3f), Vector2.One, Vector3.Zero));
             }
 
@@ -92,11 +93,9 @@ namespace Offscreen
 
             ShaderSetDescription phongShaders = new ShaderSetDescription(
                 new[] { _vertexLayout },
-                new[]
-                {
-                    LoadShader(factory, "Phong", ShaderStages.Vertex, "VS"),
-                    LoadShader(factory, "Phong", ShaderStages.Fragment, "FS")
-                });
+                factory.CreateFromSpirv(
+                    new ShaderDescription(ShaderStages.Vertex, ReadEmbeddedAssetBytes("Phong-vertex.glsl"), "main"),
+                    new ShaderDescription(ShaderStages.Fragment, ReadEmbeddedAssetBytes("Phong-fragment.glsl"), "main")));
 
             ResourceLayout phongLayout = factory.CreateResourceLayout(new ResourceLayoutDescription(
                 new ResourceLayoutElementDescription("UBO", ResourceKind.UniformBuffer, ShaderStages.Vertex)));
@@ -124,11 +123,9 @@ namespace Offscreen
 
             ShaderSetDescription mirrorShaders = new ShaderSetDescription(
                 new[] { _vertexLayout },
-                new[]
-                {
-                    LoadShader(factory, "Mirror", ShaderStages.Vertex, "VS"),
-                    LoadShader(factory, "Mirror", ShaderStages.Fragment, "FS")
-                });
+                factory.CreateFromSpirv(
+                    new ShaderDescription(ShaderStages.Vertex, ReadEmbeddedAssetBytes("Mirror-vertex.glsl"), "main"),
+                    new ShaderDescription(ShaderStages.Fragment, ReadEmbeddedAssetBytes("Mirror-fragment.glsl"), "main")));
 
             GraphicsPipelineDescription mirrorPD = new GraphicsPipelineDescription(
                 BlendStateDescription.SingleOverrideBlend,

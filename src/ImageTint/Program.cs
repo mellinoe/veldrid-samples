@@ -7,6 +7,7 @@ using System.Numerics;
 using Veldrid;
 using Veldrid.ImageSharp;
 using Veldrid.Sdl2;
+using Veldrid.SPIRV;
 using Veldrid.StartupUtilities;
 using Veldrid.Utilities;
 
@@ -75,14 +76,12 @@ namespace ImageTint
                 new[]
                 {
                     new VertexLayoutDescription(
-                        new VertexElementDescription("Position", VertexElementSemantic.Position, VertexElementFormat.Float2),
+                        new VertexElementDescription("Position", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float2),
                         new VertexElementDescription("TextureCoordinates", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float2))
                 },
-                new[]
-                {
-                    LoadShader(factory, "TintShader", ShaderStages.Vertex, "VS"),
-                    LoadShader(factory, "TintShader", ShaderStages.Fragment, "FS")
-                });
+                factory.CreateFromSpirv(
+                    new ShaderDescription(ShaderStages.Vertex, ReadEmbeddedAssetBytes("TintShader-vertex.glsl"), "main"),
+                    new ShaderDescription(ShaderStages.Fragment, ReadEmbeddedAssetBytes("TintShader-fragment.glsl"), "main")));
 
             ResourceLayout layout = factory.CreateResourceLayout(new ResourceLayoutDescription(
                 new ResourceLayoutElementDescription("Input", ResourceKind.TextureReadOnly, ShaderStages.Fragment),

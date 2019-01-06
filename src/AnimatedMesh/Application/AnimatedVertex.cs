@@ -1,17 +1,12 @@
-﻿using ShaderGen;
-using System.Numerics;
+﻿using System.Numerics;
 
 namespace AnimatedMesh
 {
     public unsafe struct AnimatedVertex
     {
-        [PositionSemantic]
         public Vector3 Position;
-        [TextureCoordinateSemantic]
         public Vector2 UV;
-        [TextureCoordinateSemantic]
         public Vector4 BoneWeights;
-        [TextureCoordinateSemantic]
         public UInt4 BoneIndices;
 
         public void AddBone(uint id, float weight)
@@ -37,5 +32,10 @@ namespace AnimatedMesh
                 BoneIndices.W = id;
             }
         }
+    }
+
+    public struct UInt4
+    {
+        public uint X, Y, Z, W;
     }
 }

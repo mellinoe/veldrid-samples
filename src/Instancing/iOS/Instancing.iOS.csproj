@@ -148,9 +148,6 @@
     <Reference Include="Veldrid.StartupUtilities">
       <HintPath>..\..\packages\Veldrid.StartupUtilities.4.2.0-beta1\lib\netstandard2.0\Veldrid.StartupUtilities.dll</HintPath>
     </Reference>
-    <Reference Include="ShaderGen.Primitives">
-      <HintPath>..\..\packages\ShaderGen.Primitives.1.2.0-g6c2ba50db6\lib\netstandard2.0\ShaderGen.Primitives.dll</HintPath>
-    </Reference>
     <Reference Include="Veldrid.Utilities">
       <HintPath>..\..\packages\Veldrid.Utilities.4.2.0-beta1\lib\netstandard2.0\Veldrid.Utilities.dll</HintPath>
     </Reference>

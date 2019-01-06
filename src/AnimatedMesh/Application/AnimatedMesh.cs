@@ -12,6 +12,8 @@ using aiQuaternion = Assimp.Quaternion;
 using Camera = SampleBase.Camera;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using System.Text;
+using Veldrid.SPIRV;
 
 namespace AnimatedMesh
 {
@@ -39,7 +41,7 @@ namespace AnimatedMesh
         private aiMatrix4x4[] _boneTransformations;
         private float _animationTimeScale = 1f;
 
-        public AnimatedMesh(ApplicationWindow window) : base(window){}
+        public AnimatedMesh(ApplicationWindow window) : base(window) { }
 
         private static string GetAssetPath(string relativeAssetPath)
         {
@@ -56,9 +58,6 @@ namespace AnimatedMesh
                 * Matrix4x4.CreateRotationX(3 * (float)Math.PI / 2)
                 * Matrix4x4.CreateScale(0.05f);
             GraphicsDevice.UpdateBuffer(_worldBuffer, 0, ref worldMatrix);
-
-            Shader vs = LoadShader(factory, "Animated", ShaderStages.Vertex, "VS");
-            Shader fs = LoadShader(factory, "Animated", ShaderStages.Fragment, "FS");
 
             ResourceLayout layout = factory.CreateResourceLayout(new ResourceLayoutDescription(
                 new ResourceLayoutElementDescription("Projection", ResourceKind.UniformBuffer, ShaderStages.Vertex),
@@ -82,7 +81,7 @@ namespace AnimatedMesh
             VertexLayoutDescription vertexLayouts = new VertexLayoutDescription(
                 new[]
                 {
-                    new VertexElementDescription("Position", VertexElementSemantic.Position, VertexElementFormat.Float3),
+                    new VertexElementDescription("Position", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float3),
                     new VertexElementDescription("UV", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float2),
                     new VertexElementDescription("BoneWeights", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float4),
                     new VertexElementDescription("BoneIndices", VertexElementSemantic.TextureCoordinate, VertexElementFormat.UInt4),
@@ -93,7 +92,11 @@ namespace AnimatedMesh
                 DepthStencilStateDescription.DepthOnlyLessEqual,
                 new RasterizerStateDescription(FaceCullMode.Back, PolygonFillMode.Solid, FrontFace.CounterClockwise, true, false),
                 PrimitiveTopology.TriangleList,
-                new ShaderSetDescription(new[] { vertexLayouts }, new[] { vs, fs }),
+                new ShaderSetDescription(
+                    new[] { vertexLayouts },
+                    factory.CreateFromSpirv(
+                        new ShaderDescription(ShaderStages.Vertex, Encoding.UTF8.GetBytes(VertexCode), "main"),
+                        new ShaderDescription(ShaderStages.Fragment, Encoding.UTF8.GetBytes(FragmentCode), "main"))),
                 layout,
                 GraphicsDevice.SwapchainFramebuffer.OutputDescription);
             _pipeline = factory.CreateGraphicsPipeline(ref gpd);
@@ -360,5 +363,58 @@ namespace AnimatedMesh
             GraphicsDevice.UpdateBuffer(_projectionBuffer, 0, _camera.ProjectionMatrix);
             GraphicsDevice.UpdateBuffer(_viewBuffer, 0, _camera.ViewMatrix);
         }
+
+        private const string VertexCode = @"
+#version 450
+
+layout(set = 0, binding = 0) uniform ProjectionBuffer
+{
+    mat4 Projection;
+};
+
+layout(set = 0, binding = 1) uniform ViewBuffer
+{
+    mat4 View;
+};
+
+layout(set = 0, binding = 2) uniform WorldBuffer
+{
+    mat4 World;
+};
+
+layout(set = 0, binding = 3) uniform BonesBuffer
+{
+    mat4 BonesTransformations[64];
+};
+
+layout(location = 0) in vec3 Position;
+layout(location = 1) in vec2 UV;
+layout(location = 2) in vec4 BoneWeights;
+layout(location = 3) in uvec4 BoneIndices;
+layout(location = 0) out vec2 fsin_uv;
+
+void main()
+{
+    mat4 boneTransformation = BonesTransformations[BoneIndices.x]  * BoneWeights.x;
+    boneTransformation += BonesTransformations[BoneIndices.y]  * BoneWeights.y;
+    boneTransformation += BonesTransformations[BoneIndices.z]  * BoneWeights.z;
+    boneTransformation += BonesTransformations[BoneIndices.w]  * BoneWeights.w;
+    gl_Position = Projection * View * World * boneTransformation * vec4(Position, 1);
+    fsin_uv = UV;
+}";
+
+        private const string FragmentCode = @"
+#version 450
+
+layout(set = 0, binding = 4) uniform texture2D SurfaceTex;
+layout(set = 0, binding = 5) uniform sampler SurfaceSampler;
+
+layout(location = 0) in vec2 fsin_uv;
+layout(location = 0) out vec4 fsout_color;
+
+void main()
+{
+    fsout_color = texture(sampler2D(SurfaceTex, SurfaceSampler), fsin_uv);
+}";
     }
 }

@@ -49,7 +49,9 @@ namespace SampleBase
                 debug: false,
                 swapchainDepthFormat: PixelFormat.R16_UNorm,
                 syncToVerticalBlank: true,
-                resourceBindingModel: ResourceBindingModel.Improved);
+                resourceBindingModel: ResourceBindingModel.Improved,
+                preferDepthRangeZeroToOne: true,
+                preferStandardClipSpaceYDirection: true);
 #if DEBUG
             options.Debug = true;
 #endif

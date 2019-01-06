@@ -1,13 +1,10 @@
-﻿using ShaderGen;
-using System;
-using System.Numerics;
+﻿using System.Numerics;
 using System.Runtime.CompilerServices;
 
 namespace AnimatedMesh
 {
     public unsafe struct BoneAnimInfo
     {
-        [ArraySize(64)]
         public Matrix4x4[] BonesTransformations;
 
         public Blittable GetBlittable()

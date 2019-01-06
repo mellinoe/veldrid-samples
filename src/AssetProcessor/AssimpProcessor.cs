@@ -51,8 +51,8 @@ namespace AssetProcessor
                 int boneIndicesOffset = -1;
 
                 List<VertexElementDescription> elementDescs = new List<VertexElementDescription>();
-                elementDescs.Add(new VertexElementDescription("Position", VertexElementSemantic.Position, VertexElementFormat.Float3));
-                elementDescs.Add(new VertexElementDescription("Normal", VertexElementSemantic.Normal, VertexElementFormat.Float3));
+                elementDescs.Add(new VertexElementDescription("Position", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float3));
+                elementDescs.Add(new VertexElementDescription("Normal", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float3));
                 normalOffset = 12;
 
                 int vertexSize = 24;
