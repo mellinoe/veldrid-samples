@@ -28,7 +28,7 @@ namespace TexturedCube.Android
             debug = true;
 #endif
 
-            _options = new GraphicsDeviceOptions(debug, PixelFormat.R16_UNorm, false);
+            _options = new GraphicsDeviceOptions(debug, PixelFormat.R16_UNorm, false, ResourceBindingModel.Improved, true, true);
             GraphicsBackend backend = GraphicsDevice.IsBackendSupported(GraphicsBackend.Vulkan)
                 ? GraphicsBackend.Vulkan
                 : GraphicsBackend.OpenGLES;
