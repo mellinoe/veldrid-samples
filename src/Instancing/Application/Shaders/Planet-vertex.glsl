@@ -1,8 +1,6 @@
 #version 450
-#extension GL_ARB_separate_shader_objects : enable
-#extension GL_ARB_shading_language_420pack : enable
 
-layout(set = 0, binding = 0) uniform ProjView
+layout(set = 0, binding = 1) uniform ProjView
 {
     mat4 View;
     mat4 Proj;

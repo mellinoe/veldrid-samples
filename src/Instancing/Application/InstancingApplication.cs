@@ -87,9 +87,9 @@ namespace Instancing
 
             ResourceLayoutElementDescription[] resourceLayoutElementDescriptions =
             {
+                new ResourceLayoutElementDescription("LightInfo", ResourceKind.UniformBuffer, ShaderStages.Fragment),
                 new ResourceLayoutElementDescription("ProjView", ResourceKind.UniformBuffer, ShaderStages.Vertex),
                 new ResourceLayoutElementDescription("RotationInfo", ResourceKind.UniformBuffer, ShaderStages.Vertex),
-                new ResourceLayoutElementDescription("LightInfo", ResourceKind.UniformBuffer, ShaderStages.Fragment),
             };
             ResourceLayoutDescription resourceLayoutDescription = new ResourceLayoutDescription(resourceLayoutElementDescriptions);
             ResourceLayout sharedLayout = factory.CreateResourceLayout(resourceLayoutDescription);
@@ -101,7 +101,7 @@ namespace Instancing
             };
             ResourceLayout textureLayout = factory.CreateResourceLayout(new ResourceLayoutDescription(textureLayoutDescriptions));
 
-            BindableResource[] bindableResources = new BindableResource[] { _cameraProjViewBuffer, _rotationInfoBuffer, _lightInfoBuffer };
+            BindableResource[] bindableResources = new BindableResource[] { _lightInfoBuffer, _cameraProjViewBuffer, _rotationInfoBuffer };
             ResourceSetDescription resourceSetDescription = new ResourceSetDescription(sharedLayout, bindableResources);
             _sharedResourceSet = factory.CreateResourceSet(resourceSetDescription);
 

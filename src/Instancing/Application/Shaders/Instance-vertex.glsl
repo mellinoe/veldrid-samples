@@ -2,13 +2,13 @@
 #extension GL_ARB_separate_shader_objects : enable
 #extension GL_ARB_shading_language_420pack : enable
 
-layout(set = 0, binding = 0) uniform ProjView
+layout(set = 0, binding = 1) uniform ProjView
 {
     mat4 View;
     mat4 Proj;
 };
 
-layout(set = 0, binding = 1) uniform RotationInfo
+layout(set = 0, binding = 2) uniform RotationInfo
 {
     float LocalRotation;
     float GlobalRotation;

@@ -62,6 +62,8 @@ namespace ComputeParticles
 
             _computeScreenSizeResourceSet = factory.CreateResourceSet(new ResourceSetDescription(screenSizeLayout, _screenSizeBuffer));
 
+            var result = SpirvCompilation.CompileVertexFragment(ReadEmbeddedAssetBytes($"Vertex.glsl"), ReadEmbeddedAssetBytes($"Fragment.glsl"), CrossCompileTarget.MSL);
+
             var shaders = factory.CreateFromSpirv(
                 new ShaderDescription(
                     ShaderStages.Vertex,
