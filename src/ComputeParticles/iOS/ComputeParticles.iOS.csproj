@@ -116,7 +116,7 @@
       <HintPath>..\..\packages\Microsoft.Extensions.DependencyModel.2.0.3\lib\netstandard1.6\Microsoft.Extensions.DependencyModel.dll</HintPath>
     </Reference>
     <Reference Include="NativeLibraryLoader">
-      <HintPath>..\..\packages\NativeLibraryLoader.1.0.8\lib\netstandard2.0\NativeLibraryLoader.dll</HintPath>
+      <HintPath>..\..\packages\NativeLibraryLoader.1.0.10\lib\netstandard2.0\NativeLibraryLoader.dll</HintPath>
     </Reference>
     <Reference Include="SharpDX">
       <HintPath>..\..\packages\SharpDX.4.0.1\lib\netstandard1.1\SharpDX.dll</HintPath>
@@ -131,25 +131,28 @@
       <HintPath>..\..\packages\SharpDX.Direct3D11.4.0.1\lib\netstandard1.1\SharpDX.Direct3D11.dll</HintPath>
     </Reference>
     <Reference Include="Veldrid.MetalBindings">
-      <HintPath>..\..\packages\Veldrid.MetalBindings.4.2.0-beta1\lib\netstandard2.0\Veldrid.MetalBindings.dll</HintPath>
+      <HintPath>..\..\packages\Veldrid.MetalBindings.4.5.0\lib\netstandard2.0\Veldrid.MetalBindings.dll</HintPath>
     </Reference>
     <Reference Include="Veldrid.OpenGLBindings">
-      <HintPath>..\..\packages\Veldrid.OpenGLBindings.4.2.0-beta1\lib\netstandard2.0\Veldrid.OpenGLBindings.dll</HintPath>
+      <HintPath>..\..\packages\Veldrid.OpenGLBindings.4.5.0\lib\netstandard2.0\Veldrid.OpenGLBindings.dll</HintPath>
     </Reference>
     <Reference Include="vk">
-      <HintPath>..\..\packages\Vk.1.0.17\lib\netstandard1.4\vk.dll</HintPath>
+      <HintPath>..\..\packages\Vk.1.0.21\lib\netstandard1.4\vk.dll</HintPath>
     </Reference>
     <Reference Include="Veldrid">
-      <HintPath>..\..\packages\Veldrid.4.2.0-beta1\lib\netstandard2.0\Veldrid.dll</HintPath>
+      <HintPath>..\..\packages\Veldrid.4.5.0\lib\netstandard2.0\Veldrid.dll</HintPath>
     </Reference>
     <Reference Include="Veldrid.SDL2">
-      <HintPath>..\..\packages\Veldrid.SDL2.4.2.0-beta1\lib\netstandard2.0\Veldrid.SDL2.dll</HintPath>
+      <HintPath>..\..\packages\Veldrid.SDL2.4.5.0\lib\netstandard2.0\Veldrid.SDL2.dll</HintPath>
     </Reference>
     <Reference Include="Veldrid.StartupUtilities">
-      <HintPath>..\..\packages\Veldrid.StartupUtilities.4.2.0-beta1\lib\netstandard2.0\Veldrid.StartupUtilities.dll</HintPath>
+      <HintPath>..\..\packages\Veldrid.StartupUtilities.4.5.0\lib\netstandard2.0\Veldrid.StartupUtilities.dll</HintPath>
     </Reference>
     <Reference Include="Veldrid.Utilities">
-      <HintPath>..\..\packages\Veldrid.Utilities.4.2.0-beta1\lib\netstandard2.0\Veldrid.Utilities.dll</HintPath>
+      <HintPath>..\..\packages\Veldrid.Utilities.4.5.0\lib\netstandard2.0\Veldrid.Utilities.dll</HintPath>
+    </Reference>
+    <Reference Include="Veldrid.SPIRV">
+      <HintPath>..\..\packages\Veldrid.SPIRV.1.0.5\lib\netstandard2.0\Veldrid.SPIRV.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -195,4 +198,5 @@
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\iOS\Xamarin.iOS.CSharp.targets" />
+  <Import Project="..\..\packages\Veldrid.SPIRV.1.0.5\build\Xamarin.iOS10\Veldrid.SPIRV.targets" Condition="Exists('..\..\packages\Veldrid.SPIRV.1.0.5\build\Xamarin.iOS10\Veldrid.SPIRV.targets')" />
 </Project>

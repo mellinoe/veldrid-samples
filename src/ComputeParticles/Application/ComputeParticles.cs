@@ -17,8 +17,6 @@ namespace ComputeParticles
         private DeviceBuffer _screenSizeBuffer;
         private Shader _computeShader;
         private Pipeline _computePipeline;
-        private Shader _vertexShader;
-        private Shader _fragmentShader;
         private Pipeline _graphicsPipeline;
         private ResourceSet _graphicsParticleResourceSet;
         private CommandList _cl;
