@@ -24,7 +24,13 @@ namespace ComputeTexture.Android
             debug = true;
 #endif
 
-            GraphicsDeviceOptions options = new GraphicsDeviceOptions(debug, PixelFormat.R16_UNorm, false);
+            GraphicsDeviceOptions options = new GraphicsDeviceOptions(
+                debug,
+                PixelFormat.R16_UNorm,
+                false,
+                ResourceBindingModel.Improved,
+                true,
+                true);
             GraphicsBackend backend = GraphicsDevice.IsBackendSupported(GraphicsBackend.Vulkan)
                 ? GraphicsBackend.Vulkan
                 : GraphicsBackend.OpenGLES;
