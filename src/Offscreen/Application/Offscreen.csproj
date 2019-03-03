@@ -22,7 +22,7 @@
   <ItemGroup>
     <ProjectReference Include="$(SrcDir)\SampleBase\SampleBase.csproj" />
     <PackageReference Include="Veldrid.Spirv" Version="$(VeldridSpirvVersion)" />
-    <PackageReference Include="AssimpNet-netstandard" Version="3.3.1" />
+    <PackageReference Include="AssimpNet" Version="$(AssimpNetVersion)" />
   </ItemGroup>
 
 </Project>
