@@ -11,7 +11,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\SampleBase\SampleBase.csproj" />
-    <PackageReference Include="Veldrid.Spirv" Version="1.0.6" />
     <ProjectReference Include="$(SrcDir)/AssetPrimitives/AssetPrimitives.csproj" />
     <ProjectReference Include="$(SrcDir)/AssetProcessor/AssetProcessor.csproj">
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
