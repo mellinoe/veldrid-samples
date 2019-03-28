@@ -14,7 +14,6 @@ namespace TexturedCube.Android
         )]
     public class MainActivity : Activity
     {
-        private GraphicsDeviceOptions _options;
         private VeldridSurfaceView _view;
         private AndroidApplicationWindow _window;
         private TexturedCube _tc;
@@ -38,7 +37,7 @@ namespace TexturedCube.Android
             GraphicsBackend backend = GraphicsDevice.IsBackendSupported(GraphicsBackend.Vulkan)
                 ? GraphicsBackend.Vulkan
                 : GraphicsBackend.OpenGLES;
-            _view = new VeldridSurfaceView(this, backend, _options);
+            _view = new VeldridSurfaceView(this, backend, options);
             _window = new AndroidApplicationWindow(this, _view);
             _window.GraphicsDeviceCreated += (g, r, s) => _window.Run();
             _tc = new TexturedCube(_window);
