@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -191,6 +191,8 @@
     <ProjectReference Include="..\..\SampleBase.iOS\SampleBase.iOS.csproj">
       <Project>{F3F8BE66-ACF7-4D18-918C-A1D182E7C137}</Project>
       <Name>SampleBase.iOS</Name>
+      <IsAppExtension>false</IsAppExtension>
+      <IsWatchApp>false</IsWatchApp>
     </ProjectReference>
     <ProjectReference Include="..\..\SampleBase\SampleBase.csproj">
       <Project>{7AF8692A-B52B-438C-A980-3B6BBCF15DA8}</Project>

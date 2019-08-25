@@ -1,6 +1,7 @@
 ﻿using Android.App;
 using Android.Content.PM;
 using Android.OS;
+using SampleBase;
 using SampleBase.Android;
 using Veldrid;
 
@@ -14,6 +15,7 @@ namespace ComputeTexture.Android
     public class MainActivity : Activity
     {
         private VeldridSurfaceView _view;
+        private AndroidApplicationWindow _window;
 
         protected override void OnCreate(Bundle savedInstanceState)
         {
@@ -31,13 +33,16 @@ namespace ComputeTexture.Android
                 ResourceBindingModel.Improved,
                 true,
                 true);
-            GraphicsBackend backend = GraphicsDevice.IsBackendSupported(GraphicsBackend.Vulkan)
-                ? GraphicsBackend.Vulkan
-                : GraphicsBackend.OpenGLES;
-            _view = new VeldridSurfaceView(this, backend, options);
-            AndroidApplicationWindow window = new AndroidApplicationWindow(this, _view);
-            window.GraphicsDeviceCreated += (g, r, s) => window.Run();
-            ComputeTexture app = new ComputeTexture(window);
+            var sampleOptions = new SampleOptions
+            {
+                Backend = GraphicsDevice.IsBackendSupported(GraphicsBackend.Vulkan)
+                    ? GraphicsBackend.Vulkan
+                    : GraphicsBackend.OpenGLES
+            };
+            _view = new VeldridSurfaceView(this, sampleOptions.Backend.Value, options);
+            _window = new AndroidApplicationWindow(this, _view);
+            _window.GraphicsDeviceCreated += (g, r, s) => _window.Run(sampleOptions);
+            ComputeTexture app = new ComputeTexture(_window);
             SetContentView(_view);
         }
 

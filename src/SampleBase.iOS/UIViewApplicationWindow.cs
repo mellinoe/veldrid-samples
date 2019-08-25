@@ -32,7 +32,7 @@ namespace SampleBase.iOS
         public event Action Resized;
         public event Action<KeyEvent> KeyPressed;
 
-        public void Run()
+        public void Run(SampleOptions options)
         {
             _timer = CADisplayLink.Create(Render);
             _timer.FrameInterval = 1;

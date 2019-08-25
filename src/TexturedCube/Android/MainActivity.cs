@@ -3,6 +3,7 @@ using Android.Content.PM;
 using Android.OS;
 using SampleBase.Android;
 using System.Threading;
+using SampleBase;
 using Veldrid;
 
 namespace TexturedCube.Android
@@ -34,12 +35,15 @@ namespace TexturedCube.Android
                 ResourceBindingModel.Improved,
                 true,
                 true);
-            GraphicsBackend backend = GraphicsDevice.IsBackendSupported(GraphicsBackend.Vulkan)
-                ? GraphicsBackend.Vulkan
-                : GraphicsBackend.OpenGLES;
-            _view = new VeldridSurfaceView(this, backend, options);
+            var sampleOptions = new SampleOptions
+            {
+                Backend = GraphicsDevice.IsBackendSupported(GraphicsBackend.Vulkan)
+                    ? GraphicsBackend.Vulkan
+                    : GraphicsBackend.OpenGLES
+            };
+            _view = new VeldridSurfaceView(this, sampleOptions.Backend.Value, options);
             _window = new AndroidApplicationWindow(this, _view);
-            _window.GraphicsDeviceCreated += (g, r, s) => _window.Run();
+            _window.GraphicsDeviceCreated += (g, r, s) => _window.Run(sampleOptions);
             _tc = new TexturedCube(_window);
             SetContentView(_view);
         }
