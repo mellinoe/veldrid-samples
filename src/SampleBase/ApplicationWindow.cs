@@ -16,6 +16,6 @@ namespace SampleBase
         uint Width { get; }
         uint Height { get; }
 
-        void Run();
+        void Run(SampleOptions options);
     }
 }

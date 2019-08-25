@@ -43,7 +43,7 @@ namespace SampleBase
             _window.KeyDown += OnKeyDown;
         }
 
-        public void Run()
+        public void Run(SampleOptions sampleOptions)
         {
             GraphicsDeviceOptions options = new GraphicsDeviceOptions(
                 debug: false,
@@ -55,7 +55,7 @@ namespace SampleBase
 #if DEBUG
             options.Debug = true;
 #endif
-            _gd = VeldridStartup.CreateGraphicsDevice(_window, options);
+            _gd = VeldridStartup.CreateGraphicsDevice(_window, options, sampleOptions.Backend ?? VeldridStartup.GetPlatformDefaultBackend());
             _factory = new DisposeCollectorResourceFactory(_gd.ResourceFactory);
             GraphicsDeviceCreated?.Invoke(_gd, _factory, _gd.MainSwapchain);
 

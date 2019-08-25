@@ -1,3 +1,4 @@
+using CommandLine;
 using SampleBase;
 
 namespace Offscreen
@@ -8,7 +9,7 @@ namespace Offscreen
         {
             VeldridStartupWindow window = new VeldridStartupWindow("Offscreen");
             OffscreenApplication offscreen = new OffscreenApplication(window);
-            window.Run();
+            Parser.Default.ParseArguments<SampleOptions>(args).WithParsed<SampleOptions>(options => window.Run(options));
         }
     }
 }

@@ -8,7 +8,7 @@ namespace AnimatedMesh
         {
             VeldridStartupWindow window = new VeldridStartupWindow("Animated Mesh");
             AnimatedMesh animatedMesh = new AnimatedMesh(window);
-            window.Run();
+            Parser.Default.ParseArguments<SampleOptions>(args).WithParsed<SampleOptions>(options => window.Run(options));
         }
     }
 }
