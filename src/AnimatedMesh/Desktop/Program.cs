@@ -1,3 +1,4 @@
+using CommandLine;
 using SampleBase;
 
 namespace AnimatedMesh
