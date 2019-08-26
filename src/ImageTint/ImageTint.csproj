@@ -8,7 +8,7 @@
   <ItemGroup>
     <ProjectReference Include="..\SampleBase\SampleBase.csproj" />
     <PackageReference Include="Veldrid.Spirv" Version="$(VeldridSpirvVersion)" />
-    <PackageReference Include="Veldrid.ImageSharp" Version="4.7.0" />
+    <PackageReference Include="Veldrid.ImageSharp" Version="$(VeldridVersion)" />
   </ItemGroup>
 
   <ItemGroup>

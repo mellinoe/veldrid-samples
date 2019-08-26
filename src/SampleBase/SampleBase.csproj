@@ -7,10 +7,10 @@
 
   <ItemGroup>
     <PackageReference Include="CommandLineParser" Version="2.6.0" />
-    <PackageReference Include="Veldrid" Version="4.7.0" />
+    <PackageReference Include="Veldrid" Version="$(VeldridVersion)" />
     <PackageReference Include="Veldrid.RenderDoc" Version="1.0.0" />
-    <PackageReference Include="Veldrid.StartupUtilities" Version="4.7.0" />
-    <PackageReference Include="Veldrid.Utilities" Version="4.7.0" />
+    <PackageReference Include="Veldrid.StartupUtilities" Version="$(VeldridVersion)" />
+    <PackageReference Include="Veldrid.Utilities" Version="$(VeldridVersion)" />
     <PackageReference Include="Veldrid.Spirv" Version="$(VeldridSpirvVersion)" />
   </ItemGroup>
 
