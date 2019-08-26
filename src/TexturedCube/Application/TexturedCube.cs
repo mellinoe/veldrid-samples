@@ -93,7 +93,7 @@ namespace TexturedCube
 
             _worldTextureSet = factory.CreateResourceSet(new ResourceSetDescription(
                 worldTextureLayout,
-                _worldBuffer,
+                new DeviceBufferRange(_worldBuffer, 0, 64),
                 _surfaceTextureView,
                 GraphicsDevice.Aniso4xSampler));
 

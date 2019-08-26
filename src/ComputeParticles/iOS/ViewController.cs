@@ -3,6 +3,7 @@
 using UIKit;
 using SampleBase.iOS;
 using ComputeParticles;
+using SampleBase;
 
 namespace iOS
 {
@@ -18,7 +19,7 @@ namespace iOS
             ComputeParticles.ComputeParticles app = new ComputeParticles.ComputeParticles(this);
             base.ViewDidLoad();
             // Perform any additional setup after loading the view, typically from a nib.
-            Run();
+            Run(new SampleOptions());
         }
 
         public override void DidReceiveMemoryWarning()

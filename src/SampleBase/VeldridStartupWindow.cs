@@ -13,6 +13,7 @@ namespace SampleBase
         private GraphicsDevice _gd;
         private DisposeCollectorResourceFactory _factory;
         private bool _windowResized = true;
+        private RenderDoc _renderDoc;
 
         public event Action<float> Rendering;
         public event Action<GraphicsDevice, ResourceFactory, Swapchain> GraphicsDeviceCreated;
@@ -55,8 +56,13 @@ namespace SampleBase
 #if DEBUG
             options.Debug = true;
 #endif
+            if (sampleOptions.Renderdoc)
+            {
+                RenderDoc.Load(out _renderDoc);
+            }
             _gd = VeldridStartup.CreateGraphicsDevice(_window, options, sampleOptions.Backend ?? VeldridStartup.GetPlatformDefaultBackend());
             _factory = new DisposeCollectorResourceFactory(_gd.ResourceFactory);
+
             GraphicsDeviceCreated?.Invoke(_gd, _factory, _gd.MainSwapchain);
 
             Stopwatch sw = Stopwatch.StartNew();

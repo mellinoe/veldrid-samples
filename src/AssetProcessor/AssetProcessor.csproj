@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -13,7 +13,7 @@
   <ItemGroup>
     <PackageReference Include="AssimpNet" Version="$(AssimpNetVersion)" />
     <PackageReference Include="SixLabors.ImageSharp" Version="1.0.0-beta0003" />
-    <PackageReference Include="Veldrid" Version="$(VeldridVersion)" />
+    <PackageReference Include="Veldrid" Version="4.7.0" />
     <ProjectReference Include="..\AssetPrimitives\AssetPrimitives.csproj" />
   </ItemGroup>
 
