@@ -8,7 +8,7 @@
     <SamplesAssetsDir>$(MSBuildThisFileDirectory)assets</SamplesAssetsDir>
     <SrcDir>$(RepositoryRootDirectory)/src</SrcDir>
     <VeldridVersion>4.7.0</VeldridVersion>
-    <VeldridSpirvVersion>1.0.12</VeldridSpirvVersion>
+    <VeldridSpirvVersion>1.0.11</VeldridSpirvVersion>
     <AssimpNetVersion>4.1.0</AssimpNetVersion>
   </PropertyGroup>
 </Project>
