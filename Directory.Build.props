@@ -7,8 +7,8 @@
     <BaseIntermediateOutputPath>$([System.IO.Path]::GetFullPath('$(RepositoryRootDirectory)bin\obj\$(MSBuildProjectName)'))\</BaseIntermediateOutputPath>
     <SamplesAssetsDir>$(MSBuildThisFileDirectory)assets</SamplesAssetsDir>
     <SrcDir>$(RepositoryRootDirectory)/src</SrcDir>
-    <VeldridVersion>4.6.1</VeldridVersion>
-    <VeldridSpirvVersion>1.0.9</VeldridSpirvVersion>
+    <VeldridVersion>4.7.0</VeldridVersion>
+    <VeldridSpirvVersion>1.0.13</VeldridSpirvVersion>
     <AssimpNetVersion>4.1.0</AssimpNetVersion>
   </PropertyGroup>
 </Project>
