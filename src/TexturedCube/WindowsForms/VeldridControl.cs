@@ -1,26 +1,27 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Drawing;
 using System.Windows.Forms;
 using SampleBase;
 using Veldrid;
 using Veldrid.Utilities;
+using Veldrid.Vk;
 
 namespace TexturedCube
 {
     public class VeldridControl : Control, ApplicationWindow
     {
         private readonly Stopwatch _stopwatch = new Stopwatch();
-        private SwapchainSource _swapchainSource;
         private GraphicsDevice _device;
         private DisposeCollectorResourceFactory _resources;
         private bool _isAnimated;
 
         public VeldridControl()
         {
-            BackColor = Color.Red;
-            DoubleBuffered = true;
-            ResizeRedraw = true;
+            this.SetStyle(ControlStyles.AllPaintingInWmPaint, true);
+            this.SetStyle(ControlStyles.DoubleBuffer, false);
+            this.SetStyle(ControlStyles.Opaque, true);
+            this.SetStyle(ControlStyles.ResizeRedraw, true);
+            this.SetStyle(ControlStyles.UserPaint, true);
         }
 
         public event Action<float> Rendering;
@@ -38,9 +39,13 @@ namespace TexturedCube
                 {
                     _isAnimated = value;
                     if (_isAnimated)
+                    {
                         Application.Idle += OnIdle;
+                    }
                     else
+                    {
                         Application.Idle -= OnIdle;
+                    }
                 }
             }
         }
@@ -58,17 +63,10 @@ namespace TexturedCube
         {
             base.OnHandleCreated(e);
 
-            var window = (Control) this;
-            //while (window.Parent != null)
-            //{
-            //    window = window.Parent;
-            //}
-
-            _swapchainSource = SwapchainSource.CreateWin32(window.Handle, Handle);
             var width = (uint) Math.Max(Width, 1);
             var height = (uint) Math.Max(Height, 1);
-            var description = new SwapchainDescription(_swapchainSource, width, height, PixelFormat.R32_Float, false);
-            _device = GraphicsDevice.CreateD3D11(new GraphicsDeviceOptions(), description);
+            _device = GraphicsDevice.CreateD3D11(new GraphicsDeviceOptions(true, PixelFormat.R32_Float, false), Handle, width, height);
+            //_device = GraphicsDevice.CreateVulkan(new GraphicsDeviceOptions(false, PixelFormat.R32_Float, false) {PreferStandardClipSpaceYDirection = true}, VkSurfaceSource.CreateWin32(Handle, Handle), width, height);
             _resources = new DisposeCollectorResourceFactory(_device.ResourceFactory);
 
             GraphicsDeviceCreated?.Invoke(_device, _resources, _device.MainSwapchain);
@@ -90,7 +88,11 @@ namespace TexturedCube
 
         protected override void OnPaint(PaintEventArgs e)
         {
-            base.OnPaint(e);
+            Render();
+        }
+
+        private void Render()
+        {
             var elapsedTotalSeconds = (float) _stopwatch.Elapsed.TotalSeconds;
             if (!_stopwatch.IsRunning)
                 _stopwatch.Start();
@@ -99,10 +101,7 @@ namespace TexturedCube
             if (_device != null)
             {
                 Rendering?.Invoke(elapsedTotalSeconds);
-                _device.WaitForIdle();
             }
-
-            //e.Graphics.Dispose();
         }
 
         protected override void OnResize(EventArgs e)
