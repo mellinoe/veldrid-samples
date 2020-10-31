@@ -54,7 +54,13 @@ void main()
             };
             Sdl2Window window = VeldridStartup.CreateWindow(ref windowCI);
 
-            _graphicsDevice = VeldridStartup.CreateGraphicsDevice(window);
+            GraphicsDeviceOptions options = new GraphicsDeviceOptions
+            {
+                PreferStandardClipSpaceYDirection = true,
+                PreferDepthRangeZeroToOne = true
+            };
+
+            _graphicsDevice = VeldridStartup.CreateGraphicsDevice(window, options, GraphicsBackend.Vulkan);
 
             CreateResources();
 
