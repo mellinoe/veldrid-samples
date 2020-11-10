@@ -2,6 +2,7 @@
 using Android.Widget;
 using Android.OS;
 using Android.Content.PM;
+using SampleBase;
 using SampleBase.Android;
 using Veldrid;
 
@@ -16,6 +17,7 @@ namespace Instancing.Android
     public class MainActivity : Activity
     {
         private VeldridSurfaceView _view;
+        private AndroidApplicationWindow _window;
 
         protected override void OnCreate(Bundle savedInstanceState)
         {
@@ -33,13 +35,16 @@ namespace Instancing.Android
                 ResourceBindingModel.Improved, 
                 true,
                 true);
-            GraphicsBackend backend = GraphicsDevice.IsBackendSupported(GraphicsBackend.Vulkan)
-                ? GraphicsBackend.Vulkan
-                : GraphicsBackend.OpenGLES;
-            _view = new VeldridSurfaceView(this, backend, options);
-            AndroidApplicationWindow window = new AndroidApplicationWindow(this, _view);
-            window.GraphicsDeviceCreated += (g, r, s) => window.Run();
-            InstancingApplication app = new InstancingApplication(window);
+            var sampleOptions = new SampleOptions
+            {
+                Backend = GraphicsDevice.IsBackendSupported(GraphicsBackend.Vulkan)
+                    ? GraphicsBackend.Vulkan
+                    : GraphicsBackend.OpenGLES
+            };
+            _view = new VeldridSurfaceView(this, sampleOptions.Backend.Value, options);
+            _window = new AndroidApplicationWindow(this, _view);
+            _window.GraphicsDeviceCreated += (g, r, s) => _window.Run(sampleOptions);
+            InstancingApplication app = new InstancingApplication(_window);
             SetContentView(_view);
         }
 

@@ -3,6 +3,7 @@
 using UIKit;
 using SampleBase.iOS;
 using ComputeTexture;
+using SampleBase;
 
 namespace iOS
 {
@@ -18,7 +19,7 @@ namespace iOS
             ComputeTexture.ComputeTexture app = new ComputeTexture.ComputeTexture(this);
             base.ViewDidLoad();
             // Perform any additional setup after loading the view, typically from a nib.
-            Run();
+            Run(new SampleOptions());
         }
 
         public override void DidReceiveMemoryWarning()

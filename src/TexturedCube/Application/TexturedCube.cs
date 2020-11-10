@@ -1,6 +1,7 @@
 ﻿using AssetPrimitives;
 using SampleBase;
 using System.Numerics;
+using System.Runtime.InteropServices;
 using System.Text;
 using Veldrid;
 using Veldrid.SPIRV;
@@ -25,6 +26,7 @@ namespace TexturedCube
         private ResourceSet _projViewSet;
         private ResourceSet _worldTextureSet;
         private float _ticks;
+        private uint[] _worldMatrixOffsets;
 
         public TexturedCube(ApplicationWindow window) : base(window)
         {
@@ -35,9 +37,14 @@ namespace TexturedCube
 
         protected unsafe override void CreateResources(ResourceFactory factory)
         {
+            var uniformAlignment = GraphicsDevice.UniformBufferMinOffsetAlignment;
+            var worldMatrixSize = (uint)Marshal.SizeOf<Matrix4x4>();
+            var worldMatrixUniformSize = uniformAlignment*((worldMatrixSize + uniformAlignment - 1) / uniformAlignment);
+            _worldMatrixOffsets = new uint[] {0, worldMatrixUniformSize, worldMatrixUniformSize * 2};
+
             _projectionBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
             _viewBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
-            _worldBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
+            _worldBuffer = factory.CreateBuffer(new BufferDescription(worldMatrixUniformSize*3, BufferUsage.UniformBuffer));
 
             _vertexBuffer = factory.CreateBuffer(new BufferDescription((uint)(VertexPositionTexture.SizeInBytes * _vertices.Length), BufferUsage.VertexBuffer));
             GraphicsDevice.UpdateBuffer(_vertexBuffer, 0, _vertices);
@@ -66,7 +73,7 @@ namespace TexturedCube
 
             ResourceLayout worldTextureLayout = factory.CreateResourceLayout(
                 new ResourceLayoutDescription(
-                    new ResourceLayoutElementDescription("WorldBuffer", ResourceKind.UniformBuffer, ShaderStages.Vertex),
+                    new ResourceLayoutElementDescription("WorldBuffer", ResourceKind.UniformBuffer, ShaderStages.Vertex, ResourceLayoutElementOptions.DynamicBinding),
                     new ResourceLayoutElementDescription("SurfaceTexture", ResourceKind.TextureReadOnly, ShaderStages.Fragment),
                     new ResourceLayoutElementDescription("SurfaceSampler", ResourceKind.Sampler, ShaderStages.Fragment)));
 
@@ -86,7 +93,7 @@ namespace TexturedCube
 
             _worldTextureSet = factory.CreateResourceSet(new ResourceSetDescription(
                 worldTextureLayout,
-                _worldBuffer,
+                new DeviceBufferRange(_worldBuffer, 0, 64),
                 _surfaceTextureView,
                 GraphicsDevice.Aniso4xSampler));
 
@@ -114,7 +121,12 @@ namespace TexturedCube
             Matrix4x4 rotation =
                 Matrix4x4.CreateFromAxisAngle(Vector3.UnitY, (_ticks / 1000f))
                 * Matrix4x4.CreateFromAxisAngle(Vector3.UnitX, (_ticks / 3000f));
-            _cl.UpdateBuffer(_worldBuffer, 0, ref rotation);
+            for (int i = 0; i < _worldMatrixOffsets.Length; ++i)
+            {
+                Matrix4x4 translation = Matrix4x4.CreateTranslation(Vector3.UnitX*(i-1.0f)*1.4f);
+                var worldMatrix = rotation * translation;
+                _cl.UpdateBuffer(_worldBuffer, _worldMatrixOffsets[i], ref worldMatrix);
+            }
 
             _cl.SetFramebuffer(MainSwapchain.Framebuffer);
             _cl.ClearColorTarget(0, RgbaFloat.Black);
@@ -123,8 +135,12 @@ namespace TexturedCube
             _cl.SetVertexBuffer(0, _vertexBuffer);
             _cl.SetIndexBuffer(_indexBuffer, IndexFormat.UInt16);
             _cl.SetGraphicsResourceSet(0, _projViewSet);
-            _cl.SetGraphicsResourceSet(1, _worldTextureSet);
-            _cl.DrawIndexed(36, 1, 0, 0, 0);
+            for (int i = 0; i < _worldMatrixOffsets.Length; ++i)
+            {
+                _cl.SetGraphicsResourceSet(1, _worldTextureSet, 1, ref _worldMatrixOffsets[i]);
+                _cl.DrawIndexed(36, 1, 0, 0, 0);
+            }
+
 
             _cl.End();
             GraphicsDevice.SubmitCommands(_cl);

@@ -1,4 +1,5 @@
-﻿using SampleBase;
+﻿using CommandLine;
+using SampleBase;
 
 namespace ComputeParticles
 {
@@ -8,7 +9,7 @@ namespace ComputeParticles
         {
             VeldridStartupWindow window = new VeldridStartupWindow("Compute Particles");
             ComputeParticles computeParticles = new ComputeParticles(window);
-            window.Run();
+            Parser.Default.ParseArguments<SampleOptions>(args).WithParsed<SampleOptions>(options => window.Run(options));
         }
     }
 }

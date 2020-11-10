@@ -1,5 +1,5 @@
 ﻿using System;
-
+using SampleBase;
 using SampleBase.iOS;
 
 namespace TexturedCube.iOS
@@ -17,7 +17,7 @@ namespace TexturedCube.iOS
             base.ViewDidLoad();
 			// Perform any additional setup after loading the view, typically from a nib.
 
-			Run();
+			Run(new SampleOptions());
         }
 
         public override void DidReceiveMemoryWarning()

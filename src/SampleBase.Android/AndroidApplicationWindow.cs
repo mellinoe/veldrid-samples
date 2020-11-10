@@ -54,7 +54,7 @@ namespace SampleBase.Android
             Rendering?.Invoke((float)deltaSeconds);
         }
 
-        public void Run()
+        public void Run(SampleOptions options)
         {
             _view.RunContinuousRenderLoop();
         }

@@ -1,4 +1,5 @@
-﻿using SampleBase;
+﻿using CommandLine;
+using SampleBase;
 
 namespace ComputeTexture
 {
@@ -8,7 +9,7 @@ namespace ComputeTexture
         {
             VeldridStartupWindow window = new VeldridStartupWindow("Compute Texture");
             ComputeTexture computeTexture = new ComputeTexture(window);
-            window.Run();
+            Parser.Default.ParseArguments<SampleOptions>(args).WithParsed<SampleOptions>(options => window.Run(options));
         }
     }
 }

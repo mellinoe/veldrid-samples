@@ -1,3 +1,4 @@
+using CommandLine;
 using SampleBase;
 
 namespace Instancing
@@ -8,7 +9,7 @@ namespace Instancing
         {
             VeldridStartupWindow window = new VeldridStartupWindow("Instancing");
             InstancingApplication instancing = new InstancingApplication(window);
-            window.Run();
+            Parser.Default.ParseArguments<SampleOptions>(args).WithParsed<SampleOptions>(options => window.Run(options));
         }
     }
 }
