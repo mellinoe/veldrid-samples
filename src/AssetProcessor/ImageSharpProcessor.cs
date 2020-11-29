@@ -2,14 +2,13 @@
 using SixLabors.ImageSharp.Advanced;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
-using SixLabors.ImageSharp.Processing.Transforms;
-using SixLabors.ImageSharp.Processing.Transforms.Resamplers;
 using System;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
 using Veldrid;
 using AssetPrimitives;
+using System.Runtime.InteropServices;
 
 namespace AssetProcessor
 {
@@ -17,7 +16,7 @@ namespace AssetProcessor
     {
         public unsafe override ProcessedTexture ProcessT(Stream stream, string extension)
         {
-            Image<Rgba32> image = Image.Load(stream);
+            Image<Rgba32> image = Image.Load<Rgba32>(stream);
             Image<Rgba32>[] mipmaps = GenerateMipmaps(image, out int totalSize);
 
             byte[] allTexData = new byte[totalSize];
@@ -27,7 +26,11 @@ namespace AssetProcessor
                 foreach (Image<Rgba32> mipmap in mipmaps)
                 {
                     long mipSize = mipmap.Width * mipmap.Height * sizeof(Rgba32);
-                    fixed (Rgba32* pixelPtr = &mipmap.DangerousGetPinnableReferenceToPixelBuffer())
+                    if (!mipmap.TryGetSinglePixelSpan(out Span<Rgba32> pixelSpan))
+                    {
+                        throw new VeldridException("Unable to get image pixelspan.");
+                    }
+                    fixed (void* pixelPtr = &MemoryMarshal.GetReference(pixelSpan))
                     {
                         Buffer.MemoryCopy(pixelPtr, allTexDataPtr + offset, mipSize, mipSize);
                     }
@@ -46,9 +49,7 @@ namespace AssetProcessor
 
         // Taken from Veldrid.ImageSharp
 
-        private static readonly IResampler s_resampler = new Lanczos3Resampler();
-
-        private static Image<T>[] GenerateMipmaps<T>(Image<T> baseImage, out int totalSize) where T : struct, IPixel<T>
+        private static Image<T>[] GenerateMipmaps<T>(Image<T> baseImage, out int totalSize) where T : unmanaged, IPixel<T>
         {
             int mipLevelCount = ComputeMipLevels(baseImage.Width, baseImage.Height);
             Image<T>[] mipLevels = new Image<T>[mipLevelCount];
@@ -62,7 +63,7 @@ namespace AssetProcessor
             {
                 int newWidth = Math.Max(1, currentWidth / 2);
                 int newHeight = Math.Max(1, currentHeight / 2);
-                Image<T> newImage = baseImage.Clone(context => context.Resize(newWidth, newHeight, s_resampler));
+                Image<T> newImage = baseImage.Clone(context => context.Resize(newWidth, newHeight, KnownResamplers.Lanczos3));
                 Debug.Assert(i < mipLevelCount);
                 mipLevels[i] = newImage;
 
