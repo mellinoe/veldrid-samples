@@ -54,6 +54,7 @@ namespace ComputeParticles
                 _computeShader,
                 new[] { particleStorageLayout, screenSizeLayout },
                 1, 1, 1);
+            
             _computePipeline = factory.CreateComputePipeline(ref computePipelineDesc);
 
             _computeResourceSet = factory.CreateResourceSet(new ResourceSetDescription(particleStorageLayout, _particleBuffer));
@@ -61,7 +62,7 @@ namespace ComputeParticles
             _computeScreenSizeResourceSet = factory.CreateResourceSet(new ResourceSetDescription(screenSizeLayout, _screenSizeBuffer));
 
             var result = SpirvCompilation.CompileVertexFragment(ReadEmbeddedAssetBytes($"Vertex.glsl"), ReadEmbeddedAssetBytes($"Fragment.glsl"), CrossCompileTarget.MSL);
-
+            
             var shaders = factory.CreateFromSpirv(
                 new ShaderDescription(
                     ShaderStages.Vertex,
@@ -110,7 +111,7 @@ namespace ComputeParticles
         private void InitResources(ResourceFactory factory)
         {
             _cl.Begin();
-            _cl.UpdateBuffer(_screenSizeBuffer, 0, new Vector4(Window.Width, Window.Height, 0, 0));
+            _cl.UpdateBuffer(_screenSizeBuffer, 0, new Vector4(Window.Width, Window.Height,0,0));
 
             ParticleInfo[] initialParticles = new ParticleInfo[ParticleCount];
             Random r = new Random();
@@ -132,7 +133,7 @@ namespace ComputeParticles
         protected override void HandleWindowResize()
         {
             base.HandleWindowResize();
-            GraphicsDevice.UpdateBuffer(_screenSizeBuffer, 0, new Vector4(Window.Width, Window.Height, 0, 0));
+            GraphicsDevice.UpdateBuffer(_screenSizeBuffer, 0, new Vector4(Window.Width, Window.Height,0,0));
         }
 
         protected override void Draw(float deltaSeconds)
@@ -144,7 +145,7 @@ namespace ComputeParticles
             _cl.SetPipeline(_computePipeline);
             _cl.SetComputeResourceSet(0, _computeResourceSet);
             _cl.SetComputeResourceSet(1, _computeScreenSizeResourceSet);
-            _cl.Dispatch(1024, 1, 1);
+            _cl.Dispatch(ParticleCount, 1, 1);
 
             _cl.SetFramebuffer(MainSwapchain.Framebuffer);
             _cl.SetFullViewports();
