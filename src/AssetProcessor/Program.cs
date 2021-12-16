@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.IO;
+using System.Web;
 using AssetPrimitives;
 
 namespace AssetProcessor
@@ -13,16 +15,23 @@ namespace AssetProcessor
         private static Dictionary<string, BinaryAssetProcessor> GetAssetProcessors()
         {
             ImageSharpProcessor texProcessor = new ImageSharpProcessor();
+            StbImageProcessor stbImageProcessor = new StbImageProcessor();
+            KtxFileProcessor ktxFileProcessor = new KtxFileProcessor();
             AssimpProcessor assimpProcessor = new AssimpProcessor();
 
             return new Dictionary<string, BinaryAssetProcessor>()
             {
                 { ".png", texProcessor },
-                { ".ktx", new KtxFileProcessor() },
+                { ".hdr", stbImageProcessor },
+                { ".ktx", ktxFileProcessor },
                 { ".dae", assimpProcessor },
                 { ".obj", assimpProcessor },
+                { ".fbx", assimpProcessor }
             };
         }
+
+        private static NameValueCollection ParseArgs(string args)
+            => HttpUtility.ParseQueryString(args);
 
         static int Main(string[] args)
         {
@@ -35,12 +44,19 @@ namespace AssetProcessor
             for (int i = 1; i < args.Length; i++)
             {
                 string arg = args[i];
-                Console.WriteLine($"Processing {arg}");
+                var assetParts = arg.Split("::", 2);
+                Console.WriteLine(string.Join(", ", assetParts));
+                var path = assetParts[0];
+                var processorArgs = assetParts.Length > 1 && !string.IsNullOrWhiteSpace(assetParts[1]) ? ParseArgs(assetParts[1]) : null;
 
-                string extension = Path.GetExtension(arg);
+                Console.WriteLine($"Processing {path}");
+                if (processorArgs != null)
+                    Console.WriteLine($"\t with args {processorArgs}");
+
+                string extension = Path.GetExtension(path);
                 if (string.IsNullOrEmpty(extension))
                 {
-                    Console.Error.WriteLine($"Invalid path: {arg}");
+                    Console.Error.WriteLine($"Invalid path: {path}");
                     return -1;
                 }
 
@@ -51,9 +67,9 @@ namespace AssetProcessor
                 }
 
                 object processedAsset;
-                using (FileStream fs = File.OpenRead(arg))
+                using (FileStream fs = File.OpenRead(path))
                 {
-                    processedAsset = processor.Process(fs, extension);
+                    processedAsset = processor.Process(fs, extension, processorArgs);
                 }
 
                 Type assetType = processedAsset.GetType();
@@ -63,7 +79,7 @@ namespace AssetProcessor
                     return -1;
                 }
 
-                string fileName = Path.GetFileNameWithoutExtension(arg);
+                string fileName = Path.GetFileNameWithoutExtension(path);
                 string outputFileName = Path.Combine(outputDirectory, fileName + ".binary");
                 using (FileStream outFS = File.Create(outputFileName))
                 {

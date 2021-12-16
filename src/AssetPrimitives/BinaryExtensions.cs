@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -31,13 +34,26 @@ namespace AssetPrimitives
             writer.Write(array);
         }
 
-        public static void WriteObjectArray<T>(this BinaryWriter writer, T[] array, Action<BinaryWriter, T> writeFunc)
+        public static void WriteObjectArray<T>(this BinaryWriter writer, ICollection<T> array, Action<BinaryWriter, T> writeFunc)
         {
-            writer.Write(array.Length);
+            writer.Write(array.Count);
             foreach (T item in array)
             {
                 writeFunc(writer, item);
             }
+        }
+
+        public static void WriteDictionary<TKey, TValue>(this BinaryWriter writer, IDictionary<TKey, TValue> dictionary, Action<BinaryWriter, TKey> keyWriterFunc, Action<BinaryWriter, TValue> valueWriteFunc)
+        {
+            writer.WriteObjectArray(dictionary.Keys, keyWriterFunc);
+            writer.WriteObjectArray(dictionary.Values, valueWriteFunc);
+        }
+
+        public static IDictionary<TKey, TValue> ReadDictionary<TKey, TValue>(this BinaryReader reader, Func<BinaryReader, TKey> keyReader, Func<BinaryReader, TValue> valueReader)
+        {
+            var keys = reader.ReadObjectArray(keyReader);
+            var values = reader.ReadObjectArray(valueReader);
+            return Enumerable.Zip(keys, values, Tuple.Create).ToDictionary(kvp => kvp.Item1, kvp => kvp.Item2);
         }
 
         public static T[] ReadObjectArray<T>(this BinaryReader reader, Func<BinaryReader, T> readFunc)

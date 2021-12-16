@@ -8,6 +8,18 @@ namespace Common
 {
     public class Model
     {
+        public enum VertexElementSemantic
+        {
+            Position,
+            Normal,
+            TextureCoordinate,
+            Color,
+            Tangent,
+            BiTangent,
+            BoneWeight,
+            BoneIndices
+        }
+
         private const PostProcessSteps DefaultPostProcessSteps =
             PostProcessSteps.FlipWindingOrder | PostProcessSteps.Triangulate | PostProcessSteps.PreTransformVertices
             | PostProcessSteps.CalculateTangentSpace | PostProcessSteps.GenerateSmoothNormals;
@@ -122,6 +134,16 @@ namespace Common
                                 vertices.Add(pColor.R);
                                 vertices.Add(pColor.G);
                                 vertices.Add(pColor.B);
+                                break;
+                            case VertexElementSemantic.Tangent:
+                                vertices.Add(pTangent.X);
+                                vertices.Add(pTangent.Y);
+                                vertices.Add(pTangent.Z);
+                                break;
+                            case VertexElementSemantic.BiTangent:
+                                vertices.Add(pBiTangent.X);
+                                vertices.Add(pBiTangent.Y);
+                                vertices.Add(pBiTangent.Z);
                                 break;
                             default: throw new System.NotImplementedException();
                         };

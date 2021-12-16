@@ -1,25 +1,19 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>netstandard2.0</TargetFramework>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <Compile Include="$(SrcDir)\Common\Model.cs" Link="Model.cs" />
-    <Compile Include="$(SrcDir)\Common\RawList.cs" Link="RawList.cs" />
-    <EmbeddedResource Include="$(SamplesAssetsDir)\models\goblin.dae">
-      <LogicalName>goblin.dae</LogicalName>
-    </EmbeddedResource>
-    <EmbeddedResource Include="$(SamplesAssetsDir)\textures\goblin_bc3_unorm.ktx">
-      <LogicalName>goblin_bc3_unorm.ktx</LogicalName>
-    </EmbeddedResource>
-  </ItemGroup>
+	<ItemGroup>
+		<Asset Include="$(SamplesAssetsDir)\models\goblin.dae" ProcessorFormat="Position,TextureCoordinate,BoneWeights,BoneIndices" />
+		<Asset Include="$(SamplesAssetsDir)\textures\goblin_bc3_unorm.ktx" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="$(SrcDir)\SampleBase\SampleBase.csproj" />
-    <PackageReference Include="Veldrid.Spirv" Version="$(VeldridSpirvVersion)" />
-    <PackageReference Include="AssimpNet" Version="$(AssimpNetVersion)" />
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="$(SrcDir)\SampleBase\SampleBase.csproj" />
+		<PackageReference Include="Veldrid.Spirv" Version="$(VeldridSpirvVersion)" />
+		<PackageReference Include="AssimpNet" Version="$(AssimpNetVersion)" />
+	</ItemGroup>
 
 </Project>

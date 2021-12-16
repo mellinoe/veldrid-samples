@@ -51,7 +51,7 @@ namespace AssetPrimitives
                     uint mipWidth = GetDimension(Width, level);
                     uint mipHeight = GetDimension(Height, level);
                     uint mipDepth = GetDimension(Depth, level);
-                    uint subresourceSize = mipWidth * mipHeight * mipDepth * GetFormatSize(Format);
+                    uint subresourceSize = mipWidth * mipHeight * mipDepth * FormatHelpers.GetSizeInBytes(Format);
 
                     for (uint layer = 0; layer < ArrayLayers; layer++)
                     {
@@ -71,16 +71,6 @@ namespace AssetPrimitives
             gd.SubmitCommands(cl);
 
             return texture;
-        }
-
-        private uint GetFormatSize(PixelFormat format)
-        {
-            switch (format)
-            {
-                case PixelFormat.R8_G8_B8_A8_UNorm: return 4;
-                case PixelFormat.BC3_UNorm: return 1;
-                default: throw new NotImplementedException();
-            }
         }
 
         public static uint GetDimension(uint largestLevelDimension, uint mipLevel)

@@ -58,7 +58,7 @@ namespace Offscreen
                     factory,
                     planeModelStream,
                     "dae",
-                    new[] { VertexElementSemantic.Position, VertexElementSemantic.TextureCoordinate, VertexElementSemantic.Color, VertexElementSemantic.Normal },
+                    new[] { Model.VertexElementSemantic.Position, Model.VertexElementSemantic.TextureCoordinate, Model.VertexElementSemantic.Color, Model.VertexElementSemantic.Normal },
                     new Model.ModelCreateInfo(new Vector3(0.5f, 0.5f, 0.5f), Vector2.One, Vector3.Zero));
             }
 
@@ -69,7 +69,7 @@ namespace Offscreen
                     factory,
                     dragonModelStream,
                     "dae",
-                    new[] { VertexElementSemantic.Position, VertexElementSemantic.TextureCoordinate, VertexElementSemantic.Color, VertexElementSemantic.Normal },
+                    new[] { Model.VertexElementSemantic.Position, Model.VertexElementSemantic.TextureCoordinate, Model.VertexElementSemantic.Color, Model.VertexElementSemantic.Normal },
                     new Model.ModelCreateInfo(new Vector3(0.3f, -0.3f, 0.3f), Vector2.One, Vector3.Zero));
             }
 

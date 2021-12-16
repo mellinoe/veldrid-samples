@@ -1,18 +1,11 @@
-﻿using SampleBase;
-using System;
-using System.IO;
-using Veldrid;
-using System.Numerics;
-using Assimp;
-
-using aiMatrix4x4 = Assimp.Matrix4x4;
-using Matrix4x4 = System.Numerics.Matrix4x4;
-using Quaternion = System.Numerics.Quaternion;
-using aiQuaternion = Assimp.Quaternion;
-using Camera = SampleBase.Camera;
+﻿using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
+using System.IO;
+using System.Numerics;
 using System.Text;
+using AssetPrimitives;
+using SampleBase;
+using Veldrid;
 using Veldrid.SPIRV;
 
 namespace AnimatedMesh
@@ -31,22 +24,16 @@ namespace AnimatedMesh
         private CommandList _cl;
         private Pipeline _pipeline;
 
-        private Animation _animation;
-        private Dictionary<string, uint> _boneIDsByName = new Dictionary<string, uint>();
+        private ProcessedAnimation _modelAnimation;
+        private IDictionary<string, uint> _boneIDsByName;
         private double _previousAnimSeconds = 0;
-        private Scene _scene;
-        private Mesh _firstMesh;
-        private BoneAnimInfo _boneAnimInfo = BoneAnimInfo.New();
-        private aiMatrix4x4 _rootNodeInverseTransform;
-        private aiMatrix4x4[] _boneTransformations;
+        private ProcessedModel _model;
+        private ProcessedMeshPart _modelMesh;
+        private Matrix4x4 _rootNodeInverseTransform;
+        private Matrix4x4[] _boneTransformations;
         private float _animationTimeScale = 1f;
 
         public AnimatedMesh(ApplicationWindow window) : base(window) { }
-
-        private static string GetAssetPath(string relativeAssetPath)
-        {
-            return Path.Combine(AppContext.BaseDirectory, "assets", relativeAssetPath);
-        }
 
         protected override void CreateResources(ResourceFactory factory)
         {
@@ -60,37 +47,34 @@ namespace AnimatedMesh
             GraphicsDevice.UpdateBuffer(_worldBuffer, 0, ref worldMatrix);
 
             ResourceLayout layout = factory.CreateResourceLayout(new ResourceLayoutDescription(
-                new ResourceLayoutElementDescription("Projection", ResourceKind.UniformBuffer, ShaderStages.Vertex),
-                new ResourceLayoutElementDescription("View", ResourceKind.UniformBuffer, ShaderStages.Vertex),
-                new ResourceLayoutElementDescription("World", ResourceKind.UniformBuffer, ShaderStages.Vertex),
-                new ResourceLayoutElementDescription("Bones", ResourceKind.UniformBuffer, ShaderStages.Vertex),
+                new ResourceLayoutElementDescription("ProjectionBuffer", ResourceKind.UniformBuffer, ShaderStages.Vertex),
+                new ResourceLayoutElementDescription("ViewBuffer", ResourceKind.UniformBuffer, ShaderStages.Vertex),
+                new ResourceLayoutElementDescription("WorldBuffer", ResourceKind.UniformBuffer, ShaderStages.Vertex),
+                new ResourceLayoutElementDescription("BonesBuffer", ResourceKind.UniformBuffer, ShaderStages.Vertex),
                 new ResourceLayoutElementDescription("SurfaceTex", ResourceKind.TextureReadOnly, ShaderStages.Fragment),
                 new ResourceLayoutElementDescription("SurfaceSampler", ResourceKind.Sampler, ShaderStages.Fragment)));
 
             Texture texture;
-            using (Stream ktxStream = OpenEmbeddedAssetStream("goblin_bc3_unorm.ktx"))
-            {
-                texture = KtxFile.LoadTexture(
-                    GraphicsDevice,
-                    factory,
-                    ktxStream,
-                    PixelFormat.BC3_UNorm);
-            }
+
+            var ktxData = LoadEmbeddedAsset<byte[]>("goblin_bc3_unorm.binary");
+            texture = KtxFile.LoadTexture(
+                GraphicsDevice,
+                factory,
+                ktxData,
+                PixelFormat.BC3_UNorm);
             _texView = ResourceFactory.CreateTextureView(texture);
 
-            VertexLayoutDescription vertexLayouts = new VertexLayoutDescription(
-                new[]
-                {
-                    new VertexElementDescription("Position", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float3),
-                    new VertexElementDescription("UV", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float2),
-                    new VertexElementDescription("BoneWeights", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float4),
-                    new VertexElementDescription("BoneIndices", VertexElementSemantic.TextureCoordinate, VertexElementFormat.UInt4),
-                });
+            _model = LoadEmbeddedAsset<ProcessedModel>("goblin.binary");
+            _modelMesh = _model.MeshParts[0];
+            _modelAnimation = _model.Animations[0];
+            _boneIDsByName = _modelMesh.BoneIDsByName;
+
+            VertexLayoutDescription vertexLayouts = new VertexLayoutDescription(_modelMesh.VertexElements);
 
             GraphicsPipelineDescription gpd = new GraphicsPipelineDescription(
                 BlendStateDescription.SingleOverrideBlend,
                 DepthStencilStateDescription.DepthOnlyLessEqual,
-                new RasterizerStateDescription(FaceCullMode.Back, PolygonFillMode.Solid, FrontFace.CounterClockwise, true, false),
+                new RasterizerStateDescription(FaceCullMode.Back, PolygonFillMode.Solid, FrontFace.Clockwise, true, false),
                 PrimitiveTopology.TriangleList,
                 new ShaderSetDescription(
                     new[] { vertexLayouts },
@@ -101,45 +85,8 @@ namespace AnimatedMesh
                 GraphicsDevice.SwapchainFramebuffer.OutputDescription);
             _pipeline = factory.CreateGraphicsPipeline(ref gpd);
 
-            AssimpContext ac = new AssimpContext();
-            using (Stream modelStream = OpenEmbeddedAssetStream("goblin.dae"))
-            {
-                _scene = ac.ImportFileFromStream(modelStream, "dae");
-            }
-            _rootNodeInverseTransform = _scene.RootNode.Transform;
-            _rootNodeInverseTransform.Inverse();
-
-            _firstMesh = _scene.Meshes[0];
-            AnimatedVertex[] vertices = new AnimatedVertex[_firstMesh.VertexCount];
-            for (int i = 0; i < vertices.Length; i++)
-            {
-                vertices[i].Position = new Vector3(_firstMesh.Vertices[i].X, _firstMesh.Vertices[i].Y, _firstMesh.Vertices[i].Z);
-                vertices[i].UV = new Vector2(_firstMesh.TextureCoordinateChannels[0][i].X, _firstMesh.TextureCoordinateChannels[0][i].Y);
-            }
-
-            _animation = _scene.Animations[0];
-
-            List<int> indices = new List<int>();
-            foreach (Face face in _firstMesh.Faces)
-            {
-                if (face.IndexCount == 3)
-                {
-                    indices.Add(face.Indices[0]);
-                    indices.Add(face.Indices[1]);
-                    indices.Add(face.Indices[2]);
-                }
-            }
-
-            for (uint boneID = 0; boneID < _firstMesh.BoneCount; boneID++)
-            {
-                Bone bone = _firstMesh.Bones[(int)boneID];
-                _boneIDsByName.Add(bone.Name, boneID);
-                foreach (VertexWeight weight in bone.VertexWeights)
-                {
-                    vertices[weight.VertexID].AddBone(boneID, weight.Weight);
-                }
-            }
-            Array.Resize(ref _boneTransformations, _firstMesh.BoneCount);
+            _rootNodeInverseTransform = _model.Nodes.RootNodeInverseTransform;
+            _boneTransformations = new Matrix4x4[_modelMesh.BoneOffsets.Length];
 
             _bonesBuffer = ResourceFactory.CreateBuffer(new BufferDescription(
                 64 * 64, BufferUsage.UniformBuffer | BufferUsage.Dynamic));
@@ -147,15 +94,13 @@ namespace AnimatedMesh
             _rs = factory.CreateResourceSet(new ResourceSetDescription(layout,
                 _projectionBuffer, _viewBuffer, _worldBuffer, _bonesBuffer, _texView, GraphicsDevice.Aniso4xSampler));
 
-            _indexCount = (uint)indices.Count;
+            _indexCount = _modelMesh.IndexCount;
 
-            _vertexBuffer = ResourceFactory.CreateBuffer(new BufferDescription(
-                (uint)(vertices.Length * Unsafe.SizeOf<AnimatedVertex>()), BufferUsage.VertexBuffer));
-            GraphicsDevice.UpdateBuffer(_vertexBuffer, 0, vertices);
+            _vertexBuffer = ResourceFactory.CreateBuffer(new BufferDescription((uint)_modelMesh.VertexData.Length, BufferUsage.VertexBuffer));
+            GraphicsDevice.UpdateBuffer(_vertexBuffer, 0, _modelMesh.VertexData);
 
-            _indexBuffer = ResourceFactory.CreateBuffer(new BufferDescription(
-                _indexCount * 4, BufferUsage.IndexBuffer));
-            GraphicsDevice.UpdateBuffer(_indexBuffer, 0, indices.ToArray());
+            _indexBuffer = ResourceFactory.CreateBuffer(new BufferDescription((uint)_modelMesh.IndexData.Length, BufferUsage.IndexBuffer));
+            GraphicsDevice.UpdateBuffer(_indexBuffer, 0, _modelMesh.IndexData);
 
             _cl = factory.CreateCommandList();
             _camera.Position = new Vector3(110, -87, -532);
@@ -185,156 +130,153 @@ namespace AnimatedMesh
 
         private void UpdateAnimation(float deltaSeconds)
         {
-            double totalSeconds = _animation.DurationInTicks * _animation.TicksPerSecond;
+            double totalSeconds = _modelAnimation.DurationInTicks * _modelAnimation.TicksPerSecond;
             double newSeconds = _previousAnimSeconds + (deltaSeconds * _animationTimeScale);
             newSeconds = newSeconds % totalSeconds;
             _previousAnimSeconds = newSeconds;
 
-            double ticks = newSeconds * _animation.TicksPerSecond;
+            double ticks = newSeconds * _modelAnimation.TicksPerSecond;
 
-            UpdateChannel(ticks, _scene.RootNode, aiMatrix4x4.Identity);
+            UpdateChannel(ticks, _model.Nodes.Nodes[_model.Nodes.RootNodeIndex], Matrix4x4.Identity);
 
-            for (int i = 0; i < _boneTransformations.Length; i++)
-            {
-                _boneAnimInfo.BonesTransformations[i] = _boneTransformations[i].ToSystemMatrixTransposed();
-            }
-
-            GraphicsDevice.UpdateBuffer(_bonesBuffer, 0, _boneAnimInfo.GetBlittable());
+            GraphicsDevice.UpdateBuffer(_bonesBuffer, 0, _boneTransformations);
         }
 
-        private void UpdateChannel(double time, Node node, aiMatrix4x4 parentTransform)
+        private void UpdateChannel(double time, ProcessedNode node, Matrix4x4 parentTransform)
         {
-            aiMatrix4x4 nodeTransformation = node.Transform;
+            Matrix4x4 nodeTransformation = node.Transform;
 
-            if (GetChannel(node, out NodeAnimationChannel channel))
+            if (GetChannel(node, out var channel))
             {
-                aiMatrix4x4 scale = InterpolateScale(time, channel);
-                aiMatrix4x4 rotation = InterpolateRotation(time, channel);
-                aiMatrix4x4 translation = InterpolateTranslation(time, channel);
+                Matrix4x4 scale = InterpolateScale(time, channel);
+                Matrix4x4 rotation = InterpolateRotation(time, channel);
+                Matrix4x4 translation = InterpolateTranslation(time, channel);
 
                 nodeTransformation = scale * rotation * translation;
             }
 
             if (_boneIDsByName.TryGetValue(node.Name, out uint boneID))
             {
-                aiMatrix4x4 m = _firstMesh.Bones[(int)boneID].OffsetMatrix
+                Matrix4x4 m = _modelMesh.BoneOffsets[boneID]
                     * nodeTransformation
                     * parentTransform
                     * _rootNodeInverseTransform;
                 _boneTransformations[boneID] = m;
             }
 
-            foreach (Node childNode in node.Children)
+            foreach (var childIdx in node.ChildIndices)
             {
+                var childNode = _model.Nodes.Nodes[childIdx];
                 UpdateChannel(time, childNode, nodeTransformation * parentTransform);
             }
         }
 
-        private aiMatrix4x4 InterpolateTranslation(double time, NodeAnimationChannel channel)
+        private Matrix4x4 InterpolateTranslation(double time, ProcessedAnimationChannel channel)
         {
-            Vector3D position;
+            Vector3 position;
 
-            if (channel.PositionKeyCount == 1)
+            if (channel.Positions.Length == 1)
             {
-                position = channel.PositionKeys[0].Value;
+                position = channel.Positions[0].Value;
             }
             else
             {
                 uint frameIndex = 0;
-                for (uint i = 0; i < channel.PositionKeyCount - 1; i++)
+                for (uint i = 0; i < channel.Positions.Length - 1; i++)
                 {
-                    if (time < (float)channel.PositionKeys[(int)(i + 1)].Time)
+                    if (time < (float)channel.Positions[(int)(i + 1)].Time)
                     {
                         frameIndex = i;
                         break;
                     }
                 }
 
-                VectorKey currentFrame = channel.PositionKeys[(int)frameIndex];
-                VectorKey nextFrame = channel.PositionKeys[(int)((frameIndex + 1) % channel.PositionKeyCount)];
+                VectorKey currentFrame = channel.Positions[(int)frameIndex];
+                VectorKey nextFrame = channel.Positions[(int)((frameIndex + 1) % channel.Positions.Length)];
 
                 double delta = (time - (float)currentFrame.Time) / (float)(nextFrame.Time - currentFrame.Time);
 
-                Vector3D start = currentFrame.Value;
-                Vector3D end = nextFrame.Value;
+                var start = currentFrame.Value;
+                var end = nextFrame.Value;
                 position = (start + (float)delta * (end - start));
             }
 
-            return aiMatrix4x4.FromTranslation(position);
+            return Matrix4x4.CreateTranslation(position);
         }
 
-        private aiMatrix4x4 InterpolateRotation(double time, NodeAnimationChannel channel)
+        private Matrix4x4 InterpolateRotation(double time, ProcessedAnimationChannel channel)
         {
-            aiQuaternion rotation;
+            Quaternion rotation;
 
-            if (channel.RotationKeyCount == 1)
+            if (channel.Rotations.Length == 1)
             {
-                rotation = channel.RotationKeys[0].Value;
+                rotation = channel.Rotations[0].Value;
             }
             else
             {
                 uint frameIndex = 0;
-                for (uint i = 0; i < channel.RotationKeyCount - 1; i++)
+                for (uint i = 0; i < channel.Rotations.Length - 1; i++)
                 {
-                    if (time < (float)channel.RotationKeys[(int)(i + 1)].Time)
+                    if (time < (float)channel.Rotations[(int)(i + 1)].Time)
                     {
                         frameIndex = i;
                         break;
                     }
                 }
 
-                QuaternionKey currentFrame = channel.RotationKeys[(int)frameIndex];
-                QuaternionKey nextFrame = channel.RotationKeys[(int)((frameIndex + 1) % channel.RotationKeyCount)];
+                QuaternionKey currentFrame = channel.Rotations[(int)frameIndex];
+                QuaternionKey nextFrame = channel.Rotations[(int)((frameIndex + 1) % channel.Rotations.Length)];
 
                 double delta = (time - (float)currentFrame.Time) / (float)(nextFrame.Time - currentFrame.Time);
 
-                aiQuaternion start = currentFrame.Value;
-                aiQuaternion end = nextFrame.Value;
-                rotation = aiQuaternion.Slerp(start, end, (float)delta);
-                rotation.Normalize();
+                var start = currentFrame.Value;
+                var end = nextFrame.Value;
+                rotation = Quaternion.Slerp(start, end, (float)delta);
+                rotation = Quaternion.Normalize(rotation);
             }
 
-            return rotation.GetMatrix();
+            return Matrix4x4.CreateFromQuaternion(rotation);
         }
 
-        private aiMatrix4x4 InterpolateScale(double time, NodeAnimationChannel channel)
+        private Matrix4x4 InterpolateScale(double time, ProcessedAnimationChannel channel)
         {
-            Vector3D scale;
+            Vector3 scale;
 
-            if (channel.ScalingKeyCount == 1)
+            if (channel.Scales.Length == 1)
             {
-                scale = channel.ScalingKeys[0].Value;
+                scale = channel.Scales[0].Value;
             }
             else
             {
                 uint frameIndex = 0;
-                for (uint i = 0; i < channel.ScalingKeyCount - 1; i++)
+                for (uint i = 0; i < channel.Scales.Length - 1; i++)
                 {
-                    if (time < (float)channel.ScalingKeys[(int)(i + 1)].Time)
+                    if (time < (float)channel.Scales[(int)(i + 1)].Time)
                     {
                         frameIndex = i;
                         break;
                     }
                 }
 
-                VectorKey currentFrame = channel.ScalingKeys[(int)frameIndex];
-                VectorKey nextFrame = channel.ScalingKeys[(int)((frameIndex + 1) % channel.ScalingKeyCount)];
+                VectorKey currentFrame = channel.Scales[(int)frameIndex];
+                VectorKey nextFrame = channel.Scales[(int)((frameIndex + 1) % channel.Scales.Length)];
 
                 double delta = (time - (float)currentFrame.Time) / (float)(nextFrame.Time - currentFrame.Time);
 
-                Vector3D start = currentFrame.Value;
-                Vector3D end = nextFrame.Value;
+                Vector3 start = currentFrame.Value;
+                Vector3 end = nextFrame.Value;
 
                 scale = (start + (float)delta * (end - start));
             }
 
-            return aiMatrix4x4.FromScaling(scale);
+            return Matrix4x4.CreateScale(scale);
         }
 
-        private bool GetChannel(Node node, out NodeAnimationChannel channel)
+        private bool GetChannel(ProcessedNode node, out ProcessedAnimationChannel channel)
         {
-            foreach (NodeAnimationChannel c in _animation.NodeAnimationChannels)
+            foreach (var kvp in _modelAnimation.AnimationChannels)
             {
+                var c = kvp.Value;
                 if (c.NodeName == node.Name)
                 {
                     channel = c;

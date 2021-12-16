@@ -14,7 +14,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="$(SrcDir)\Common\RawList.cs" Link="RawList.cs" />
     <EmbeddedResource Include="$(MSBuildThisFileDirectory)/Shaders/**">
       <LogicalName>%(FileName)%(Extension)</LogicalName>
     </EmbeddedResource>

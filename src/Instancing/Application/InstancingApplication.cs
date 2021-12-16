@@ -1,13 +1,10 @@
-using System.Numerics;
-using Veldrid;
-using SampleBase;
-using System.Runtime.CompilerServices;
-using System.IO;
 using System;
-using Common;
+using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using AssetPrimitives;
-using System.Diagnostics;
+using SampleBase;
+using Veldrid;
 using Veldrid.SPIRV;
 
 // This example has been adapted from Sascha Willem's "instancing" example from https://github.com/SaschaWillems/Vulkan.
