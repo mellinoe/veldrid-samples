@@ -16,10 +16,13 @@ namespace AssetProcessor
     public class AssimpProcessor : BinaryAssetProcessor<ProcessedModel>
     {
         private static readonly Vector3D ZeroVector = new Vector3D(0, 0, 0);
+
+        private const int MaxVertexBoneWeightCount = 4;
+        private const PostProcessSteps AlwaysIncludePostProcessSteps 
+            = PostProcessSteps.LimitBoneWeights; // vertex data includes strictly max 4 bone weights/indices
+
         private ProcessedModelVertexElementSemantic[] ParseVertexElementSemantics(string arg)
-        {
-            return arg.Split(",").Select(sem => Enum.Parse<ProcessedModelVertexElementSemantic>(sem)).ToArray();
-        }
+            => arg.Split(",").Select(sem => Enum.Parse<ProcessedModelVertexElementSemantic>(sem)).ToArray();
 
         private static VertexElementFormat GetVertexElementFormatForSemantic(ProcessedModelVertexElementSemantic semantic)
         {
@@ -42,22 +45,55 @@ namespace AssetProcessor
             }
         }
 
+        private static Vector3 ParseScale(string scale)
+        {
+            var parts = scale.Split(',', 3);
+            switch (parts.Length)
+            {
+                case 1:
+                    return new Vector3(float.Parse(parts[0]));
+                case 3:
+                    return new Vector3(float.Parse(parts[0]), float.Parse(parts[1]), float.Parse(parts[2]));
+                default:
+                    throw new NotImplementedException($"{nameof(ParseScale)} not implemented for {nameof(scale)} {scale}");
+            }
+        }
+
+        private static Vector3 ParseCenter(string center)
+        {
+            var parts = center.Split(',', 3);
+            if (parts.Length != 3)
+                throw new ArgumentException($"{nameof(center)} must be in '<<x>>,<<y>>,<<z>>' format (e.g. 0,0,0 or 1,0,0 etc)");
+            return new Vector3(float.Parse(parts[0]), float.Parse(parts[1]), float.Parse(parts[2]));
+        }
+
+        private static PostProcessSteps[] ParsePostProcessSteps(string arg)
+            => arg.Split("|").Select(step => Enum.Parse<PostProcessSteps>(step)).ToArray();
+
         private static VertexElementDescription CreateVertexElementDescription(ProcessedModelVertexElementSemantic semantic, VertexElementFormat format)
             => new VertexElementDescription(semantic.ToString(), VertexElementSemantic.TextureCoordinate, format);
 
-        private static NameValueCollection DefaultArgs 
-            = new NameValueCollection() { { nameof(ProcessedModelVertexElementSemantic), "Position,Normal,TextureCoordinate,BoneWeights,BoneIndices" } };
+        private static NameValueCollection DefaultArgs
+            = new NameValueCollection() {
+                { nameof(ProcessedModelVertexElementSemantic), "Position,Normal,TextureCoordinate,BoneWeights,BoneIndices" },
+                { "Scale", "1" },
+                { "Center", "0,0,0" },
+                { nameof(PostProcessSteps), "FlipWindingOrder|Triangulate|PreTransformVertices|CalculateTangentSpace|GenerateSmoothNormals" }
+            };
 
         public unsafe override ProcessedModel ProcessT(Stream stream, string extension, NameValueCollection args = null)
         {
             args = args ?? DefaultArgs;
             var inputVertexSemantics = ParseVertexElementSemantics(args[nameof(ProcessedModelVertexElementSemantic)] ?? DefaultArgs[nameof(ProcessedModelVertexElementSemantic)]).ToArray();
+            var postProcessSteps = ParsePostProcessSteps(args[nameof(PostProcessSteps)] ?? DefaultArgs[nameof(PostProcessSteps)]);
+            var scale = ParseScale(args["Scale"] ?? DefaultArgs["Scale"]);
+            var center = ParseCenter(args["Center"] ?? DefaultArgs["Center"]);
 
             AssimpContext ac = new AssimpContext();
-            ac.SetConfig(new Assimp.Configs.VertexBoneWeightLimitConfig(4));
+            ac.SetConfig(new Assimp.Configs.VertexBoneWeightLimitConfig(MaxVertexBoneWeightCount));
             Scene scene = ac.ImportFileFromStream(
                 stream,
-                PostProcessSteps.FlipWindingOrder | PostProcessSteps.GenerateNormals | PostProcessSteps.CalculateTangentSpace | PostProcessSteps.LimitBoneWeights | PostProcessSteps.Triangulate | PostProcessSteps.PreTransformVertices | PostProcessSteps.SortByPrimitiveType | PostProcessSteps.OptimizeMeshes | PostProcessSteps.ValidateDataStructure,
+                postProcessSteps.Aggregate(AlwaysIncludePostProcessSteps, (accum, step) => accum | step),
                 extension);
             aiMatrix4x4 rootNodeInverseTransform = scene.RootNode.Transform;
             rootNodeInverseTransform.Inverse();
@@ -128,8 +164,8 @@ namespace AssetProcessor
                             }
 
                             System.Numerics.Matrix4x4 offsetMat = bone.OffsetMatrix.ToSystemMatrixTransposed();
-                            System.Numerics.Matrix4x4.Decompose(offsetMat, out var scale, out var rot, out var trans);
-                            offsetMat = System.Numerics.Matrix4x4.CreateScale(scale)
+                            System.Numerics.Matrix4x4.Decompose(offsetMat, out var offsetScale, out var rot, out var trans);
+                            offsetMat = System.Numerics.Matrix4x4.CreateScale(offsetScale)
                                 * System.Numerics.Matrix4x4.CreateFromQuaternion(rot)
                                 * System.Numerics.Matrix4x4.CreateTranslation(trans);
 
@@ -145,9 +181,9 @@ namespace AssetProcessor
                             {
                                 case ProcessedModelVertexElementSemantic.Position:
                                     var position = mesh.Vertices[i];
-                                    vertexWriter.Write(position.X);
-                                    vertexWriter.Write(position.Y);
-                                    vertexWriter.Write(position.Z);
+                                    vertexWriter.Write(position.X * scale.X + center.X);
+                                    vertexWriter.Write(position.Y * scale.Y + center.Y);
+                                    vertexWriter.Write(position.Z * scale.Z + center.Z);
                                     break;
                                 case ProcessedModelVertexElementSemantic.Normal:
                                     var normal = mesh.Normals[i];

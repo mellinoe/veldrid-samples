@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
@@ -6,14 +6,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="$(SrcDir)\Common\Model.cs" Link="Model.cs" />
-    <Compile Include="$(SrcDir)\Common\RawList.cs" Link="RawList.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <EmbeddedResource Include="$(SamplesAssetsDir)\models\chinesedragon.dae" LogicalName="chinesedragon.dae" />
-    <EmbeddedResource Include="$(SamplesAssetsDir)\models\plane2.dae" LogicalName="plane2.dae" />
-    <EmbeddedResource Include="$(SamplesAssetsDir)\textures\darkmetal_bc3_unorm.ktx" LogicalName="darkmetal_bc3_unorm.ktx" />
+    <Asset Include="$(SamplesAssetsDir)\models\chinesedragon.dae" ProcessorFormat="ProcessedModelVertexElementSemantic=Position,TextureCoordinate,Color,Normal%26Scale=0.3%26CalculateTangentSpace|Triangulate|GenerateSmoothNormals|PreTransformVertices|FlipWindingOrder" />
+    <Asset Include="$(SamplesAssetsDir)\models\plane2.dae" ProcessorFormat="ProcessedModelVertexElementSemantic=Position,TextureCoordinate,Color,Normal%26Scale=0.5%26CalculateTangentSpace|Triangulate|GenerateSmoothNormals|PreTransformVertices|FlipWindingOrder" />
+    <Asset Include="$(SamplesAssetsDir)\textures\darkmetal_bc3_unorm.ktx" />
     <EmbeddedResource Include="Shaders\**">
       <LogicalName>%(Filename)%(Extension)</LogicalName>
     </EmbeddedResource>
@@ -21,6 +16,7 @@
 
   <ItemGroup>
     <ProjectReference Include="$(SrcDir)\SampleBase\SampleBase.csproj" />
+    <ProjectReference Include="..\..\AssetPrimitives\AssetPrimitives.csproj" />
     <PackageReference Include="Veldrid.Spirv" Version="$(VeldridSpirvVersion)" />
     <PackageReference Include="AssimpNet" Version="$(AssimpNetVersion)" />
   </ItemGroup>

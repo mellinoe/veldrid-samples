@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Numerics;
@@ -30,6 +31,64 @@ namespace AssetPrimitives
             MeshParts = meshParts;
             Nodes = nodes;
             Animations = animations;
+        }
+
+        public void MergeMeshesToSingleVertexAndIndexBuffer(out byte[] vertexData, out VertexElementDescription[] vertexElementDescriptions, out byte[] indexData, out uint indexCount, out IndexFormat indexFormat)
+        {
+            var dataLengths = MeshParts.Aggregate(
+                (vertexDataLength: 0u, indexDataLength: 0u, indexCount: 0u),
+                (accum, mesh) => (
+                    vertexDataLength: accum.vertexDataLength + (uint)mesh.VertexData.Length,
+                    indexDataLength: accum.indexDataLength + (uint)mesh.IndexData.Length,
+                    indexCount: accum.indexCount + mesh.IndexCount
+                )
+            );
+
+            vertexData = new byte[dataLengths.vertexDataLength];
+            indexData = new byte[dataLengths.indexDataLength];
+            indexCount = dataLengths.indexCount;
+
+            vertexElementDescriptions = MeshParts[0].VertexElements;
+            indexFormat = MeshParts[0].IndexFormat;
+
+            var vertexSize = (uint)vertexElementDescriptions.Sum(element => FormatHelpers.GetSizeInBytes(element.Format));
+
+            using (var vertexOutStream = new MemoryStream(vertexData))
+            using (var indexOutStream = new MemoryStream(indexData))
+            using (var vertexWriter = new BinaryWriter(vertexOutStream))
+            using (var indexWriter = new BinaryWriter(indexOutStream))
+            {
+                uint startIndexOffset = 0;
+                for (int i = 0; i < MeshParts.Length; i++)
+                {
+                    var mesh = MeshParts[i];
+                    Debug.Assert(Enumerable.SequenceEqual(mesh.VertexElements, vertexElementDescriptions), "Check mesh vertex data compatibility.  There seems to be meshes with incompatible vertex element lists.");
+                    Debug.Assert(mesh.IndexFormat.Equals(indexFormat), "Check mesh index data compatibility.  There seems to be meshes with incompatible index formats.");
+
+                    vertexOutStream.Write(mesh.VertexData, 0, mesh.VertexData.Length);
+
+                    using (var indexInStream = new MemoryStream(mesh.IndexData))
+                    using (var indexReader = new BinaryReader(indexInStream))
+                    {
+                        for (int index = 0; index < mesh.IndexCount; index++)
+                        {
+                            switch (indexFormat)
+                            {
+                                case IndexFormat.UInt16:
+                                    indexWriter.Write(indexReader.ReadUInt16() + startIndexOffset);
+                                    break;
+                                case IndexFormat.UInt32:
+                                    indexWriter.Write(indexReader.ReadUInt32() + startIndexOffset);
+                                    break;
+                                default:
+                                    throw new NotImplementedException($"{nameof(MergeMeshesToSingleVertexAndIndexBuffer)} not implemented for {nameof(indexFormat)} {indexFormat}");
+                            }
+                        }
+                    }
+
+                    startIndexOffset += (uint)mesh.VertexData.Length / vertexSize;
+                }
+            }
         }
     }
 

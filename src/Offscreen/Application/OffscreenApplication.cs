@@ -1,13 +1,12 @@
-﻿using Common;
-using SampleBase;
-using System;
+﻿using System;
+using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Numerics;
-using System.Runtime.CompilerServices;
+using AssetPrimitives;
+using SampleBase;
 using Veldrid;
-using Veldrid.Sdl2;
 using Veldrid.SPIRV;
-using Veldrid.Utilities;
 
 namespace Offscreen
 {
@@ -19,17 +18,25 @@ namespace Offscreen
         private CommandList _cl;
         private Framebuffer _offscreenFB;
         private Pipeline _offscreenPipeline;
-        private Model _dragonModel;
-        private Model _planeModel;
+        private ProcessedModel _dragonModel;
+        private uint _dragonIndexCount;
+        private IndexFormat _dragonIndexFormat;
+        private ProcessedModel _planeModel;
+        private ProcessedMeshPart _planeMesh;
         private Texture _colorMap;
         private TextureView _colorView;
         private Texture _offscreenColor;
         private TextureView _offscreenView;
-        private VertexLayoutDescription _vertexLayout;
+        //private VertexLayoutDescription _vertexLayout;
         private Pipeline _dragonPipeline;
         private Pipeline _mirrorPipeline;
         private Vector3 _dragonPos = new Vector3(0, 1.5f, 0);
         private Vector3 _dragonRotation = new Vector3(0, 0, 0);
+
+        private DeviceBuffer _planeVertexBuffer;
+        private DeviceBuffer _planeIndexBuffer;
+        private DeviceBuffer _dragonVertexBuffer;
+        private DeviceBuffer _dragonIndexBuffer;
 
         private DeviceBuffer _uniformBuffers_vsShared;
         private DeviceBuffer _uniformBuffers_vsMirror;
@@ -45,42 +52,41 @@ namespace Offscreen
 
         protected override void CreateResources(ResourceFactory factory)
         {
-            _vertexLayout = new VertexLayoutDescription(
+            var vertexElements = new[]
+            {
                 new VertexElementDescription("Position", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float3),
-                new VertexElementDescription("UV", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float2),
+                new VertexElementDescription("TextureCoordinate", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float2),
                 new VertexElementDescription("Color", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float3),
-                new VertexElementDescription("Normal", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float3));
+                new VertexElementDescription("Normal", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float3)
+            };
+            var vertexLayout = new VertexLayoutDescription(vertexElements);
 
-            using (Stream planeModelStream = OpenEmbeddedAssetStream("plane2.dae"))
-            {
-                _planeModel = new Model(
-                    GraphicsDevice,
-                    factory,
-                    planeModelStream,
-                    "dae",
-                    new[] { Model.VertexElementSemantic.Position, Model.VertexElementSemantic.TextureCoordinate, Model.VertexElementSemantic.Color, Model.VertexElementSemantic.Normal },
-                    new Model.ModelCreateInfo(new Vector3(0.5f, 0.5f, 0.5f), Vector2.One, Vector3.Zero));
-            }
+            _planeModel = LoadEmbeddedAsset<ProcessedModel>("plane2.binary");
+            _planeMesh = _planeModel.MeshParts[0];
+            Debug.Assert(Enumerable.SequenceEqual(_planeMesh.VertexElements, vertexElements), "Check plane mesh vertex data compatibility");
 
-            using (Stream dragonModelStream = OpenEmbeddedAssetStream("chinesedragon.dae"))
-            {
-                _dragonModel = new Model(
-                    GraphicsDevice,
-                    factory,
-                    dragonModelStream,
-                    "dae",
-                    new[] { Model.VertexElementSemantic.Position, Model.VertexElementSemantic.TextureCoordinate, Model.VertexElementSemantic.Color, Model.VertexElementSemantic.Normal },
-                    new Model.ModelCreateInfo(new Vector3(0.3f, -0.3f, 0.3f), Vector2.One, Vector3.Zero));
-            }
+            _planeVertexBuffer = factory.CreateBuffer(new BufferDescription((uint)_planeMesh.VertexData.Length, BufferUsage.VertexBuffer));
+            GraphicsDevice.UpdateBuffer(_planeVertexBuffer, 0, _planeMesh.VertexData);
+            _planeIndexBuffer = factory.CreateBuffer(new BufferDescription((uint)_planeMesh.IndexData.Length, BufferUsage.IndexBuffer));
+            GraphicsDevice.UpdateBuffer(_planeIndexBuffer, 0, _planeMesh.IndexData);
 
-            using (Stream colorMapStream = OpenEmbeddedAssetStream("darkmetal_bc3_unorm.ktx"))
-            {
-                _colorMap = KtxFile.LoadTexture(
-                    GraphicsDevice,
-                    factory,
-                    colorMapStream,
-                    PixelFormat.BC3_UNorm);
-            }
+            _dragonModel = LoadEmbeddedAsset<ProcessedModel>("chinesedragon.binary");
+
+            _dragonModel.MergeMeshesToSingleVertexAndIndexBuffer(out var dragonVertexData, out var dragonVertexElementDescriptions, out var dragonIndexData, out _dragonIndexCount, out _dragonIndexFormat);
+            Debug.Assert(Enumerable.SequenceEqual(dragonVertexElementDescriptions, vertexElements), "Check dragon mesh vertex data compatibility");
+
+            _dragonVertexBuffer = factory.CreateBuffer(new BufferDescription((uint)dragonVertexData.Length, BufferUsage.VertexBuffer));
+            GraphicsDevice.UpdateBuffer(_dragonVertexBuffer, 0, dragonVertexData);
+            _dragonIndexBuffer = factory.CreateBuffer(new BufferDescription((uint)dragonIndexData.Length, BufferUsage.IndexBuffer));
+            GraphicsDevice.UpdateBuffer(_dragonIndexBuffer, 0, dragonIndexData);
+
+            var ktxData = LoadEmbeddedAsset<byte[]>("darkmetal_bc3_unorm.binary");
+            _colorMap = KtxFile.LoadTexture(
+                GraphicsDevice,
+                factory,
+                ktxData,
+                PixelFormat.BC3_UNorm);
+
             _colorView = factory.CreateTextureView(_colorMap);
 
             _offscreenColor = factory.CreateTexture(TextureDescription.Texture2D(
@@ -92,7 +98,7 @@ namespace Offscreen
             _offscreenFB = factory.CreateFramebuffer(new FramebufferDescription(offscreenDepth, _offscreenColor));
 
             ShaderSetDescription phongShaders = new ShaderSetDescription(
-                new[] { _vertexLayout },
+                new[] { vertexLayout },
                 factory.CreateFromSpirv(
                     new ShaderDescription(ShaderStages.Vertex, ReadEmbeddedAssetBytes("Phong-vertex.glsl"), "main"),
                     new ShaderDescription(ShaderStages.Fragment, ReadEmbeddedAssetBytes("Phong-fragment.glsl"), "main")));
@@ -122,7 +128,7 @@ namespace Offscreen
                 new ResourceLayoutElementDescription("ColorMapSampler", ResourceKind.Sampler, ShaderStages.Fragment)));
 
             ShaderSetDescription mirrorShaders = new ShaderSetDescription(
-                new[] { _vertexLayout },
+                new[] { vertexLayout },
                 factory.CreateFromSpirv(
                     new ShaderDescription(ShaderStages.Vertex, ReadEmbeddedAssetBytes("Mirror-vertex.glsl"), "main"),
                     new ShaderDescription(ShaderStages.Fragment, ReadEmbeddedAssetBytes("Mirror-fragment.glsl"), "main")));
@@ -185,9 +191,9 @@ namespace Offscreen
 
             _cl.SetPipeline(_offscreenPipeline);
             _cl.SetGraphicsResourceSet(0, _offscreenResourceSet);
-            _cl.SetVertexBuffer(0, _dragonModel.VertexBuffer);
-            _cl.SetIndexBuffer(_dragonModel.IndexBuffer, IndexFormat.UInt32);
-            _cl.DrawIndexed(_dragonModel.IndexCount, 1, 0, 0, 0);
+            _cl.SetVertexBuffer(0, _dragonVertexBuffer);
+            _cl.SetIndexBuffer(_dragonIndexBuffer, _dragonIndexFormat);
+            _cl.DrawIndexed(_dragonIndexCount, 1, 0, 0, 0);
         }
 
         private void DrawMain()
@@ -199,15 +205,15 @@ namespace Offscreen
 
             _cl.SetPipeline(_mirrorPipeline);
             _cl.SetGraphicsResourceSet(0, _mirrorResourceSet);
-            _cl.SetVertexBuffer(0, _planeModel.VertexBuffer);
-            _cl.SetIndexBuffer(_planeModel.IndexBuffer, IndexFormat.UInt32);
-            _cl.DrawIndexed(_planeModel.IndexCount, 1, 0, 0, 0);
+            _cl.SetVertexBuffer(0, _planeVertexBuffer);
+            _cl.SetIndexBuffer(_planeIndexBuffer, _planeMesh.IndexFormat);
+            _cl.DrawIndexed(_planeMesh.IndexCount, 1, 0, 0, 0);
 
             _cl.SetPipeline(_dragonPipeline);
             _cl.SetGraphicsResourceSet(0, _dragonResourceSet);
-            _cl.SetVertexBuffer(0, _dragonModel.VertexBuffer);
-            _cl.SetIndexBuffer(_dragonModel.IndexBuffer, IndexFormat.UInt32);
-            _cl.DrawIndexed(_dragonModel.IndexCount, 1, 0, 0, 0);
+            _cl.SetVertexBuffer(0, _dragonVertexBuffer);
+            _cl.SetIndexBuffer(_dragonIndexBuffer, _dragonIndexFormat);
+            _cl.DrawIndexed(_dragonIndexCount, 1, 0, 0, 0);
         }
 
         public static float DegreesToRadians(float degrees)

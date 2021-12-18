@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<TargetFramework>netstandard2.0</TargetFramework>
@@ -6,7 +6,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<Asset Include="$(SamplesAssetsDir)\models\goblin.dae" ProcessorFormat="Position,TextureCoordinate,BoneWeights,BoneIndices" />
+		<Asset Include="$(SamplesAssetsDir)\models\goblin.dae" ProcessorFormat="ProcessedModelVertexElementSemantic=Position,TextureCoordinate,BoneWeights,BoneIndices%26PostProcessSteps=FlipWindingOrder|Triangulate|CalculateTangentSpace|GenerateSmoothNormals" />
 		<Asset Include="$(SamplesAssetsDir)\textures\goblin_bc3_unorm.ktx" />
 	</ItemGroup>
 

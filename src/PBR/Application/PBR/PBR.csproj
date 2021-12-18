@@ -16,8 +16,8 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<Asset Include="$(SamplesAssetsDir)\models\cerberus.fbx" ProcessorFormat="ProcessedModelVertexElementSemantic=Position,Normal,Tangent,BiTangent,TextureCoordinate " />
-		<Asset Include="$(SamplesAssetsDir)\models\skybox.obj" ProcessorFormat="ProcessedModelVertexElementSemantic=Position,Normal,Tangent,BiTangent,TextureCoordinate" />
+		<Asset Include="$(SamplesAssetsDir)\models\cerberus.fbx" ProcessorFormat="ProcessedModelVertexElementSemantic=Position,Normal,Tangent,BiTangent,TextureCoordinate%26PostProcessSteps=FlipWindingOrder|GenerateSmoothNormals|CalculateTangentSpace|LimitBoneWeights|Triangulate|SortByPrimitiveType|OptimizeMeshes|ValidateDataStructure|PreTransformVertices" />
+		<Asset Include="$(SamplesAssetsDir)\models\skybox.obj" ProcessorFormat="ProcessedModelVertexElementSemantic=Position,Normal,Tangent,BiTangent,TextureCoordinate%26PostProcessSteps=FlipWindingOrder|GenerateSmoothNormals|CalculateTangentSpace|LimitBoneWeights|Triangulate|SortByPrimitiveType|OptimizeMeshes|ValidateDataStructure|PreTransformVertices" />
 		<Asset Include="$(SamplesAssetsDir)\textures\cerberus_A.png" />
 		<Asset Include="$(SamplesAssetsDir)\textures\cerberus_M.png" ProcessorFormat="GenerateMipmaps=true%26PixelFormat=L8" />
 		<Asset Include="$(SamplesAssetsDir)\textures\cerberus_N.png" />
