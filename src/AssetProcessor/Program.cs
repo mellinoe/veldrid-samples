@@ -45,7 +45,6 @@ namespace AssetProcessor
             {
                 string arg = args[i];
                 var assetParts = arg.Split("::", 2);
-                Console.WriteLine(string.Join(", ", assetParts));
                 var path = assetParts[0];
                 var processorArgs = assetParts.Length > 1 && !string.IsNullOrWhiteSpace(assetParts[1]) ? ParseArgs(assetParts[1]) : null;
 
