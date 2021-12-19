@@ -211,7 +211,7 @@ namespace PBR
 
                         var spbrdfUniformLayoutDescription = new ResourceLayoutDescription(
                             new ResourceLayoutElementDescription("inputTexture", ResourceKind.TextureReadOnly, ShaderStages.Compute),
-                            new ResourceLayoutElementDescription("outputTexture", ResourceKind.TextureReadWrite, ShaderStages.Compute)
+                            new ResourceLayoutElementDescription("LUT", ResourceKind.TextureReadWrite, ShaderStages.Compute)
                         );
 
                         using (var shader = factory.CreateFromSpirv(new ShaderDescription(ShaderStages.Compute, spbrdfShaderSrc, "main")))
