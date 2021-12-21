@@ -99,109 +99,128 @@ namespace PBR
         {
             var environmentTex = LoadEmbeddedAsset<ProcessedTexture>("environment.binary");
 
-            using (var unfilteredEnvCubeMap = factory.CreateTexture(TextureDescription.Texture2D(EnvironmentCubeMapSize, EnvironmentCubeMapSize, EnvironmentCubeMapMipLevels, 1, PixelFormat.R16_G16_B16_A16_Float, TextureUsage.Storage | TextureUsage.Sampled | TextureUsage.Cubemap | TextureUsage.GenerateMipmaps)))
+            using (var unfilteredEnvCubeMap = factory.CreateTexture(TextureDescription.Texture2D(EnvironmentCubeMapSize, EnvironmentCubeMapSize, EnvironmentCubeMapMipLevels, 1, PixelFormat.R16_G16_B16_A16_Float, TextureUsage.Sampled | TextureUsage.Cubemap | TextureUsage.GenerateMipmaps)))
             {
                 using (var environmentHdrTexture = environmentTex.CreateDeviceTexture(GraphicsDevice, factory, TextureUsage.Sampled))
                 {
                     { // convert hdr to cubemap
-                        var equirect2CubeShaderSrc = ReadEmbeddedAssetBytes("equirect2cube_cs.glsl");
-                        var equirect2CubeUniformLayoutDescription = new ResourceLayoutDescription(
-                            new ResourceLayoutElementDescription("inputTexture", ResourceKind.TextureReadOnly, ShaderStages.Compute),
-                            new ResourceLayoutElementDescription("outputTexture", ResourceKind.TextureReadWrite, ShaderStages.Compute),
-                            new ResourceLayoutElementDescription("textureSampler", ResourceKind.Sampler, ShaderStages.Compute)
-                        );
-
-                        using (var shader = factory.CreateFromSpirv(new ShaderDescription(ShaderStages.Compute, equirect2CubeShaderSrc, "main")))
-                        using (var equirect2CubeUniformLayout = factory.CreateResourceLayout(ref equirect2CubeUniformLayoutDescription))
-                        using (var equirect2CubeResourceSet = factory.CreateResourceSet(new ResourceSetDescription(equirect2CubeUniformLayout, environmentHdrTexture, unfilteredEnvCubeMap, textureSampler)))
-                        using (var pipeline = factory.CreateComputePipeline(new ComputePipelineDescription(shader, equirect2CubeUniformLayout, 32, 32, 1)))
-                        using (var commandList = factory.CreateCommandList())
+                        using (var temporaryUnfilteredEnvCubeMap = factory.CreateTexture(TextureDescription.Texture2D(EnvironmentCubeMapSize, EnvironmentCubeMapSize, 1, 6, PixelFormat.R16_G16_B16_A16_Float, TextureUsage.Storage | TextureUsage.Sampled | TextureUsage.RenderTarget)))
                         {
-                            commandList.Begin();
-                            commandList.SetPipeline(pipeline);
-                            commandList.SetComputeResourceSet(0, equirect2CubeResourceSet);
-                            commandList.Dispatch(EnvironmentCubeMapSize / 32, EnvironmentCubeMapSize / 32, 6);
-                            commandList.End();
-                            GraphicsDevice.SubmitCommands(commandList);
-                            GraphicsDevice.WaitForIdle();
+                            var equirect2CubeShaderSrc = ReadEmbeddedAssetBytes("equirect2cube_cs.glsl");
+                            var equirect2CubeUniformLayoutDescription = new ResourceLayoutDescription(
+                                new ResourceLayoutElementDescription("inputTexture", ResourceKind.TextureReadOnly, ShaderStages.Compute),
+                                new ResourceLayoutElementDescription("outputTexture", ResourceKind.TextureReadWrite, ShaderStages.Compute),
+                                new ResourceLayoutElementDescription("textureSampler", ResourceKind.Sampler, ShaderStages.Compute)
+                            );
 
-                            commandList.Begin();
-                            commandList.GenerateMipmaps(unfilteredEnvCubeMap);
-                            commandList.End();
-                            GraphicsDevice.SubmitCommands(commandList);
-                            GraphicsDevice.WaitForIdle();
-                        }
-                    }
-
-                    var specularEnvironmentMapTexture = factory.CreateTexture(TextureDescription.Texture2D(EnvironmentCubeMapSize, EnvironmentCubeMapSize, EnvironmentCubeMapMipLevels, 1, PixelFormat.R16_G16_B16_A16_Float, TextureUsage.Storage | TextureUsage.Sampled | TextureUsage.Cubemap));
-                    { // compute pre-filtered specular environment map
-                        var spmapShaderSrc = ReadEmbeddedAssetBytes("spmap_cs.glsl");
-                        var spmapUniformLayoutDescription = new ResourceLayoutDescription(
-                            new ResourceLayoutElementDescription("inputTexture", ResourceKind.TextureReadOnly, ShaderStages.Compute),
-                            new ResourceLayoutElementDescription("outputTexture", ResourceKind.TextureReadWrite, ShaderStages.Compute),
-                            new ResourceLayoutElementDescription("FakePushConstants", ResourceKind.UniformBuffer, ShaderStages.Compute),
-                            new ResourceLayoutElementDescription("textureSampler", ResourceKind.Sampler, ShaderStages.Compute)
-                        );
-
-                        using (var shader = factory.CreateFromSpirv(new ShaderDescription(ShaderStages.Compute, spmapShaderSrc, "main")))
-                        using (var spmapUniformLayout = factory.CreateResourceLayout(ref spmapUniformLayoutDescription))
-                        using (var roughnessFilterBuffer = factory.CreateBuffer(new BufferDescription(16, BufferUsage.UniformBuffer)))
-                        using (var pipeline = factory.CreateComputePipeline(new ComputePipelineDescription(shader, spmapUniformLayout, 32, 32, 1, new SpecializationConstant[] { new SpecializationConstant(0, 1) })))
-                        using (var commandList = factory.CreateCommandList())
-                        {
-                            commandList.Begin();
-                            commandList.CopyTexture(unfilteredEnvCubeMap, specularEnvironmentMapTexture);
-                            commandList.End();
-                            GraphicsDevice.SubmitCommands(commandList);
-                            GraphicsDevice.WaitForIdle();
-
-                            var deltaRoughness = 1.0f / Math.Max(EnvironmentCubeMapMipLevels - 1, 1.0f);
-                            for (uint level = 1, size = EnvironmentCubeMapSize / 2; level < EnvironmentCubeMapMipLevels; ++level, size /= 2)
+                            using (var shader = factory.CreateFromSpirv(new ShaderDescription(ShaderStages.Compute, equirect2CubeShaderSrc, "main")))
+                            using (var equirect2CubeUniformLayout = factory.CreateResourceLayout(ref equirect2CubeUniformLayoutDescription))
+                            using (var equirect2CubeResourceSet = factory.CreateResourceSet(new ResourceSetDescription(equirect2CubeUniformLayout, environmentHdrTexture, temporaryUnfilteredEnvCubeMap, textureSampler)))
+                            using (var pipeline = factory.CreateComputePipeline(new ComputePipelineDescription(shader, equirect2CubeUniformLayout, 32, 32, 1)))
+                            using (var commandList = factory.CreateCommandList())
                             {
-                                using (var mipTailTexView = factory.CreateTextureView(new TextureViewDescription(specularEnvironmentMapTexture, PixelFormat.R16_G16_B16_A16_Float, level, 1, 0, 1)))
-                                using (var resourceSet = factory.CreateResourceSet(new ResourceSetDescription(spmapUniformLayout, unfilteredEnvCubeMap, mipTailTexView, roughnessFilterBuffer, textureSampler)))
-                                {
-                                    var numGroups = Math.Max(1, size / 32);
-                                    GraphicsDevice.UpdateBuffer(roughnessFilterBuffer, 0, new FakePushConstants { level = 0, roughness = level * deltaRoughness });
+                                commandList.Begin();
+                                commandList.SetPipeline(pipeline);
+                                commandList.SetComputeResourceSet(0, equirect2CubeResourceSet);
+                                commandList.Dispatch(EnvironmentCubeMapSize / 32, EnvironmentCubeMapSize / 32, 6);
+                                for(uint layer = 0; layer < temporaryUnfilteredEnvCubeMap.ArrayLayers; layer++)
+                                    commandList.CopyTexture(temporaryUnfilteredEnvCubeMap, unfilteredEnvCubeMap, 0, layer);
+                                commandList.End();
+                                GraphicsDevice.SubmitCommands(commandList);
+                                GraphicsDevice.WaitForIdle();
 
-                                    commandList.Begin();
-                                    commandList.SetPipeline(pipeline);
-                                    commandList.SetComputeResourceSet(0, resourceSet);
-                                    commandList.Dispatch(numGroups, numGroups, 6);
-
-                                    commandList.End();
-
-                                    GraphicsDevice.SubmitCommands(commandList);
-                                    GraphicsDevice.WaitForIdle();
-                                }
+                                commandList.Begin();
+                                commandList.GenerateMipmaps(unfilteredEnvCubeMap);
+                                commandList.End();
+                                GraphicsDevice.SubmitCommands(commandList);
+                                GraphicsDevice.WaitForIdle();
                             }
                         }
                     }
 
-                    var irradianceEnvironmentMapTexture = factory.CreateTexture(TextureDescription.Texture2D(kIrradianceMapSize, kIrradianceMapSize, 1, 1, PixelFormat.R16_G16_B16_A16_Float, TextureUsage.Storage | TextureUsage.Sampled | TextureUsage.Cubemap));
-                    {
-                        var irradianceShaderSrc = ReadEmbeddedAssetBytes("irmap_cs.glsl");
-                        var irradianceUniformLayoutDescription = new ResourceLayoutDescription(
-                            new ResourceLayoutElementDescription("inputTexture", ResourceKind.TextureReadOnly, ShaderStages.Compute),
-                            new ResourceLayoutElementDescription("outputTexture", ResourceKind.TextureReadWrite, ShaderStages.Compute),
-                            new ResourceLayoutElementDescription("textureSampler", ResourceKind.Sampler, ShaderStages.Compute)
-                        );
-
-                        using (var shader = factory.CreateFromSpirv(new ShaderDescription(ShaderStages.Compute, irradianceShaderSrc, "main")))
-                        using (var irradianceUniformLayout = factory.CreateResourceLayout(irradianceUniformLayoutDescription))
-                        using (var irradianceResourceSet = factory.CreateResourceSet(new ResourceSetDescription(irradianceUniformLayout, unfilteredEnvCubeMap, irradianceEnvironmentMapTexture, textureSampler)))
-                        using (var pipeline = factory.CreateComputePipeline(new ComputePipelineDescription(shader, irradianceUniformLayout, 32, 32, 1)))
-                        using (var commandList = factory.CreateCommandList())
+                    var specularEnvironmentMapTexture = factory.CreateTexture(TextureDescription.Texture2D(EnvironmentCubeMapSize, EnvironmentCubeMapSize, EnvironmentCubeMapMipLevels, 1, PixelFormat.R16_G16_B16_A16_Float, TextureUsage.Sampled | TextureUsage.Cubemap));
+                    { // compute pre-filtered specular environment map
+                        using (var temporarySpecularEnvironmentMapTexture = factory.CreateTexture(TextureDescription.Texture2D(EnvironmentCubeMapSize, EnvironmentCubeMapSize, EnvironmentCubeMapMipLevels, 6, PixelFormat.R16_G16_B16_A16_Float, TextureUsage.Storage | TextureUsage.Sampled | TextureUsage.RenderTarget)))
                         {
-                            commandList.Begin();
+                            var spmapShaderSrc = ReadEmbeddedAssetBytes("spmap_cs.glsl");
+                            var spmapUniformLayoutDescription = new ResourceLayoutDescription(
+                                new ResourceLayoutElementDescription("inputTexture", ResourceKind.TextureReadOnly, ShaderStages.Compute),
+                                new ResourceLayoutElementDescription("outputTexture", ResourceKind.TextureReadWrite, ShaderStages.Compute),
+                                new ResourceLayoutElementDescription("FakePushConstants", ResourceKind.UniformBuffer, ShaderStages.Compute),
+                                new ResourceLayoutElementDescription("textureSampler", ResourceKind.Sampler, ShaderStages.Compute)
+                            );
 
-                            commandList.SetPipeline(pipeline);
-                            commandList.SetComputeResourceSet(0, irradianceResourceSet);
-                            commandList.Dispatch(kIrradianceMapSize / 32, kIrradianceMapSize / 32, 6);
+                            using (var shader = factory.CreateFromSpirv(new ShaderDescription(ShaderStages.Compute, spmapShaderSrc, "main")))
+                            using (var spmapUniformLayout = factory.CreateResourceLayout(ref spmapUniformLayoutDescription))
+                            using (var roughnessFilterBuffer = factory.CreateBuffer(new BufferDescription(16, BufferUsage.UniformBuffer)))
+                            using (var pipeline = factory.CreateComputePipeline(new ComputePipelineDescription(shader, spmapUniformLayout, 32, 32, 1, new SpecializationConstant[] { new SpecializationConstant(0, 1) })))
+                            using (var commandList = factory.CreateCommandList())
+                            {
+                                commandList.Begin();
+                                commandList.CopyTexture(unfilteredEnvCubeMap, temporarySpecularEnvironmentMapTexture);
+                                commandList.End();
+                                GraphicsDevice.SubmitCommands(commandList);
+                                GraphicsDevice.WaitForIdle();
 
-                            commandList.End();
-                            GraphicsDevice.SubmitCommands(commandList);
-                            GraphicsDevice.WaitForIdle();
+                                var deltaRoughness = 1.0f / Math.Max(EnvironmentCubeMapMipLevels - 1, 1.0f);
+                                for (uint level = 1, size = EnvironmentCubeMapSize / 2; level < EnvironmentCubeMapMipLevels; ++level, size /= 2)
+                                {
+                                    using (var mipTailTexView = factory.CreateTextureView(new TextureViewDescription(temporarySpecularEnvironmentMapTexture, PixelFormat.R16_G16_B16_A16_Float, level, 1, 0, 6)))
+                                    using (var resourceSet = factory.CreateResourceSet(new ResourceSetDescription(spmapUniformLayout, unfilteredEnvCubeMap, mipTailTexView, roughnessFilterBuffer, textureSampler)))
+                                    {
+                                        var numGroups = Math.Max(1, size / 32);
+                                        GraphicsDevice.UpdateBuffer(roughnessFilterBuffer, 0, new FakePushConstants { level = 0, roughness = level * deltaRoughness });
+
+                                        commandList.Begin();
+                                        commandList.SetPipeline(pipeline);
+                                        commandList.SetComputeResourceSet(0, resourceSet);
+                                        commandList.Dispatch(numGroups, numGroups, 6);
+
+                                        commandList.End();
+
+                                        GraphicsDevice.SubmitCommands(commandList);
+                                        GraphicsDevice.WaitForIdle();
+                                    }
+                                }
+
+                                commandList.Begin();
+                                commandList.CopyTexture(temporarySpecularEnvironmentMapTexture, specularEnvironmentMapTexture);
+                                commandList.End();
+                                GraphicsDevice.SubmitCommands(commandList);
+                                GraphicsDevice.WaitForIdle();
+                            }
+                        }
+                    }
+
+                    var irradianceEnvironmentMapTexture = factory.CreateTexture(TextureDescription.Texture2D(kIrradianceMapSize, kIrradianceMapSize, 1, 1, PixelFormat.R16_G16_B16_A16_Float, TextureUsage.Sampled | TextureUsage.Cubemap));
+                    {
+                        using (var temporaryIrradianceEnvironmentMapTexture = factory.CreateTexture(TextureDescription.Texture2D(kIrradianceMapSize, kIrradianceMapSize, 1, 6, PixelFormat.R16_G16_B16_A16_Float, TextureUsage.Storage | TextureUsage.Sampled | TextureUsage.RenderTarget)))
+                        {
+                            var irradianceShaderSrc = ReadEmbeddedAssetBytes("irmap_cs.glsl");
+                            var irradianceUniformLayoutDescription = new ResourceLayoutDescription(
+                                new ResourceLayoutElementDescription("inputTexture", ResourceKind.TextureReadOnly, ShaderStages.Compute),
+                                new ResourceLayoutElementDescription("outputTexture", ResourceKind.TextureReadWrite, ShaderStages.Compute),
+                                new ResourceLayoutElementDescription("textureSampler", ResourceKind.Sampler, ShaderStages.Compute)
+                            );
+
+                            using (var shader = factory.CreateFromSpirv(new ShaderDescription(ShaderStages.Compute, irradianceShaderSrc, "main")))
+                            using (var irradianceUniformLayout = factory.CreateResourceLayout(irradianceUniformLayoutDescription))
+                            using (var irradianceResourceSet = factory.CreateResourceSet(new ResourceSetDescription(irradianceUniformLayout, unfilteredEnvCubeMap, temporaryIrradianceEnvironmentMapTexture, textureSampler)))
+                            using (var pipeline = factory.CreateComputePipeline(new ComputePipelineDescription(shader, irradianceUniformLayout, 32, 32, 1)))
+                            using (var commandList = factory.CreateCommandList())
+                            {
+                                commandList.Begin();
+
+                                commandList.SetPipeline(pipeline);
+                                commandList.SetComputeResourceSet(0, irradianceResourceSet);
+                                commandList.Dispatch(kIrradianceMapSize / 32, kIrradianceMapSize / 32, 6);
+
+                                commandList.CopyTexture(temporaryIrradianceEnvironmentMapTexture, irradianceEnvironmentMapTexture);
+
+                                commandList.End();
+                                GraphicsDevice.SubmitCommands(commandList);
+                                GraphicsDevice.WaitForIdle();
+                            }
                         }
                     }
 

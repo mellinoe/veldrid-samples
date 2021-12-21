@@ -14,7 +14,7 @@ const float InvNumSamples = 1.0 / float(NumSamples);
 
 #if VULKAN
 layout(set=0, binding=0) uniform textureCube inputTexture;
-layout(set=0, binding=1, rgba16f) restrict writeonly uniform imageCube outputTexture;
+layout(set=0, binding=1, rgba16f) restrict writeonly uniform image2DArray outputTexture;
 layout(set=0, binding=2) uniform sampler textureSampler;
 
 vec4 textureLod(textureCube tex, vec3 p, float lod) {

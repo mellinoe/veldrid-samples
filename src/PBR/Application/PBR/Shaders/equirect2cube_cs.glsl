@@ -9,7 +9,7 @@ const float TwoPI = 2 * PI;
 
 #if VULKAN
 layout(set=0, binding=0) uniform texture2D inputTexture;
-layout(set=0, binding=1, rgba16f) restrict writeonly uniform imageCube outputTexture;
+layout(set=0, binding=1, rgba16f) restrict writeonly uniform image2DArray outputTexture;
 layout(set=0, binding=2) uniform sampler textureSampler;
 
 vec4 texture(texture2D tex, vec2 uvCoords) {

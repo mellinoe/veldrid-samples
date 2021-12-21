@@ -16,7 +16,7 @@ const float InvNumSamples = 1.0 / float(NumSamples);
 #if VULKAN
 layout(constant_id=0) const int NumMipLevels = 1;
 layout(set=0, binding=0) uniform textureCube inputTexture;
-layout(set=0, binding=1, rgba16f) restrict writeonly uniform imageCube outputTexture[NumMipLevels];
+layout(set=0, binding=1, rgba16f) restrict writeonly uniform image2DArray outputTexture[NumMipLevels];
 layout(set=0, binding=2) uniform FakePushConstants {
 	int level;
 	float roughness;
@@ -38,7 +38,7 @@ vec2 texSize(textureCube tex, int lod) {
 // In OpenGL only a single mip level is bound.
 const int NumMipLevels = 1;
 layout(binding=0) uniform samplerCube inputTexture;
-layout(binding=0, rgba16f) restrict writeonly uniform imageCube outputTexture[NumMipLevels];
+layout(binding=0, rgba16f) restrict writeonly uniform image2DArray outputTexture[NumMipLevels];
 layout(binding=0) uniform FakePushConstants {
 	int level;
 	float roughness;
@@ -138,7 +138,7 @@ layout(local_size_x=32, local_size_y=32, local_size_z=1) in;
 void main(void)
 {
 	// Make sure we won't write past output when computing higher mipmap levels.
-	ivec2 outputSize = imageSize(outputTexture[PARAM_LEVEL]);
+	ivec2 outputSize = ivec2(imageSize(outputTexture[PARAM_LEVEL]));
 	if(gl_GlobalInvocationID.x >= outputSize.x || gl_GlobalInvocationID.y >= outputSize.y) {
 		return;
 	}
