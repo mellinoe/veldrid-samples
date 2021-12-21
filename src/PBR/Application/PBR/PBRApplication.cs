@@ -57,7 +57,7 @@ namespace PBR
 
         public PBRApplication(ApplicationWindow window) : base(window)
         {
-
+            SpirvCompilation.SetDefaultTargetVersionForCrossCompileTarget(CrossCompileTarget.MSL, SpirvCompilation.MakeMSLVersion(2, 1));
         }
 
         private const uint NumLights = 3;
