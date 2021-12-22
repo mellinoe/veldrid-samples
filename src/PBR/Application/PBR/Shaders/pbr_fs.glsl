@@ -101,7 +101,7 @@ vec3 fresnelSchlick(vec3 F0, float cosTheta)
 
 void main()
 {
-	float alpha = (viewProjectionMatrix[0][0] * 0.0f) + 1.0f; // access something in TransformUniforms so it isn't omitted in msl fragment shader
+	float alpha = clamp(viewProjectionMatrix[0][0], 0.0f, 1.0f) + 1.0f; // access something in TransformUniforms so it isn't omitted in msl fragment shader
 	// Sample input textures to get shading model params.
 	vec3 albedo = texture(albedoTexture, vin_texcoord).rgb;
 	float metalness = texture(metalnessTexture, vin_texcoord).r;
