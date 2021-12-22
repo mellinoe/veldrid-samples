@@ -10,6 +10,13 @@ namespace PBR
 {
     public class PBRApplication : SampleApplication
     {
+        private const bool Debug
+#if DEBUG
+            = true;
+#else
+            = false;
+#endif
+
         private Pipeline _pbrPipeline;
         private Pipeline _skyboxPipeline;
 
@@ -113,7 +120,7 @@ namespace PBR
                                 new ResourceLayoutElementDescription("textureSampler", ResourceKind.Sampler, ShaderStages.Compute)
                             );
 
-                            using (var shader = factory.CreateFromSpirv(new ShaderDescription(ShaderStages.Compute, equirect2CubeShaderSrc, "main")))
+                            using (var shader = factory.CreateFromSpirv(new ShaderDescription(ShaderStages.Compute, equirect2CubeShaderSrc, "main", Debug)))
                             using (var equirect2CubeUniformLayout = factory.CreateResourceLayout(ref equirect2CubeUniformLayoutDescription))
                             using (var equirect2CubeResourceSet = factory.CreateResourceSet(new ResourceSetDescription(equirect2CubeUniformLayout, environmentHdrTexture, temporaryUnfilteredEnvCubeMap, textureSampler)))
                             using (var pipeline = factory.CreateComputePipeline(new ComputePipelineDescription(shader, equirect2CubeUniformLayout, 32, 32, 1)))
@@ -123,7 +130,7 @@ namespace PBR
                                 commandList.SetPipeline(pipeline);
                                 commandList.SetComputeResourceSet(0, equirect2CubeResourceSet);
                                 commandList.Dispatch(EnvironmentCubeMapSize / 32, EnvironmentCubeMapSize / 32, 6);
-                                for(uint layer = 0; layer < temporaryUnfilteredEnvCubeMap.ArrayLayers; layer++)
+                                for (uint layer = 0; layer < temporaryUnfilteredEnvCubeMap.ArrayLayers; layer++)
                                     commandList.CopyTexture(temporaryUnfilteredEnvCubeMap, unfilteredEnvCubeMap, 0, layer);
                                 commandList.End();
                                 GraphicsDevice.SubmitCommands(commandList);
@@ -150,7 +157,7 @@ namespace PBR
                                 new ResourceLayoutElementDescription("textureSampler", ResourceKind.Sampler, ShaderStages.Compute)
                             );
 
-                            using (var shader = factory.CreateFromSpirv(new ShaderDescription(ShaderStages.Compute, spmapShaderSrc, "main")))
+                            using (var shader = factory.CreateFromSpirv(new ShaderDescription(ShaderStages.Compute, spmapShaderSrc, "main", Debug)))
                             using (var spmapUniformLayout = factory.CreateResourceLayout(ref spmapUniformLayoutDescription))
                             using (var roughnessFilterBuffer = factory.CreateBuffer(new BufferDescription(16, BufferUsage.UniformBuffer)))
                             using (var pipeline = factory.CreateComputePipeline(new ComputePipelineDescription(shader, spmapUniformLayout, 32, 32, 1, new SpecializationConstant[] { new SpecializationConstant(0, 1) })))
@@ -203,7 +210,7 @@ namespace PBR
                                 new ResourceLayoutElementDescription("textureSampler", ResourceKind.Sampler, ShaderStages.Compute)
                             );
 
-                            using (var shader = factory.CreateFromSpirv(new ShaderDescription(ShaderStages.Compute, irradianceShaderSrc, "main")))
+                            using (var shader = factory.CreateFromSpirv(new ShaderDescription(ShaderStages.Compute, irradianceShaderSrc, "main", Debug)))
                             using (var irradianceUniformLayout = factory.CreateResourceLayout(irradianceUniformLayoutDescription))
                             using (var irradianceResourceSet = factory.CreateResourceSet(new ResourceSetDescription(irradianceUniformLayout, unfilteredEnvCubeMap, temporaryIrradianceEnvironmentMapTexture, textureSampler)))
                             using (var pipeline = factory.CreateComputePipeline(new ComputePipelineDescription(shader, irradianceUniformLayout, 32, 32, 1)))
@@ -224,7 +231,7 @@ namespace PBR
                         }
                     }
 
-                    var specularBRDFLUTTexture = factory.CreateTexture(TextureDescription.Texture2D(kBRDF_LUT_Size, kBRDF_LUT_Size, 1, 1, PixelFormat.R8_G8_B8_A8_UNorm, TextureUsage.Storage | TextureUsage.Sampled));
+                    var specularBRDFLUTTexture = factory.CreateTexture(TextureDescription.Texture2D(kBRDF_LUT_Size, kBRDF_LUT_Size, 1, 1, PixelFormat.R16_G16_Float, TextureUsage.Storage | TextureUsage.Sampled));
                     { // compute SpecularBRDF_LUT
                         var spbrdfShaderSrc = ReadEmbeddedAssetBytes("spbrdf_cs.glsl");
 
@@ -233,7 +240,7 @@ namespace PBR
                             new ResourceLayoutElementDescription("LUT", ResourceKind.TextureReadWrite, ShaderStages.Compute)
                         );
 
-                        using (var shader = factory.CreateFromSpirv(new ShaderDescription(ShaderStages.Compute, spbrdfShaderSrc, "main")))
+                        using (var shader = factory.CreateFromSpirv(new ShaderDescription(ShaderStages.Compute, spbrdfShaderSrc, "main", Debug)))
                         using (var spbrdfUniformLayout = factory.CreateResourceLayout(spbrdfUniformLayoutDescription))
                         using (var spbrdfResourceSet = factory.CreateResourceSet(new ResourceSetDescription(spbrdfUniformLayout, unfilteredEnvCubeMap, specularBRDFLUTTexture)))
                         using (var pipeline = factory.CreateComputePipeline(new ComputePipelineDescription(shader, spbrdfUniformLayout, 32, 32, 1)))
@@ -326,10 +333,21 @@ namespace PBR
             );
             var fsSamplerUniformsLayout = factory.CreateResourceLayout(ref fsSamplerUniformsLayoutDescription);
 
-            var pbrShaders = factory.CreateFromSpirv(
-                new ShaderDescription(ShaderStages.Vertex, ReadEmbeddedAssetBytes("pbr_vs.glsl"), "main", debug: true),
-                new ShaderDescription(ShaderStages.Fragment, ReadEmbeddedAssetBytes("pbr_fs.glsl"), "main", debug: true)
-            );
+            Shader[] pbrShaders;
+            if (GraphicsDevice.GetD3D11Info(out _))
+            {
+                pbrShaders = new[] {
+                    factory.CreateShader(new ShaderDescription(ShaderStages.Vertex, ReadEmbeddedAssetBytes("pbr.hlsl"), "main_vs")),
+                    factory.CreateShader(new ShaderDescription(ShaderStages.Fragment, ReadEmbeddedAssetBytes("pbr.hlsl"), "main_ps"))
+                };
+            }
+            else
+            {
+                pbrShaders = factory.CreateFromSpirv(
+                    new ShaderDescription(ShaderStages.Vertex, ReadEmbeddedAssetBytes("pbr_vs.glsl"), "main", Debug),
+                    new ShaderDescription(ShaderStages.Fragment, ReadEmbeddedAssetBytes("pbr_fs.glsl"), "main", Debug)
+                );
+            }
 
             _pbrPipeline = factory.CreateGraphicsPipeline(
                 new GraphicsPipelineDescription()
@@ -360,8 +378,8 @@ namespace PBR
             var skyboxVertexLayout = new VertexLayoutDescription(_skyboxMesh.VertexElements);
 
             var skyboxShaders = factory.CreateFromSpirv(
-                new ShaderDescription(ShaderStages.Vertex, ReadEmbeddedAssetBytes("skybox_vs.glsl"), "main"),
-                new ShaderDescription(ShaderStages.Fragment, ReadEmbeddedAssetBytes("skybox_fs.glsl"), "main")
+                new ShaderDescription(ShaderStages.Vertex, ReadEmbeddedAssetBytes("skybox_vs.glsl"), "main", Debug),
+                new ShaderDescription(ShaderStages.Fragment, ReadEmbeddedAssetBytes("skybox_fs.glsl"), "main", Debug)
             );
             var skyboxSamplerUniformsLayoutDescription = new ResourceLayoutDescription(
                 new ResourceLayoutElementDescription("envTexture", ResourceKind.TextureReadOnly, ShaderStages.Fragment),
