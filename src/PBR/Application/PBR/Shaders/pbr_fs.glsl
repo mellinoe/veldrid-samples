@@ -20,14 +20,25 @@ struct AnalyticalLight {
 	vec4 radiance;
 };
 
-layout(location=0) in Vertex
-{
-	vec3 position;
-	vec2 texcoord;
-	mat3 tangentBasis;
-} vin;
+layout(location=0)
+in vec3 vin_pos;
+layout(location=1)
+in vec2 vin_texcoord;
+layout(location=2)
+in mat3 vin_tangentBasis;
 
 layout(location=0) out vec4 color;
+
+#if VULKAN
+layout(set=0, binding=0) uniform TransformUniforms
+#else
+layout(std140, binding=0) uniform TransformUniforms
+#endif // VULKAN
+{
+	mat4 viewProjectionMatrix;
+	mat4 skyProjectionMatrix;
+	mat4 sceneRotationMatrix;
+};
 
 #if VULKAN
 layout(set=0, binding=1) uniform ShadingUniforms
@@ -115,16 +126,16 @@ vec3 fresnelSchlick(vec3 F0, float cosTheta)
 void main()
 {
 	// Sample input textures to get shading model params.
-	vec3 albedo = texture(albedoTexture, vin.texcoord).rgb;
-	float metalness = texture(metalnessTexture, vin.texcoord).r;
-	float roughness = texture(roughnessTexture, vin.texcoord).r;
+	vec3 albedo = texture(albedoTexture, vin_texcoord).rgb;
+	float metalness = texture(metalnessTexture, vin_texcoord).r;
+	float roughness = texture(roughnessTexture, vin_texcoord).r;
 
 	// Outgoing light direction (vector from world-space fragment position to the "eye").
-	vec3 Lo = normalize(eyePosition.xyz - vin.position);
+	vec3 Lo = normalize(eyePosition.xyz - vin_pos);
 
 	// Get current fragment's normal and transform to world space.
-	vec3 N = normalize(2.0 * texture(normalTexture, vin.texcoord).rgb - 1.0);
-	N = normalize(vin.tangentBasis * N);
+	vec3 N = normalize(2.0 * texture(normalTexture, vin_texcoord).rgb - 1.0);
+	N = normalize(vin_tangentBasis * N);
 	
 	// Angle between surface normal and outgoing light direction.
 	float cosLo = max(0.0, dot(N, Lo));

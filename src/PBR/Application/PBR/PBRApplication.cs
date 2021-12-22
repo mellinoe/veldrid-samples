@@ -333,21 +333,10 @@ namespace PBR
             );
             var fsSamplerUniformsLayout = factory.CreateResourceLayout(ref fsSamplerUniformsLayoutDescription);
 
-            Shader[] pbrShaders;
-            if (GraphicsDevice.GetD3D11Info(out _))
-            {
-                pbrShaders = new[] {
-                    factory.CreateShader(new ShaderDescription(ShaderStages.Vertex, ReadEmbeddedAssetBytes("pbr.hlsl"), "main_vs")),
-                    factory.CreateShader(new ShaderDescription(ShaderStages.Fragment, ReadEmbeddedAssetBytes("pbr.hlsl"), "main_ps"))
-                };
-            }
-            else
-            {
-                pbrShaders = factory.CreateFromSpirv(
-                    new ShaderDescription(ShaderStages.Vertex, ReadEmbeddedAssetBytes("pbr_vs.glsl"), "main", Debug),
-                    new ShaderDescription(ShaderStages.Fragment, ReadEmbeddedAssetBytes("pbr_fs.glsl"), "main", Debug)
-                );
-            }
+            Shader[] pbrShaders = factory.CreateFromSpirv(
+                new ShaderDescription(ShaderStages.Vertex, ReadEmbeddedAssetBytes("pbr_vs.glsl"), "main", Debug),
+                new ShaderDescription(ShaderStages.Fragment, ReadEmbeddedAssetBytes("pbr_fs.glsl"), "main", Debug)
+            );
 
             _pbrPipeline = factory.CreateGraphicsPipeline(
                 new GraphicsPipelineDescription()

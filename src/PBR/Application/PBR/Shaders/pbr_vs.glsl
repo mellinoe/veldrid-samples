@@ -21,20 +21,20 @@ layout(std140, binding=0) uniform TransformUniforms
 	mat4 sceneRotationMatrix;
 };
 
-layout(location=0) out Vertex
-{
-	vec3 position;
-	vec2 texcoord;
-	mat3 tangentBasis;
-} vout;
+layout(location=0)
+out vec3 vout_pos;
+layout(location=1)
+out vec2 vout_texcoord;
+layout(location=2)
+out mat3 vout_tangentBasis;
 
 void main()
 {
-	vout.position = vec3(sceneRotationMatrix * vec4(position, 1.0));
-	vout.texcoord = vec2(texcoord.x, 1.0-texcoord.y);
+	vout_pos = vec3(sceneRotationMatrix * vec4(position, 1.0));
+	vout_texcoord = vec2(texcoord.x, 1.0-texcoord.y);
 
 	// Pass tangent space basis vectors (for normal mapping).
-	vout.tangentBasis = mat3(sceneRotationMatrix) * mat3(tangent, bitangent, normal);
+	vout_tangentBasis = mat3(sceneRotationMatrix) * mat3(tangent, bitangent, normal);
 
 	gl_Position = viewProjectionMatrix * sceneRotationMatrix * vec4(position, 1.0);
 }
