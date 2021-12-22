@@ -29,28 +29,19 @@ in mat3 vin_tangentBasis;
 
 layout(location=0) out vec4 color;
 
-#if VULKAN
-layout(set=0, binding=0) uniform TransformUniforms
-#else
-layout(std140, binding=0) uniform TransformUniforms
-#endif // VULKAN
+layout(std140, set=0, binding=0) uniform TransformUniforms
 {
 	mat4 viewProjectionMatrix;
 	mat4 skyProjectionMatrix;
 	mat4 sceneRotationMatrix;
 };
 
-#if VULKAN
-layout(set=0, binding=1) uniform ShadingUniforms
-#else
-layout(std140, binding=1) uniform ShadingUniforms
-#endif // VULKAN
+layout(std140, set=0, binding=1) uniform ShadingUniforms
 {
 	AnalyticalLight lights[NumLights];
 	vec4 eyePosition;
 };
 
-#if VULKAN
 layout(set=1, binding=0) uniform texture2D albedoTexture;
 layout(set=1, binding=1) uniform texture2D normalTexture;
 layout(set=1, binding=2) uniform texture2D metalnessTexture;
@@ -76,21 +67,6 @@ vec4 textureLod(textureCube tex, vec3 p, float lod) {
 int texQueryLevels(textureCube tex) {
 	return textureQueryLevels(samplerCube(tex, textureSampler));
 }
-
-#else
-layout(binding=0) uniform sampler2D albedoTexture;
-layout(binding=1) uniform sampler2D normalTexture;
-layout(binding=2) uniform sampler2D metalnessTexture;
-layout(binding=3) uniform sampler2D roughnessTexture;
-layout(binding=4) uniform samplerCube specularTexture;
-layout(binding=5) uniform samplerCube irradianceTexture;
-layout(binding=6) uniform sampler2D specularBRDF_LUT;
-
-int texQueryLevels(samplerCube tex) {
-	return textureQueryLevels(tex);
-}
-
-#endif // VULKAN
 
 // GGX/Towbridge-Reitz normal distribution function.
 // Uses Disney's reparametrization of alpha = roughness^2.
@@ -125,6 +101,7 @@ vec3 fresnelSchlick(vec3 F0, float cosTheta)
 
 void main()
 {
+	float alpha = (viewProjectionMatrix[0][0] * 0.0f) + 1.0f; // access something in TransformUniforms so it isn't omitted in msl fragment shader
 	// Sample input textures to get shading model params.
 	vec3 albedo = texture(albedoTexture, vin_texcoord).rgb;
 	float metalness = texture(metalnessTexture, vin_texcoord).r;
@@ -214,9 +191,8 @@ void main()
 
 		// Total ambient lighting contribution.
 		ambientLighting = diffuseIBL + specularIBL;
-		//ambientLighting = vec3(0.5, 0.5, 0.5);
 	}
 
 	// Final fragment color.
-	color = vec4(directLighting + ambientLighting, 1.0);
+	color = vec4(directLighting + ambientLighting, alpha);
 }

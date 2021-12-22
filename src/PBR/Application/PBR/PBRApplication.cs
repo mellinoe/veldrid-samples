@@ -115,14 +115,14 @@ namespace PBR
                         {
                             var equirect2CubeShaderSrc = ReadEmbeddedAssetBytes("equirect2cube_cs.glsl");
                             var equirect2CubeUniformLayoutDescription = new ResourceLayoutDescription(
-                                new ResourceLayoutElementDescription("inputTexture", ResourceKind.TextureReadOnly, ShaderStages.Compute),
                                 new ResourceLayoutElementDescription("outputTexture", ResourceKind.TextureReadWrite, ShaderStages.Compute),
+                                new ResourceLayoutElementDescription("inputTexture", ResourceKind.TextureReadOnly, ShaderStages.Compute),
                                 new ResourceLayoutElementDescription("textureSampler", ResourceKind.Sampler, ShaderStages.Compute)
                             );
-
+                            
                             using (var shader = factory.CreateFromSpirv(new ShaderDescription(ShaderStages.Compute, equirect2CubeShaderSrc, "main", Debug)))
                             using (var equirect2CubeUniformLayout = factory.CreateResourceLayout(ref equirect2CubeUniformLayoutDescription))
-                            using (var equirect2CubeResourceSet = factory.CreateResourceSet(new ResourceSetDescription(equirect2CubeUniformLayout, environmentHdrTexture, temporaryUnfilteredEnvCubeMap, textureSampler)))
+                            using (var equirect2CubeResourceSet = factory.CreateResourceSet(new ResourceSetDescription(equirect2CubeUniformLayout, temporaryUnfilteredEnvCubeMap, environmentHdrTexture, textureSampler)))
                             using (var pipeline = factory.CreateComputePipeline(new ComputePipelineDescription(shader, equirect2CubeUniformLayout, 32, 32, 1)))
                             using (var commandList = factory.CreateCommandList())
                             {
@@ -151,8 +151,8 @@ namespace PBR
                         {
                             var spmapShaderSrc = ReadEmbeddedAssetBytes("spmap_cs.glsl");
                             var spmapUniformLayoutDescription = new ResourceLayoutDescription(
-                                new ResourceLayoutElementDescription("inputTexture", ResourceKind.TextureReadOnly, ShaderStages.Compute),
                                 new ResourceLayoutElementDescription("outputTexture", ResourceKind.TextureReadWrite, ShaderStages.Compute),
+                                new ResourceLayoutElementDescription("inputTexture", ResourceKind.TextureReadOnly, ShaderStages.Compute),
                                 new ResourceLayoutElementDescription("FakePushConstants", ResourceKind.UniformBuffer, ShaderStages.Compute),
                                 new ResourceLayoutElementDescription("textureSampler", ResourceKind.Sampler, ShaderStages.Compute)
                             );
@@ -173,7 +173,7 @@ namespace PBR
                                 for (uint level = 1, size = EnvironmentCubeMapSize / 2; level < EnvironmentCubeMapMipLevels; ++level, size /= 2)
                                 {
                                     using (var mipTailTexView = factory.CreateTextureView(new TextureViewDescription(temporarySpecularEnvironmentMapTexture, PixelFormat.R16_G16_B16_A16_Float, level, 1, 0, 6)))
-                                    using (var resourceSet = factory.CreateResourceSet(new ResourceSetDescription(spmapUniformLayout, unfilteredEnvCubeMap, mipTailTexView, roughnessFilterBuffer, textureSampler)))
+                                    using (var resourceSet = factory.CreateResourceSet(new ResourceSetDescription(spmapUniformLayout, mipTailTexView, unfilteredEnvCubeMap, roughnessFilterBuffer, textureSampler)))
                                     {
                                         var numGroups = Math.Max(1, size / 32);
                                         GraphicsDevice.UpdateBuffer(roughnessFilterBuffer, 0, new FakePushConstants { level = 0, roughness = level * deltaRoughness });
@@ -205,14 +205,14 @@ namespace PBR
                         {
                             var irradianceShaderSrc = ReadEmbeddedAssetBytes("irmap_cs.glsl");
                             var irradianceUniformLayoutDescription = new ResourceLayoutDescription(
-                                new ResourceLayoutElementDescription("inputTexture", ResourceKind.TextureReadOnly, ShaderStages.Compute),
                                 new ResourceLayoutElementDescription("outputTexture", ResourceKind.TextureReadWrite, ShaderStages.Compute),
+                                new ResourceLayoutElementDescription("inputTexture", ResourceKind.TextureReadOnly, ShaderStages.Compute),
                                 new ResourceLayoutElementDescription("textureSampler", ResourceKind.Sampler, ShaderStages.Compute)
                             );
 
                             using (var shader = factory.CreateFromSpirv(new ShaderDescription(ShaderStages.Compute, irradianceShaderSrc, "main", Debug)))
                             using (var irradianceUniformLayout = factory.CreateResourceLayout(irradianceUniformLayoutDescription))
-                            using (var irradianceResourceSet = factory.CreateResourceSet(new ResourceSetDescription(irradianceUniformLayout, unfilteredEnvCubeMap, temporaryIrradianceEnvironmentMapTexture, textureSampler)))
+                            using (var irradianceResourceSet = factory.CreateResourceSet(new ResourceSetDescription(irradianceUniformLayout, temporaryIrradianceEnvironmentMapTexture, unfilteredEnvCubeMap, textureSampler)))
                             using (var pipeline = factory.CreateComputePipeline(new ComputePipelineDescription(shader, irradianceUniformLayout, 32, 32, 1)))
                             using (var commandList = factory.CreateCommandList())
                             {
@@ -236,13 +236,12 @@ namespace PBR
                         var spbrdfShaderSrc = ReadEmbeddedAssetBytes("spbrdf_cs.glsl");
 
                         var spbrdfUniformLayoutDescription = new ResourceLayoutDescription(
-                            new ResourceLayoutElementDescription("inputTexture", ResourceKind.TextureReadOnly, ShaderStages.Compute),
                             new ResourceLayoutElementDescription("LUT", ResourceKind.TextureReadWrite, ShaderStages.Compute)
                         );
 
                         using (var shader = factory.CreateFromSpirv(new ShaderDescription(ShaderStages.Compute, spbrdfShaderSrc, "main", Debug)))
                         using (var spbrdfUniformLayout = factory.CreateResourceLayout(spbrdfUniformLayoutDescription))
-                        using (var spbrdfResourceSet = factory.CreateResourceSet(new ResourceSetDescription(spbrdfUniformLayout, unfilteredEnvCubeMap, specularBRDFLUTTexture)))
+                        using (var spbrdfResourceSet = factory.CreateResourceSet(new ResourceSetDescription(spbrdfUniformLayout, specularBRDFLUTTexture)))
                         using (var pipeline = factory.CreateComputePipeline(new ComputePipelineDescription(shader, spbrdfUniformLayout, 32, 32, 1)))
                         using (var commandList = factory.CreateCommandList())
                         {
@@ -311,7 +310,7 @@ namespace PBR
 
             var transformAndShadingUniformsLayout = factory.CreateResourceLayout(
                 new ResourceLayoutDescription(
-                    new ResourceLayoutElementDescription("TransformUniforms", ResourceKind.UniformBuffer, ShaderStages.Vertex),
+                    new ResourceLayoutElementDescription("TransformUniforms", ResourceKind.UniformBuffer, ShaderStages.Vertex | ShaderStages.Fragment),
                     new ResourceLayoutElementDescription("ShadingUniforms", ResourceKind.UniformBuffer, ShaderStages.Fragment)
                 )
             );
@@ -363,7 +362,6 @@ namespace PBR
                     Outputs = GraphicsDevice.SwapchainFramebuffer.OutputDescription
                 }
             );
-
             var skyboxVertexLayout = new VertexLayoutDescription(_skyboxMesh.VertexElements);
 
             var skyboxShaders = factory.CreateFromSpirv(
@@ -382,7 +380,7 @@ namespace PBR
                     BlendState = BlendStateDescription.SingleOverrideBlend,
                     DepthStencilState = new DepthStencilStateDescription(
                             depthTestEnabled: false,
-                            depthWriteEnabled: true,
+                            depthWriteEnabled: false,
                             comparisonKind: ComparisonKind.LessEqual
                         ),
                     RasterizerState = new RasterizerStateDescription(

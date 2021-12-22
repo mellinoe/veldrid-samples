@@ -7,19 +7,13 @@
 const float PI = 3.141592;
 const float TwoPI = 2 * PI;
 
-#if VULKAN
-layout(set=0, binding=0) uniform texture2D inputTexture;
-layout(set=0, binding=1, rgba16f) restrict writeonly uniform image2DArray outputTexture;
+layout(set=0, binding=0, rgba16f) restrict writeonly uniform image2DArray outputTexture;
+layout(set=0, binding=1) uniform texture2D inputTexture;
 layout(set=0, binding=2) uniform sampler textureSampler;
 
 vec4 texture(texture2D tex, vec2 uvCoords) {
 	return texture(sampler2D(tex, textureSampler), uvCoords);
 }
-
-#else
-layout(binding=0) uniform sampler2D inputTexture;
-layout(binding=0, rgba16f) restrict writeonly uniform imageCube outputTexture;
-#endif // VULKAN
 
 // Calculate normalized sampling direction vector based on current fragment coordinates (gl_GlobalInvocationID.xyz).
 // This is essentially "inverse-sampling": we reconstruct what the sampling vector would be if we wanted it to "hit"
@@ -38,7 +32,8 @@ vec3 getSamplingVector()
     else if(gl_GlobalInvocationID.z == 2) ret = vec3(uv.x, 1.0, -uv.y);
     else if(gl_GlobalInvocationID.z == 3) ret = vec3(uv.x, -1.0, uv.y);
     else if(gl_GlobalInvocationID.z == 4) ret = vec3(uv.x, uv.y, 1.0);
-    else if(gl_GlobalInvocationID.z == 5) ret = vec3(-uv.x, uv.y, -1.0);
+    //else if(gl_GlobalInvocationID.z == 5)
+    else ret = vec3(-uv.x, uv.y, -1.0);
     return normalize(ret);
 }
 
