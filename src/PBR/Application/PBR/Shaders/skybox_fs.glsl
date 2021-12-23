@@ -8,8 +8,8 @@ layout(location=0) in vec3 localPosition;
 layout(location=0) out vec4 color;
 
 #if VULKAN
-layout(set=1, binding=0) uniform textureCube envTexture;
-layout(set=1, binding=1) uniform sampler textureSampler;
+layout(set=0, binding=1) uniform textureCube envTexture;
+layout(set=0, binding=2) uniform sampler textureSampler;
 
 vec4 textureLod(textureCube tex, vec3 p, float lod) {
 	return textureLod(samplerCube(tex, textureSampler), p, lod);

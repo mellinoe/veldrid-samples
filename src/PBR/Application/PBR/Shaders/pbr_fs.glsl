@@ -42,15 +42,15 @@ layout(std140, set=0, binding=1) uniform ShadingUniforms
 	vec4 eyePosition;
 };
 
-layout(set=1, binding=0) uniform texture2D albedoTexture;
-layout(set=1, binding=1) uniform texture2D normalTexture;
-layout(set=1, binding=2) uniform texture2D metalnessTexture;
-layout(set=1, binding=3) uniform texture2D roughnessTexture;
-layout(set=1, binding=4) uniform textureCube specularTexture;
-layout(set=1, binding=5) uniform textureCube irradianceTexture;
-layout(set=1, binding=6) uniform texture2D specularBRDF_LUT;
+layout(set=0, binding=2) uniform texture2D albedoTexture;
+layout(set=0, binding=3) uniform texture2D metalnessTexture;
+layout(set=0, binding=4) uniform texture2D roughnessTexture;
+layout(set=0, binding=5) uniform texture2D normalTexture;
+layout(set=0, binding=6) uniform textureCube irradianceTexture;
+layout(set=0, binding=7) uniform textureCube specularTexture;
+layout(set=0, binding=8) uniform texture2D specularBRDF_LUT;
 
-layout(set=1, binding=7) uniform sampler textureSampler;
+layout(set=0, binding=9) uniform sampler textureSampler;
 
 vec4 texture(texture2D tex, vec2 uvCoords) {
 	return texture(sampler2D(tex, textureSampler), uvCoords);
