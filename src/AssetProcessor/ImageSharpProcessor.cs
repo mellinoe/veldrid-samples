@@ -1,32 +1,54 @@
-﻿using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Advanced;
-using SixLabors.ImageSharp.PixelFormats;
-using SixLabors.ImageSharp.Processing;
-using System;
+﻿using System;
+using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
-using Veldrid;
-using AssetPrimitives;
 using System.Runtime.InteropServices;
+using AssetPrimitives;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp.Processing;
+using Veldrid;
 
 namespace AssetProcessor
 {
     public class ImageSharpProcessor : BinaryAssetProcessor<ProcessedTexture>
     {
-        public unsafe override ProcessedTexture ProcessT(Stream stream, string extension)
+        private static NameValueCollection DefaultArgs = new NameValueCollection() { { "PixelFormat", nameof(Rgba32) }, { nameof(GenerateMipmaps), "true" } };
+
+        private static Func<Stream, NameValueCollection, ProcessedTexture> WithPixelFormat(Func<Stream, NameValueCollection, PixelFormat, ProcessedTexture> f, PixelFormat pixelFormat)
+            => (stream, arg) => f(stream, arg, pixelFormat);
+
+        private static new Dictionary<string, Func<Stream, NameValueCollection, ProcessedTexture>> ImageProcessFormats = new Dictionary<string, Func<Stream, NameValueCollection, ProcessedTexture>>()
+            {
+                { nameof(Rgba32), WithPixelFormat(ProcessImage<Rgba32>, PixelFormat.R8_G8_B8_A8_UNorm) },
+                { nameof(L8), WithPixelFormat(ProcessImage<L8>, PixelFormat.R8_UNorm) }
+            };
+
+        public unsafe override ProcessedTexture ProcessT(Stream stream, string extension, NameValueCollection args = null)
         {
-            Image<Rgba32> image = Image.Load<Rgba32>(stream);
-            Image<Rgba32>[] mipmaps = GenerateMipmaps(image, out int totalSize);
+            args = args ?? DefaultArgs;
+            return ImageProcessFormats[args["PixelFormat"]](stream, args);
+        }
+
+        private unsafe static ProcessedTexture ProcessImage<T>(Stream stream, NameValueCollection args, PixelFormat pixelFormat) where T : unmanaged, IPixel<T>
+        {
+            Image<T> image = Image.Load<T>(stream);
+            Image<T>[] mipmaps = new Image<T>[] { image };
+            int totalSize = image.Width * image.Height * Unsafe.SizeOf<T>();
+            bool generateMipmaps = args[nameof(GenerateMipmaps)] == "true";
+            if (generateMipmaps)
+                mipmaps = GenerateMipmaps(image, out totalSize);
 
             byte[] allTexData = new byte[totalSize];
             long offset = 0;
             fixed (byte* allTexDataPtr = allTexData)
             {
-                foreach (Image<Rgba32> mipmap in mipmaps)
+                foreach (Image<T> mipmap in mipmaps)
                 {
-                    long mipSize = mipmap.Width * mipmap.Height * sizeof(Rgba32);
-                    if (!mipmap.TryGetSinglePixelSpan(out Span<Rgba32> pixelSpan))
+                    long mipSize = mipmap.Width * mipmap.Height * sizeof(T);
+                    if (!mipmap.TryGetSinglePixelSpan(out Span<T> pixelSpan))
                     {
                         throw new VeldridException("Unable to get image pixelspan.");
                     }
@@ -39,12 +61,11 @@ namespace AssetProcessor
                 }
             }
 
-            ProcessedTexture texData = new ProcessedTexture(
-                    PixelFormat.R8_G8_B8_A8_UNorm, TextureType.Texture2D,
+            return new ProcessedTexture(
+                    pixelFormat, TextureType.Texture2D,
                     (uint)image.Width, (uint)image.Height, 1,
                     (uint)mipmaps.Length, 1,
                     allTexData);
-            return texData;
         }
 
         // Taken from Veldrid.ImageSharp

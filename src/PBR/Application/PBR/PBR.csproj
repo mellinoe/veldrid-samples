@@ -1,0 +1,43 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>netstandard2.0</TargetFramework>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<None Remove="Shaders\equirect2cube_cs.glsl" />
+		<None Remove="Shaders\irmap_cs.glsl" />
+		<None Remove="Shaders\pbr_fs.glsl" />
+		<None Remove="Shaders\pbr_vs.glsl" />
+		<None Remove="Shaders\skybox_fs.glsl" />
+		<None Remove="Shaders\skybox_vs.glsl" />
+		<None Remove="Shaders\spbrdf_cs.glsl" />
+		<None Remove="Shaders\spmap_cs.glsl" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Asset Include="$(SamplesAssetsDir)\models\cerberus.fbx" ProcessorFormat="ProcessedModelVertexElementSemantic=Position,Normal,Tangent,BiTangent,TextureCoordinate%26PostProcessSteps=FlipWindingOrder|GenerateSmoothNormals|CalculateTangentSpace|LimitBoneWeights|Triangulate|SortByPrimitiveType|OptimizeMeshes|ValidateDataStructure|PreTransformVertices" />
+		<Asset Include="$(SamplesAssetsDir)\models\skybox.obj" ProcessorFormat="ProcessedModelVertexElementSemantic=Position,Normal,Tangent,BiTangent,TextureCoordinate%26PostProcessSteps=FlipWindingOrder|GenerateSmoothNormals|CalculateTangentSpace|LimitBoneWeights|Triangulate|SortByPrimitiveType|OptimizeMeshes|ValidateDataStructure|PreTransformVertices" />
+		<Asset Include="$(SamplesAssetsDir)\textures\cerberus_A.png" />
+		<Asset Include="$(SamplesAssetsDir)\textures\cerberus_M.png" ProcessorFormat="GenerateMipmaps=true%26PixelFormat=L8" />
+		<Asset Include="$(SamplesAssetsDir)\textures\cerberus_N.png" />
+		<Asset Include="$(SamplesAssetsDir)\textures\cerberus_R.png" ProcessorFormat="GenerateMipmaps=true%26PixelFormat=L8" />
+		<Asset Include="$(SamplesAssetsDir)\textures\environment.hdr" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<EmbeddedResource Include="Shaders\equirect2cube_cs.glsl" LogicalName="equirect2cube_cs.glsl" />
+		<EmbeddedResource Include="Shaders\irmap_cs.glsl" LogicalName="irmap_cs.glsl" />
+		<EmbeddedResource Include="Shaders\skybox_fs.glsl" LogicalName="skybox_fs.glsl" />
+		<EmbeddedResource Include="Shaders\skybox_vs.glsl" LogicalName="skybox_vs.glsl" />
+		<EmbeddedResource Include="Shaders\pbr_fs.glsl" LogicalName="pbr_fs.glsl" />
+		<EmbeddedResource Include="Shaders\pbr_vs.glsl" LogicalName="pbr_vs.glsl" />
+		<EmbeddedResource Include="Shaders\spbrdf_cs.glsl" LogicalName="spbrdf_cs.glsl" />
+		<EmbeddedResource Include="Shaders\spmap_cs.glsl" LogicalName="spmap_cs.glsl" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="$(SrcDir)\SampleBase\SampleBase.csproj" />
+	</ItemGroup>
+
+</Project>

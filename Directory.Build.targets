@@ -7,7 +7,7 @@
     <PropertyGroup>
       <_Command>dotnet $(_AssetProcessorPath)</_Command>
       <_Command>$(_Command) $(_ProcessDir)</_Command>
-      <_Command>$(_Command) @(Asset->'%(Identity)', ' ')</_Command>
+      <_Command>$(_Command) @(Asset->'"%(Identity)::%(ProcessorFormat)"', ' ')</_Command>
     </PropertyGroup>
     <Message Importance="high" Text="Executing: $(_Command)" />
     <Exec Command="$(_Command)" />

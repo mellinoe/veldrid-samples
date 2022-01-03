@@ -2,6 +2,7 @@
 using SampleBase;
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Diagnostics;
 using System.IO;
 using Veldrid;
@@ -10,7 +11,7 @@ namespace AssetProcessor
 {
     public class KtxFileProcessor : BinaryAssetProcessor<byte[]>
     {
-        public override byte[] ProcessT(Stream stream, string extension)
+        public override byte[] ProcessT(Stream stream, string extension, NameValueCollection args = null)
         {
             MemoryStream ms = new MemoryStream();
             stream.CopyTo(ms);

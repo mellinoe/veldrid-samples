@@ -35,7 +35,7 @@ namespace AssetPrimitives
             TextureData = textureData;
         }
 
-        public unsafe Texture CreateDeviceTexture(GraphicsDevice gd, ResourceFactory rf, TextureUsage usage)
+        public Texture CreateDeviceTexture(GraphicsDevice gd, ResourceFactory rf, TextureUsage usage)
         {
             Texture texture = rf.CreateTexture(new TextureDescription(
                 Width, Height, Depth, MipLevels, ArrayLayers, Format, usage, Type));
@@ -44,23 +44,21 @@ namespace AssetPrimitives
                 Width, Height, Depth, MipLevels, ArrayLayers, Format, TextureUsage.Staging, Type));
 
             ulong offset = 0;
-            fixed (byte* texDataPtr = &TextureData[0])
+            var textureData = new Span<byte>(TextureData);
+            for (uint level = 0; level < MipLevels; level++)
             {
-                for (uint level = 0; level < MipLevels; level++)
-                {
-                    uint mipWidth = GetDimension(Width, level);
-                    uint mipHeight = GetDimension(Height, level);
-                    uint mipDepth = GetDimension(Depth, level);
-                    uint subresourceSize = mipWidth * mipHeight * mipDepth * GetFormatSize(Format);
+                uint mipWidth = GetDimension(Width, level);
+                uint mipHeight = GetDimension(Height, level);
+                uint mipDepth = GetDimension(Depth, level);
+                uint subresourceSize = mipWidth * mipHeight * mipDepth * FormatSizeHelpers.GetSizeInBytes(Format);
 
-                    for (uint layer = 0; layer < ArrayLayers; layer++)
-                    {
-                        gd.UpdateTexture(
-                            staging, (IntPtr)(texDataPtr + offset), subresourceSize,
-                            0, 0, 0, mipWidth, mipHeight, mipDepth,
-                            level, layer);
-                        offset += subresourceSize;
-                    }
+                for (uint layer = 0; layer < ArrayLayers; layer++)
+                {
+                    gd.UpdateTexture(
+                        staging, textureData.Slice((int)offset, (int)subresourceSize),
+                        0, 0, 0, mipWidth, mipHeight, mipDepth,
+                        level, layer);
+                    offset += subresourceSize;
                 }
             }
 
@@ -71,16 +69,6 @@ namespace AssetPrimitives
             gd.SubmitCommands(cl);
 
             return texture;
-        }
-
-        private uint GetFormatSize(PixelFormat format)
-        {
-            switch (format)
-            {
-                case PixelFormat.R8_G8_B8_A8_UNorm: return 4;
-                case PixelFormat.BC3_UNorm: return 1;
-                default: throw new NotImplementedException();
-            }
         }
 
         public static uint GetDimension(uint largestLevelDimension, uint mipLevel)

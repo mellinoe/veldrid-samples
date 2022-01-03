@@ -1,16 +1,95 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Numerics;
 using Veldrid;
 
 namespace AssetPrimitives
 {
+    public enum ProcessedModelVertexElementSemantic
+    {
+        Position,
+        Normal,
+        TextureCoordinate,
+        Color,
+        Tangent,
+        BiTangent,
+        BoneWeights,
+        BoneIndices
+    }
+
     public class ProcessedModel
     {
-        public ProcessedMeshPart[] MeshParts { get; set; }
-        public ProcessedNodeSet Nodes { get; set; }
-        public ProcessedAnimation[] Animations { get; set; }
+        public ProcessedMeshPart[] MeshParts { get; }
+        public ProcessedNodeSet Nodes { get; }
+        public ProcessedAnimation[] Animations { get; }
+
+        public ProcessedModel(ProcessedMeshPart[] meshParts, ProcessedNodeSet nodes, ProcessedAnimation[] animations)
+        {
+            MeshParts = meshParts;
+            Nodes = nodes;
+            Animations = animations;
+        }
+
+        public void MergeMeshesToSingleVertexAndIndexBuffer(out byte[] vertexData, out VertexElementDescription[] vertexElementDescriptions, out byte[] indexData, out uint indexCount, out IndexFormat indexFormat)
+        {
+            var dataLengths = MeshParts.Aggregate(
+                (vertexDataLength: 0u, indexDataLength: 0u, indexCount: 0u),
+                (accum, mesh) => (
+                    vertexDataLength: accum.vertexDataLength + (uint)mesh.VertexData.Length,
+                    indexDataLength: accum.indexDataLength + (uint)mesh.IndexData.Length,
+                    indexCount: accum.indexCount + mesh.IndexCount
+                )
+            );
+
+            vertexData = new byte[dataLengths.vertexDataLength];
+            indexData = new byte[dataLengths.indexDataLength];
+            indexCount = dataLengths.indexCount;
+
+            vertexElementDescriptions = MeshParts[0].VertexElements;
+            indexFormat = MeshParts[0].IndexFormat;
+
+            var vertexSize = (uint)vertexElementDescriptions.Sum(element => FormatSizeHelpers.GetSizeInBytes(element.Format));
+
+            using (var vertexOutStream = new MemoryStream(vertexData))
+            using (var indexOutStream = new MemoryStream(indexData))
+            using (var vertexWriter = new BinaryWriter(vertexOutStream))
+            using (var indexWriter = new BinaryWriter(indexOutStream))
+            {
+                uint startIndexOffset = 0;
+                for (int i = 0; i < MeshParts.Length; i++)
+                {
+                    var mesh = MeshParts[i];
+                    Debug.Assert(Enumerable.SequenceEqual(mesh.VertexElements, vertexElementDescriptions), "Check mesh vertex data compatibility.  There seems to be meshes with incompatible vertex element lists.");
+                    Debug.Assert(mesh.IndexFormat.Equals(indexFormat), "Check mesh index data compatibility.  There seems to be meshes with incompatible index formats.");
+
+                    vertexOutStream.Write(mesh.VertexData, 0, mesh.VertexData.Length);
+
+                    using (var indexInStream = new MemoryStream(mesh.IndexData))
+                    using (var indexReader = new BinaryReader(indexInStream))
+                    {
+                        for (int index = 0; index < mesh.IndexCount; index++)
+                        {
+                            switch (indexFormat)
+                            {
+                                case IndexFormat.UInt16:
+                                    indexWriter.Write(indexReader.ReadUInt16() + startIndexOffset);
+                                    break;
+                                case IndexFormat.UInt32:
+                                    indexWriter.Write(indexReader.ReadUInt32() + startIndexOffset);
+                                    break;
+                                default:
+                                    throw new NotImplementedException($"{nameof(MergeMeshesToSingleVertexAndIndexBuffer)} not implemented for {nameof(indexFormat)} {indexFormat}");
+                            }
+                        }
+                    }
+
+                    startIndexOffset += (uint)mesh.VertexData.Length / vertexSize;
+                }
+            }
+        }
     }
 
     public class ProcessedMeshPart
@@ -20,7 +99,7 @@ namespace AssetPrimitives
         public byte[] IndexData { get; set; }
         public IndexFormat IndexFormat { get; set; }
         public uint IndexCount { get; set; }
-        public Dictionary<string, uint> BoneIDsByName { get; set; }
+        public IDictionary<string, uint> BoneIDsByName { get; set; }
         public Matrix4x4[] BoneOffsets { get; set; }
 
         public ProcessedMeshPart(
@@ -29,7 +108,7 @@ namespace AssetPrimitives
             byte[] indexData,
             IndexFormat indexFormat,
             uint indexCount,
-            Dictionary<string, uint> boneIDsByName,
+            IDictionary<string, uint> boneIDsByName,
             Matrix4x4[] boneOffsets)
         {
             VertexData = vertexData;
@@ -57,6 +136,7 @@ namespace AssetPrimitives
         }
     }
 
+    [Serializable]
     public class ProcessedAnimation
     {
         public ProcessedAnimation(
@@ -169,17 +249,18 @@ namespace AssetPrimitives
     {
         public override ProcessedModel ReadT(BinaryReader reader)
         {
-            ProcessedMeshPart[] parts = reader.ReadObjectArray(ReadMeshPart);
+            var parts = reader.ReadObjectArray(ReadMeshPart);
+            var nodes = ReadNodeSet(reader);
+            var animations = reader.ReadObjectArray(ReadAnimation);
 
-            return new ProcessedModel()
-            {
-                MeshParts = parts
-            };
+            return new ProcessedModel(parts, nodes, animations);
         }
 
         public override void WriteT(BinaryWriter writer, ProcessedModel value)
         {
             writer.WriteObjectArray(value.MeshParts, WriteMeshPart);
+            WriteNodeSet(writer, value.Nodes);
+            writer.WriteObjectArray(value.Animations, WriteAnimation);
         }
 
         private void WriteMeshPart(BinaryWriter writer, ProcessedMeshPart part)
@@ -189,7 +270,7 @@ namespace AssetPrimitives
             writer.WriteByteArray(part.IndexData);
             writer.WriteEnum(part.IndexFormat);
             writer.Write(part.IndexCount);
-            //writer.WriteDictionary(part.BoneIDsByName);
+            writer.WriteDictionary(part.BoneIDsByName, (w, s) => w.Write(s), (w, v) => w.Write(v));
             writer.WriteBlittableArray(part.BoneOffsets);
         }
 
@@ -200,7 +281,7 @@ namespace AssetPrimitives
             byte[] indexData = reader.ReadByteArray();
             IndexFormat format = reader.ReadEnum<IndexFormat>();
             uint indexCount = reader.ReadUInt32();
-            //Dictionary<string, uint> dict = reader.ReadDictionary<string, uint>();
+            var dict = reader.ReadDictionary(r => r.ReadString(), r => r.ReadUInt32());
             Matrix4x4[] boneOffsets = reader.ReadBlittableArray<Matrix4x4>();
 
             return new ProcessedMeshPart(
@@ -209,10 +290,75 @@ namespace AssetPrimitives
                 indexData,
                 format,
                 indexCount,
-                new Dictionary<string, uint>(),
+                dict,
                 boneOffsets);
         }
 
+        private void WriteNodeSet(BinaryWriter writer, ProcessedNodeSet nodeSet)
+        {
+            writer.WriteObjectArray(nodeSet.Nodes, WriteNode);
+            writer.Write(nodeSet.RootNodeIndex);
+            writer.WriteBlittableArray(new[] { nodeSet.RootNodeInverseTransform });
+        }
+
+        private ProcessedNodeSet ReadNodeSet(BinaryReader reader)
+        {
+            var nodes = reader.ReadObjectArray(ReadNode);
+            var rootNodeIndex = reader.ReadInt32();
+            var rootNodeInverseTransform = reader.ReadBlittableArray<Matrix4x4>();
+            return new ProcessedNodeSet(nodes, rootNodeIndex, rootNodeInverseTransform[0]);
+        }
+
+        private void WriteNode(BinaryWriter writer, ProcessedNode node)
+        {
+            writer.Write(node.Name);
+            writer.WriteBlittableArray(new[] { node.Transform });
+            writer.Write(node.ParentIndex);
+            writer.WriteBlittableArray(node.ChildIndices);
+        }
+
+        private ProcessedNode ReadNode(BinaryReader reader)
+        {
+            var name = reader.ReadString();
+            var transform = reader.ReadBlittableArray<Matrix4x4>();
+            var parentIndex = reader.ReadInt32();
+            var childIndices = reader.ReadBlittableArray<int>();
+            return new ProcessedNode(name, transform[0], parentIndex, childIndices);
+        }
+
+        private void WriteAnimation(BinaryWriter writer, ProcessedAnimation animation)
+        {
+            writer.Write(animation.Name);
+            writer.Write(animation.DurationInTicks);
+            writer.Write(animation.TicksPerSecond);
+            writer.WriteDictionary(animation.AnimationChannels, (w, s) => w.Write(s), WriteAnimationChannel);
+        }
+
+        private ProcessedAnimation ReadAnimation(BinaryReader reader)
+        {
+            var name = reader.ReadString();
+            var durationInTicks = reader.ReadDouble();
+            var ticksPerSecond = reader.ReadDouble();
+            var animationChannels = reader.ReadDictionary(r => r.ReadString(), ReadAnimationChannel);
+            return new ProcessedAnimation(name, durationInTicks, ticksPerSecond, animationChannels.ToDictionary(kvp => kvp.Key, kvp => kvp.Value));
+        }
+
+        private void WriteAnimationChannel(BinaryWriter writer, ProcessedAnimationChannel channel)
+        {
+            writer.Write(channel.NodeName);
+            writer.WriteBlittableArray(channel.Positions);
+            writer.WriteBlittableArray(channel.Scales);
+            writer.WriteBlittableArray(channel.Rotations);
+        }
+
+        private ProcessedAnimationChannel ReadAnimationChannel(BinaryReader reader)
+        {
+            var name = reader.ReadString();
+            var positions = reader.ReadBlittableArray<VectorKey>();
+            var scales = reader.ReadBlittableArray<VectorKey>();
+            var rotations = reader.ReadBlittableArray<QuaternionKey>();
+            return new ProcessedAnimationChannel(name, positions, scales, rotations);
+        }
 
         private void WriteVertexElementDesc(BinaryWriter writer, VertexElementDescription desc)
         {
