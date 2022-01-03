@@ -51,7 +51,7 @@ namespace AssetPrimitives
             vertexElementDescriptions = MeshParts[0].VertexElements;
             indexFormat = MeshParts[0].IndexFormat;
 
-            var vertexSize = (uint)vertexElementDescriptions.Sum(element => FormatHelpers.GetSizeInBytes(element.Format));
+            var vertexSize = (uint)vertexElementDescriptions.Sum(element => FormatSizeHelpers.GetSizeInBytes(element.Format));
 
             using (var vertexOutStream = new MemoryStream(vertexData))
             using (var indexOutStream = new MemoryStream(indexData))

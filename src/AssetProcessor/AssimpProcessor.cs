@@ -124,7 +124,7 @@ namespace AssetProcessor
 
                 var vertexDataElementFormats =
                     vertexSemantics.Select(GetVertexElementFormatForSemantic).ToArray();
-                var vertexSize = vertexDataElementFormats.Select(FormatHelpers.GetSizeInBytes).Sum(i => (int)i);
+                var vertexSize = vertexDataElementFormats.Select(FormatSizeHelpers.GetSizeInBytes).Sum(i => (int)i);
 
                 var elementDescriptions = Enumerable.Zip(vertexSemantics, vertexDataElementFormats, CreateVertexElementDescription).ToArray();
 
