@@ -29,7 +29,7 @@
 		<EmbeddedResource Include="Shaders\equirect2cube_cs.glsl" LogicalName="equirect2cube_cs.glsl" />
 		<EmbeddedResource Include="Shaders\irmap_cs.glsl" LogicalName="irmap_cs.glsl" />
 		<EmbeddedResource Include="Shaders\skybox_fs.glsl" LogicalName="skybox_fs.glsl" />
-		<EmbeddedResource Include="Shaders\skybox_vs.glsl" LogicalName="skybox_vs.glsl"/>
+		<EmbeddedResource Include="Shaders\skybox_vs.glsl" LogicalName="skybox_vs.glsl" />
 		<EmbeddedResource Include="Shaders\pbr_fs.glsl" LogicalName="pbr_fs.glsl" />
 		<EmbeddedResource Include="Shaders\pbr_vs.glsl" LogicalName="pbr_vs.glsl" />
 		<EmbeddedResource Include="Shaders\spbrdf_cs.glsl" LogicalName="spbrdf_cs.glsl" />
@@ -37,13 +37,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="$(SrcDir)/AssetProcessor/AssetProcessor.csproj">
-			<ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-			<SkipGetTargetFrameworkProperties>true</SkipGetTargetFrameworkProperties>
-		</ProjectReference>
 		<ProjectReference Include="$(SrcDir)\SampleBase\SampleBase.csproj" />
-		<PackageReference Include="Veldrid.Spirv" Version="$(VeldridSpirvVersion)" />
-		<PackageReference Include="AssimpNet" Version="$(AssimpNetVersion)" />
 	</ItemGroup>
 
 </Project>

@@ -85,7 +85,7 @@ vec3 tangentToWorld(const vec3 v, const vec3 N, const vec3 S, const vec3 T)
 	return S * v.x + T * v.y + N * v.z;
 }
 
-layout(local_size_x=32, local_size_y=32, local_size_z=1) in;
+layout(local_size_x=8, local_size_y=8, local_size_z=1) in;
 void main(void)
 {
 	vec3 N = getSamplingVector();

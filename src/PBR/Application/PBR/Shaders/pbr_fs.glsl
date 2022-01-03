@@ -180,7 +180,7 @@ void main()
 		vec3 diffuseIBL = kd * albedo * irradiance;
 
 		// Sample pre-filtered specular reflection environment at correct mipmap level.
-		int specularTextureLevels = texQueryLevels(specularTexture);
+		int specularTextureLevels = 10; //texQueryLevels(specularTexture);
 		vec3 specularIrradiance = textureLod(specularTexture, Lr, roughness * specularTextureLevels).rgb;
 
 		// Split-sum approximation factors for Cook-Torrance specular BRDF.

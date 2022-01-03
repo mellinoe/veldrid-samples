@@ -13,7 +13,7 @@ const float Epsilon = 0.001; // This program needs larger eps.
 const uint NumSamples = 1024;
 const float InvNumSamples = 1.0 / float(NumSamples);
 
-layout(set=0, binding=0, rg16f) restrict writeonly uniform image2D LUT;
+layout(set=0, binding=0, rgba16f) restrict writeonly uniform image2D LUT;
 
 // Compute Van der Corput radical inverse
 // See: http://holger.dammertz.org/stuff/notes_HammersleyOnHemisphere.html
@@ -62,7 +62,7 @@ float gaSchlickGGX_IBL(float cosLi, float cosLo, float roughness)
 	return gaSchlickG1(cosLi, k) * gaSchlickG1(cosLo, k);
 }
 
-layout(local_size_x=32, local_size_y=32, local_size_z=1) in;
+layout(local_size_x=8, local_size_y=8, local_size_z=1) in;
 void main(void)
 {
 	// Get integration parameters.

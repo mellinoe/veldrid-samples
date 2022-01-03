@@ -62,8 +62,7 @@ namespace PBR
 
         public PBRApplication(ApplicationWindow window) : base(window)
         {
-            SpirvCompilation.SetDefaultTargetVersionForCrossCompileTarget(CrossCompileTarget.MSL,
-                SpirvCompilation.MakeMSLVersion(2, 1));
+            SpirvCompilation.SetDefaultTargetVersionForCrossCompileTarget(CrossCompileTarget.MSL, SpirvCompilation.MakeMSLVersion(2, 1));
         }
 
         private const uint NumLights = 3;
@@ -76,11 +75,11 @@ namespace PBR
         private const uint kBRDF_LUT_Size = 256;
 
         private static uint ComputeMipLevels(uint width, uint height)
-            => 1 + (uint) Math.Floor(Math.Log(Math.Max(width, height), 2));
+            => 1 + (uint)Math.Floor(Math.Log(Math.Max(width, height), 2));
 
-        private readonly static uint SizeOfMatrix = (uint) Marshal.SizeOf<Matrix4x4>();
-        private readonly static uint SizeOfLight = (uint) Marshal.SizeOf<AnalyticalLight>();
-        private readonly static uint SizeOfVector4 = (uint) Marshal.SizeOf<Vector4>();
+        private readonly static uint SizeOfMatrix = (uint)Marshal.SizeOf<Matrix4x4>();
+        private readonly static uint SizeOfLight = (uint)Marshal.SizeOf<AnalyticalLight>();
+        private readonly static uint SizeOfVector4 = (uint)Marshal.SizeOf<Vector4>();
 
         private void SetViewProjection(Matrix4x4 matrix)
             => GraphicsDevice.UpdateBuffer(_matrixBuffer, SizeOfMatrix * 0, ref matrix);
@@ -142,13 +141,13 @@ namespace PBR
                                 new ResourceSetDescription(equirect2CubeUniformLayout, temporaryUnfilteredEnvCubeMap,
                                     environmentHdrTexture, textureSampler)))
                             using (var pipeline = factory.CreateComputePipeline(
-                                new ComputePipelineDescription(shader, equirect2CubeUniformLayout, 32, 32, 1)))
+                                new ComputePipelineDescription(shader, equirect2CubeUniformLayout, 8, 8, 1)))
                             using (var commandList = factory.CreateCommandList())
                             {
                                 commandList.Begin();
                                 commandList.SetPipeline(pipeline);
                                 commandList.SetComputeResourceSet(0, equirect2CubeResourceSet);
-                                commandList.Dispatch(EnvironmentCubeMapSize / 32, EnvironmentCubeMapSize / 32, 6);
+                                commandList.Dispatch(EnvironmentCubeMapSize / 8, EnvironmentCubeMapSize / 8, 6);
                                 for (uint layer = 0; layer < temporaryUnfilteredEnvCubeMap.ArrayLayers; layer++)
                                     commandList.CopyTexture(temporaryUnfilteredEnvCubeMap, unfilteredEnvCubeMap, 0,
                                         layer);
@@ -195,8 +194,8 @@ namespace PBR
                             using (var roughnessFilterBuffer =
                                 factory.CreateBuffer(new BufferDescription(16, BufferUsage.UniformBuffer)))
                             using (var pipeline = factory.CreateComputePipeline(new ComputePipelineDescription(shader,
-                                spmapUniformLayout, 32, 32, 1,
-                                new SpecializationConstant[] {new SpecializationConstant(0, 1)})))
+                                spmapUniformLayout, 8, 8, 1,
+                                new SpecializationConstant[] { new SpecializationConstant(0, 1) })))
                             using (var commandList = factory.CreateCommandList())
                             {
                                 commandList.Begin();
@@ -210,22 +209,45 @@ namespace PBR
                                     level < EnvironmentCubeMapMipLevels;
                                     ++level, size /= 2)
                                 {
-                                    using (var mipTailTexView = factory.CreateTextureView(
-                                        new TextureViewDescription(temporarySpecularEnvironmentMapTexture,
-                                            PixelFormat.R16_G16_B16_A16_Float, level, 1, 0, 6)))
+                                    using (var mipTailTexView = factory.CreateTexture(
+                                        TextureDescription.Texture2D(temporarySpecularEnvironmentMapTexture.Width >> (int)level, temporarySpecularEnvironmentMapTexture.Height >> (int)level, 1, 6,
+                                            PixelFormat.R16_G16_B16_A16_Float, TextureUsage.Storage | TextureUsage.Sampled | TextureUsage.RenderTarget)))
                                     using (var resourceSet = factory.CreateResourceSet(
                                         new ResourceSetDescription(spmapUniformLayout, mipTailTexView,
                                             unfilteredEnvCubeMap, roughnessFilterBuffer, textureSampler)))
                                     {
-                                        var numGroups = Math.Max(1, size / 32);
+                                        var numGroups = Math.Max(1, size / 8);
                                         GraphicsDevice.UpdateBuffer(roughnessFilterBuffer, 0,
-                                            new FakePushConstants {level = 0, roughness = level * deltaRoughness});
+                                            new FakePushConstants { level = 0, roughness = level * deltaRoughness });
+
+                                        commandList.Begin();
+                                        for (uint layer = 0; layer < 6; ++layer)
+                                        {
+                                            commandList.CopyTexture(
+                                                temporarySpecularEnvironmentMapTexture,
+                                                0, 0, 0, level, 0,
+                                                mipTailTexView, 0, 0, 0, 0, 0,
+                                                mipTailTexView.Width, mipTailTexView.Height, 1, 6);
+                                        }
+                                        commandList.End();
+                                        GraphicsDevice.SubmitCommands(commandList);
 
                                         commandList.Begin();
                                         commandList.SetPipeline(pipeline);
                                         commandList.SetComputeResourceSet(0, resourceSet);
                                         commandList.Dispatch(numGroups, numGroups, 6);
+                                        commandList.End();
+                                        GraphicsDevice.SubmitCommands(commandList);
 
+                                        commandList.Begin();
+                                        for (uint layer = 0; layer < 6; ++layer)
+                                        {
+                                            commandList.CopyTexture(
+                                                mipTailTexView,
+                                                0, 0, 0, 0, 0,
+                                                temporarySpecularEnvironmentMapTexture, 0, 0, 0, level, 0,
+                                                mipTailTexView.Width, mipTailTexView.Height, 1, 6);
+                                        }
                                         commandList.End();
 
                                         GraphicsDevice.SubmitCommands(commandList);
@@ -270,14 +292,14 @@ namespace PBR
                                 new ResourceSetDescription(irradianceUniformLayout,
                                     temporaryIrradianceEnvironmentMapTexture, unfilteredEnvCubeMap, textureSampler)))
                             using (var pipeline = factory.CreateComputePipeline(
-                                new ComputePipelineDescription(shader, irradianceUniformLayout, 32, 32, 1)))
+                                new ComputePipelineDescription(shader, irradianceUniformLayout, 8, 8, 1)))
                             using (var commandList = factory.CreateCommandList())
                             {
                                 commandList.Begin();
 
                                 commandList.SetPipeline(pipeline);
                                 commandList.SetComputeResourceSet(0, irradianceResourceSet);
-                                commandList.Dispatch(kIrradianceMapSize / 32, kIrradianceMapSize / 32, 6);
+                                commandList.Dispatch(kIrradianceMapSize / 8, kIrradianceMapSize / 8, 6);
 
                                 commandList.CopyTexture(temporaryIrradianceEnvironmentMapTexture,
                                     irradianceEnvironmentMapTexture);
@@ -290,7 +312,7 @@ namespace PBR
                     }
 
                     var specularBRDFLUTTexture = factory.CreateTexture(TextureDescription.Texture2D(kBRDF_LUT_Size,
-                        kBRDF_LUT_Size, 1, 1, PixelFormat.R16_G16_Float, TextureUsage.Storage | TextureUsage.Sampled));
+                        kBRDF_LUT_Size, 1, 1, PixelFormat.R16_G16_B16_A16_Float, TextureUsage.Storage | TextureUsage.Sampled));
                     {
                         // compute SpecularBRDF_LUT
                         var spbrdfShaderSrc = ReadEmbeddedAssetBytes("spbrdf_cs.glsl");
@@ -309,14 +331,14 @@ namespace PBR
                                 specularBRDFLUTTexture)))
                         using (var pipeline =
                             factory.CreateComputePipeline(
-                                new ComputePipelineDescription(shader, spbrdfUniformLayout, 32, 32, 1)))
+                                new ComputePipelineDescription(shader, spbrdfUniformLayout, 8, 8, 1)))
                         using (var commandList = factory.CreateCommandList())
                         {
                             commandList.Begin();
 
                             commandList.SetPipeline(pipeline);
                             commandList.SetComputeResourceSet(0, spbrdfResourceSet);
-                            commandList.Dispatch(kBRDF_LUT_Size / 32, kBRDF_LUT_Size / 32, 6);
+                            commandList.Dispatch(kBRDF_LUT_Size / 8, kBRDF_LUT_Size / 8, 6);
 
                             commandList.End();
                             GraphicsDevice.SubmitCommands(commandList);
@@ -327,11 +349,11 @@ namespace PBR
                     if (GraphicsDevice.GetVulkanInfo(out var info))
                     {
                         info.TransitionImageLayout(specularEnvironmentMapTexture,
-                            (uint) Vulkan.VkImageLayout.ShaderReadOnlyOptimal);
+                            (uint)Vulkan.VkImageLayout.ShaderReadOnlyOptimal);
                         info.TransitionImageLayout(irradianceEnvironmentMapTexture,
-                            (uint) Vulkan.VkImageLayout.ShaderReadOnlyOptimal);
+                            (uint)Vulkan.VkImageLayout.ShaderReadOnlyOptimal);
                         info.TransitionImageLayout(specularBRDFLUTTexture,
-                            (uint) Vulkan.VkImageLayout.ShaderReadOnlyOptimal);
+                            (uint)Vulkan.VkImageLayout.ShaderReadOnlyOptimal);
                     }
 
                     return (specularEnvironmentMapTexture, irradianceEnvironmentMapTexture, specularBRDFLUTTexture);
@@ -367,18 +389,18 @@ namespace PBR
                     roughnessTex.CreateDeviceTexture(GraphicsDevice, factory, TextureUsage.Sampled);
             }
 
-            var textureSampler = GraphicsDevice.Aniso4xSampler;
+            var textureSampler = GraphicsDevice.Features.SamplerAnisotropy ? GraphicsDevice.Aniso4xSampler : GraphicsDevice.PointSampler;
             (_environmentSpecularTexture, _modelIrradianceTexture, _modelSpecularBRDF_LUTTexture) =
                 LoadAndPreprocessEnvironmentMap(factory, textureSampler);
 
             var modelVertexLayout = new VertexLayoutDescription(_modelMesh.VertexElements);
             _modelVertexBuffer =
-                factory.CreateBuffer(new BufferDescription((uint) _modelMesh.VertexData.Length,
+                factory.CreateBuffer(new BufferDescription((uint)_modelMesh.VertexData.Length,
                     BufferUsage.VertexBuffer));
             GraphicsDevice.UpdateBuffer(_modelVertexBuffer, 0, _modelMesh.VertexData);
 
             _modelIndexBuffer =
-                factory.CreateBuffer(new BufferDescription((uint) _modelMesh.IndexData.Length,
+                factory.CreateBuffer(new BufferDescription((uint)_modelMesh.IndexData.Length,
                     BufferUsage.IndexBuffer));
             GraphicsDevice.UpdateBuffer(_modelIndexBuffer, 0, _modelMesh.IndexData);
 
@@ -432,9 +454,9 @@ namespace PBR
                         scissorTestEnabled: false
                     ),
                     PrimitiveTopology = PrimitiveTopology.TriangleList,
-                    ResourceLayouts = new[] {pbrResourceLayout},
+                    ResourceLayouts = new[] { pbrResourceLayout },
                     ShaderSet = new ShaderSetDescription(
-                        vertexLayouts: new[] {modelVertexLayout},
+                        vertexLayouts: new[] { modelVertexLayout },
                         shaders: pbrShaders
                     ),
                     Outputs = GraphicsDevice.SwapchainFramebuffer.OutputDescription
@@ -467,13 +489,13 @@ namespace PBR
                         cullMode: FaceCullMode.Back,
                         fillMode: PolygonFillMode.Solid,
                         frontFace: FrontFace.Clockwise,
-                        depthClipEnabled: false,
+                        depthClipEnabled: !GraphicsDevice.Features.DepthClipDisable,
                         scissorTestEnabled: true
                     ),
                     PrimitiveTopology = PrimitiveTopology.TriangleList,
-                    ResourceLayouts = new[] {skyboxResourceLayout},
+                    ResourceLayouts = new[] { skyboxResourceLayout },
                     ShaderSet = new ShaderSetDescription(
-                        vertexLayouts: new[] {skyboxVertexLayout},
+                        vertexLayouts: new[] { skyboxVertexLayout },
                         shaders: skyboxShaders
                     ),
                     Outputs = GraphicsDevice.SwapchainFramebuffer.OutputDescription
@@ -481,11 +503,11 @@ namespace PBR
             );
 
             _skyboxVertexBuffer =
-                factory.CreateBuffer(new BufferDescription((uint) _skyboxMesh.VertexData.Length,
+                factory.CreateBuffer(new BufferDescription((uint)_skyboxMesh.VertexData.Length,
                     BufferUsage.VertexBuffer));
             GraphicsDevice.UpdateBuffer(_skyboxVertexBuffer, 0, _skyboxMesh.VertexData);
             _skyboxIndexBuffer =
-                factory.CreateBuffer(new BufferDescription((uint) _skyboxMesh.VertexData.Length,
+                factory.CreateBuffer(new BufferDescription((uint)_skyboxMesh.VertexData.Length,
                     BufferUsage.IndexBuffer));
             GraphicsDevice.UpdateBuffer(_skyboxIndexBuffer, 0, _skyboxMesh.IndexData);
 
@@ -523,12 +545,12 @@ namespace PBR
             SetLight(1, ref lights[1]);
             SetLight(2, ref lights[2]);
 
-            _camera.Position = new Vector3(0, 0, 150f);
+            _camera.Position = new Vector3(120.8379f, -20.199202f, 22.761984f);
             _camera.MoveSpeed = 500f;
             _camera.NearDistance = 4f;
             _camera.FarDistance = 4096f;
-            _camera.Yaw = 0f;
-            _camera.Pitch = 0f;
+            _camera.Yaw = 1.16000009f;
+            _camera.Pitch = 0.09000002f;
         }
 
         protected override void Draw(float deltaSeconds)
@@ -542,6 +564,7 @@ namespace PBR
 
             {
                 _commandList.Begin();
+
                 _commandList.SetFramebuffer(GraphicsDevice.SwapchainFramebuffer);
                 _commandList.ClearColorTarget(0, RgbaFloat.CornflowerBlue);
                 _commandList.ClearDepthStencil(1f);
