@@ -2,13 +2,13 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>netcoreapp3.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Veldrid" Version="$(VeldridVersion)" />
     <PackageReference Include="Veldrid.StartupUtilities" Version="$(VeldridVersion)" />
-    <PackageReference Include="Veldrid.Spirv" Version="$(VeldridSpirvVersion)" />
+    <PackageReference Include="Veldrid.Spirv" Version="1.0.15" />
   </ItemGroup>
 
 </Project>

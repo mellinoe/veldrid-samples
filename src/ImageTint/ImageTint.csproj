@@ -2,12 +2,12 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>netcoreapp2.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\SampleBase\SampleBase.csproj" />
-    <PackageReference Include="Veldrid.Spirv" Version="$(VeldridSpirvVersion)" />
+    <PackageReference Include="Veldrid.Spirv" Version="1.0.15" />
     <PackageReference Include="Veldrid.ImageSharp" Version="$(VeldridVersion)" />
   </ItemGroup>
 

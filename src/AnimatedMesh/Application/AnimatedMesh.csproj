@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework>netstandard2.1</TargetFramework>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
@@ -18,7 +18,7 @@
 
   <ItemGroup>
     <ProjectReference Include="$(SrcDir)\SampleBase\SampleBase.csproj" />
-    <PackageReference Include="Veldrid.Spirv" Version="$(VeldridSpirvVersion)" />
+    <PackageReference Include="Veldrid.Spirv" Version="1.0.15" />
     <PackageReference Include="AssimpNet" Version="$(AssimpNetVersion)" />
   </ItemGroup>
 
