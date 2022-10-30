@@ -9,7 +9,7 @@
     <PackageReference Include="Veldrid" Version="$(VeldridVersion)" />
     <PackageReference Include="Veldrid.StartupUtilities" Version="$(VeldridVersion)" />
     <PackageReference Include="Veldrid.Utilities" Version="$(VeldridVersion)" />
-    <PackageReference Include="Veldrid.Spirv" Version="1.0.15" />
+    <PackageReference Include="Veldrid.Spirv" Version="$(VeldridSpirvVersion)" />
   </ItemGroup>
 
   <ItemGroup>
